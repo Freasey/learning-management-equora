@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+  Design system: "Scholarly Calm"
+  Tenang, kredibel, fokus konten. Teal = otoritas akademik,
+  sand/paper = hangat & redam kontras layar, oranye = aksen aksi.
+*/
+@theme {
+  /* Brand — teal */
+  --color-teal-900: #0e3a3a;
+  --color-teal-700: #155e5e;
+  --color-teal-500: #2f8f8a;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Surfaces — sand & paper */
+  --color-sand: #f3ece0;
+  --color-sand-deep: #e6dcc8;
+  --color-paper: #fbf9f4;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Ink & support */
+  --color-ink: #1d2422;
+  --color-muted: #6f7a76;
+  --color-line: #ddd4c4;
+
+  /* Accent — burnt orange */
+  --color-accent: #c8783c;
+
+  /* Fonts */
+  --font-display: var(--font-display), Georgia, serif;
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+
+  /* ── "Bright Campus" — KHUSUS area siswa (/siswa) ────────── */
+  --color-coral: #ff6b5e;
+  --color-sky: #3da9fc;
+  --color-sunny: #ffc145;
+  --color-grape: #7c5cff;
+  --color-mint: #27ca9a;
+  --color-cream: #fff6ee;
+
+  --font-kid: var(--font-nunito), system-ui, sans-serif;
+  --font-kid-display: var(--font-baloo), "Baloo 2", system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  line-height: 1.55;
+}
+
+/* Tailwind v4 tak lagi memberi cursor pointer otomatis pada tombol. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
 }
