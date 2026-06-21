@@ -17,6 +17,19 @@ export function StudentLoginForm() {
     <form action={formAction} className="space-y-4">
       <label className="block">
         <span className="mb-1.5 block text-sm font-bold text-slate-700">
+          Kode sekolah
+        </span>
+        <input
+          name="schoolCode"
+          required
+          autoComplete="off"
+          placeholder="cth. DEMO01"
+          className={`${field} font-kid-display uppercase tracking-wide`}
+        />
+      </label>
+
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-bold text-slate-700">
           NIS / Username
         </span>
         <input

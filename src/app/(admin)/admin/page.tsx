@@ -85,10 +85,14 @@ export default async function AdminHome() {
       </header>
 
       <p className="mb-6 rounded-lg border border-line bg-paper px-4 py-3 text-sm text-muted">
-        Bagikan <strong className="text-ink">kode sekolah</strong> di atas kepada
-        guru &amp; siswa untuk mendaftar di{" "}
+        Bagikan <strong className="text-ink">kode sekolah</strong> di atas: guru
+        mendaftar di{" "}
         <Link href="/gabung" className="font-semibold text-teal-700">
           /gabung
+        </Link>
+        , siswa di{" "}
+        <Link href="/daftar-siswa" className="font-semibold text-teal-700">
+          /daftar-siswa
         </Link>
         , lalu setujui di menu{" "}
         <Link href="/admin/pendaftaran" className="font-semibold text-teal-700">

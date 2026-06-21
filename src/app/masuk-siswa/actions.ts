@@ -11,11 +11,12 @@ export async function authenticateStudent(
     await signIn("credentials", {
       identifier: formData.get("identifier"),
       password: formData.get("password"),
+      schoolCode: formData.get("schoolCode"),
       redirectTo: "/dashboard",
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return "NIS atau kata sandi salah.";
+      return "Kode sekolah, NIS, atau kata sandi salah.";
     }
     throw error;
   }

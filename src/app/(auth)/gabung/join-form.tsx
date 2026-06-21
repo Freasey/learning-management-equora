@@ -26,21 +26,13 @@ export function JoinForm() {
 
   return (
     <form action={formAction} className="space-y-4">
+      <input type="hidden" name="role" value="teacher" />
+
       <label className="block">
         <span className="mb-1.5 block text-xs font-semibold text-ink">
           Kode sekolah
         </span>
         <input name="code" required placeholder="cth. K7P2QX" className={`${fieldClass} font-mono uppercase`} />
-      </label>
-
-      <label className="block">
-        <span className="mb-1.5 block text-xs font-semibold text-ink">
-          Saya seorang
-        </span>
-        <select name="role" defaultValue="student" className={fieldClass}>
-          <option value="student">Siswa</option>
-          <option value="teacher">Guru</option>
-        </select>
       </label>
 
       <label className="block">
@@ -52,9 +44,9 @@ export function JoinForm() {
 
       <label className="block">
         <span className="mb-1.5 block text-xs font-semibold text-ink">
-          Email (guru) / NIS (siswa)
+          Email
         </span>
-        <input name="identifier" required placeholder="email atau NIS" className={fieldClass} />
+        <input name="identifier" type="email" required placeholder="nama@sekolah.sch.id" className={fieldClass} />
       </label>
 
       <label className="block">

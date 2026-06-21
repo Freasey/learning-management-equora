@@ -19,7 +19,7 @@ export default function GabungPage() {
 
       <div className="rounded-2xl border border-line bg-paper p-8 shadow-[0_24px_60px_-30px_rgba(14,58,58,0.35)]">
         <h1 className="font-display text-2xl font-medium text-ink">
-          Gabung ke sekolah
+          Gabung sebagai guru
         </h1>
         <p className="mt-1 mb-6 text-sm text-muted">
           Masukkan kode sekolah dari admin Anda. Akun akan aktif setelah
@@ -32,6 +32,12 @@ export default function GabungPage() {
         Sudah punya akun?{" "}
         <Link href="/masuk" className="font-semibold text-teal-700">
           Masuk di sini
+        </Link>
+      </p>
+      <p className="mt-2 text-center text-xs text-muted">
+        Seorang siswa?{" "}
+        <Link href="/daftar-siswa" className="font-semibold text-teal-700">
+          Daftar lewat halaman siswa
         </Link>
       </p>
     </div>

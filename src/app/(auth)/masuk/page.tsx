@@ -34,7 +34,7 @@ export default function MasukPage() {
         </Link>
       </p>
       <p className="mt-2 text-center text-xs text-muted">
-        Diundang sekolah (guru/siswa)?{" "}
+        Diundang sebagai guru?{" "}
         <Link href="/gabung" className="font-semibold text-teal-700">
           Gabung dengan kode
         </Link>
