@@ -513,6 +513,26 @@ export const loginAttempts = pgTable(
   (t) => [uniqueIndex("login_attempts_identifier_unq").on(t.identifier)],
 );
 
+/**
+ * Notifikasi in-app per pengguna (B1) — pengganti sistem "pull".
+ * Di-emit saat peristiwa lintas-peran: kuis terbit, esai menunggu koreksi,
+ * nilai keluar, pendaftaran disetujui, pengumuman.
+ */
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  schoolId: uuid("school_id").references(() => schools.id, { onDelete: "cascade" }),
+  type: text("type").notNull().default("info"), // info | quiz | grade | approval | announcement
+  title: text("title").notNull(),
+  body: text("body").notNull().default(""),
+  href: text("href"), // tautan tujuan saat diklik
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type PricingPlan = typeof pricingPlans.$inferSelect;
 export type Membership = typeof memberships.$inferSelect;

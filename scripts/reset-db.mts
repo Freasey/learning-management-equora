@@ -15,44 +15,17 @@ if (!url) throw new Error("DATABASE_URL belum diatur di .env.local");
 
 const sql = neon(url);
 
-// Tabel milik project (urutan apa pun — pakai CASCADE). Harus mencakup SEMUA
-// tabel di src/db/schema.ts agar baseline `CREATE TABLE` tidak bentrok.
-const projectTables = [
-  // konten & penilaian
-  "answers",
-  "attempts",
-  "grades",
-  "grade_items",
-  "questions",
-  "assessments",
-  "materials",
-  // akademik
-  "school_announcements",
-  "schedules",
-  "class_subjects",
-  "enrollments",
-  "classes",
-  "subjects",
-  "curriculum_subjects",
-  "academic_years",
-  // dokumentasi
-  "doc_revisions",
-  "doc_articles",
-  // inti
-  "memberships",
-  "contact_requests",
-  "announcements",
-  "users",
-  "schools",
-  "tenants", // nama lama, jaga-jaga bila masih ada
-  "pricing_plans",
-];
-
 async function main() {
-  console.log("Menghapus tabel project (scoped)...");
-  for (const t of projectTables) {
-    await sql.query(`DROP TABLE IF EXISTS "${t}" CASCADE`);
-    console.log(`  ✓ drop ${t}`);
+  // Drop SEMUA tabel di schema public (generik) — robust terhadap penambahan
+  // tabel baru di src/db/schema.ts tanpa harus memperbarui daftar manual.
+  console.log("Menghapus semua tabel di schema public...");
+  const res = await sql.query(
+    `SELECT tablename FROM pg_tables WHERE schemaname = 'public'`,
+  );
+  const rows = (Array.isArray(res) ? res : res.rows) as { tablename: string }[];
+  for (const { tablename } of rows) {
+    await sql.query(`DROP TABLE IF EXISTS "public"."${tablename}" CASCADE`);
+    console.log(`  ✓ drop ${tablename}`);
   }
 
   // Riwayat migrasi drizzle disimpan di schema "drizzle".

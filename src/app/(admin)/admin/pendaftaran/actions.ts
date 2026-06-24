@@ -8,6 +8,7 @@ import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { assertQuota } from "@/lib/quota";
 import { getClassYear } from "@/lib/academic";
 import { ensureMembership } from "@/lib/membership";
+import { notify } from "@/lib/notify";
 
 export async function approveMember(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
@@ -33,6 +34,15 @@ export async function approveMember(formData: FormData) {
     const academicYearId = await getClassYear(schoolId, classId);
     await db.insert(enrollments).values({ schoolId, classId, studentId: id, academicYearId });
   }
+
+  await notify({
+    userId: id,
+    schoolId,
+    type: "approval",
+    title: "Pendaftaran disetujui",
+    body: "Akun Anda telah diterima. Selamat datang!",
+    href: member.role === "student" ? "/siswa" : "/guru",
+  });
 
   revalidatePath("/admin/pendaftaran");
 }
@@ -71,6 +81,14 @@ export async function approveMembership(formData: FormData) {
     .update(memberships)
     .set({ status: "active" })
     .where(eq(memberships.id, id));
+  await notify({
+    userId: m.userId,
+    schoolId,
+    type: "approval",
+    title: "Permintaan mengajar disetujui",
+    body: "Anda kini anggota sekolah ini. Buka lewat Kelola workspace.",
+    href: "/workspace",
+  });
   revalidatePath("/admin/pendaftaran");
 }
 

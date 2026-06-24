@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { isUserActive } from "@/lib/auth-guard";
+import { unreadCount } from "@/lib/notify";
 import { kidFontVars } from "@/lib/kid-fonts";
 import { LogoBook, IconLogout, IconHelp } from "@/components/kid/icons";
 import { StudentBackBar } from "@/components/kid/back-bar";
+import { NotifBell } from "@/components/notif-bell";
 import { doSignOut } from "./actions";
 
 export default async function StudentLayout({
@@ -12,6 +14,7 @@ export default async function StudentLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
   if (!(await isUserActive(session?.user?.id))) redirect("/masuk-siswa");
+  const unread = await unreadCount(session?.user?.id);
 
   return (
     <div className={`${kidFontVars} font-kid min-h-screen bg-cream`}>
@@ -29,6 +32,7 @@ export default async function StudentLayout({
             <span className="hidden text-sm font-bold text-slate-600 sm:block">
               {session?.user?.name ?? "Siswa"}
             </span>
+            <NotifBell count={unread} variant="light" />
             <Link
               href="/panduan/siswa"
               target="_blank"

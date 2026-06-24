@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db, assessments, questions, attempts, answers, gradeItems, grades } from "@/db";
 import { requireStudent } from "@/lib/auth-guard";
 import { getStudentClass } from "@/lib/student";
+import { notify } from "@/lib/notify";
 
 /** Tulis/timpa nilai siswa ke item nilai tertaut assessment. */
 async function writeGrade(
@@ -119,6 +120,16 @@ export async function submitAttempt(formData: FormData) {
 
   if (status === "graded") {
     await writeGrade(schoolId, assessmentId, studentId, autoScore, a.academicYearId);
+  } else if (a.teacherId) {
+    // B1: ada esai → beri tahu guru untuk mengoreksi.
+    await notify({
+      userId: a.teacherId,
+      schoolId,
+      type: "info",
+      title: "Esai menunggu koreksi",
+      body: `Seorang siswa mengumpulkan "${a.title}".`,
+      href: `/guru/kuis/${a.id}`,
+    });
   }
 
   redirect(`/siswa/kuis/${assessmentId}`);

@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, assessments, questions, gradeItems, attempts, answers, grades } from "@/db";
+import { db, assessments, questions, gradeItems, attempts, answers, grades, enrollments } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
 import { getActiveYear } from "@/lib/academic";
 import { assertTeacherTeachesClass, teacherTeachesClass } from "@/lib/teaching";
+import { notify, notifyMany } from "@/lib/notify";
 
 async function writeGrade(
   schoolId: string,
@@ -80,6 +81,15 @@ export async function gradeEssays(formData: FormData) {
 
   if (!anyPending) {
     await writeGrade(schoolId, att.assessmentId, att.studentId, total, att.academicYearId);
+    // B1: beri tahu siswa nilainya sudah keluar.
+    await notify({
+      userId: att.studentId,
+      schoolId,
+      type: "grade",
+      title: "Nilai kuis sudah keluar",
+      body: "Koreksi selesai. Ketuk untuk melihat hasilmu.",
+      href: `/siswa/kuis/${att.assessmentId}`,
+    });
   }
   revalidatePath(`/guru/kuis/${att.assessmentId}`);
   revalidatePath(`/guru/kuis/${att.assessmentId}/koreksi/${attemptId}`);
@@ -193,6 +203,23 @@ export async function setAssessmentStatus(formData: FormData) {
   await db.update(assessments).set({ status }).where(eq(assessments.id, id));
   // Saat diterbitkan & dihitung ke nilai → buat item nilai tertaut.
   if (status === "published" && a.countToGrade) await ensureGradeItem(schoolId, a);
+  // B1: beri tahu siswa kelas bahwa ada kuis baru.
+  if (status === "published" && a.classId) {
+    const studs = await db
+      .select({ id: enrollments.studentId })
+      .from(enrollments)
+      .where(and(eq(enrollments.classId, a.classId), eq(enrollments.schoolId, schoolId)));
+    await notifyMany(
+      studs.map((s) => s.id),
+      {
+        schoolId,
+        type: "quiz",
+        title: `Kuis baru: ${a.title}`,
+        body: "Ada kuis baru untukmu. Ketuk untuk mengerjakan.",
+        href: `/siswa/kuis/${a.id}`,
+      },
+    );
+  }
   revalidatePath(`/guru/kuis/${id}`);
 }
 

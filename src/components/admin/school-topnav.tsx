@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GraduationCap, LogOut, HelpCircle, BookOpen, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotifBell } from "@/components/notif-bell";
 import { doSignOut } from "@/app/(admin)/admin/actions";
 
 type Item = { href: string; label: string };
@@ -49,10 +50,12 @@ export function SchoolTopNav({
   name,
   email,
   roles = [],
+  unread = 0,
 }: {
   name: string;
   email?: string | null;
   roles?: string[];
+  unread?: number;
 }) {
   const pathname = usePathname();
   const canTeach = roles.includes("teacher");
@@ -114,6 +117,7 @@ export function SchoolTopNav({
                 <div className="font-mono text-[10px] text-paper/50">{email}</div>
               )}
             </div>
+            <NotifBell count={unread} />
             <Link
               href="/workspace"
               aria-label="Kelola workspace"
