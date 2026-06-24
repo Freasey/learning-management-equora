@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Users, GraduationCap, ShieldCheck, Copy } from "lucide-react";
 import { auth } from "@/auth";
-import { db, schools, pricingPlans, users } from "@/db";
+import { db, schools, pricingPlans } from "@/db";
+import { countRole } from "@/lib/quota";
 import { quotaLabel } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -38,12 +39,9 @@ export default async function AdminHome() {
     .limit(1);
 
   const [studentCount, teacherCount, adminCount] = await Promise.all([
-    db.$count(users, and(eq(users.schoolId, schoolId), eq(users.role, "student"))),
-    db.$count(users, and(eq(users.schoolId, schoolId), eq(users.role, "teacher"))),
-    db.$count(
-      users,
-      and(eq(users.schoolId, schoolId), eq(users.role, "school_admin")),
-    ),
+    countRole(schoolId, "student"),
+    countRole(schoolId, "teacher"),
+    countRole(schoolId, "school_admin"),
   ]);
 
   const usage = [

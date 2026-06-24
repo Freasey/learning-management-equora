@@ -1,5 +1,5 @@
-import { and, eq } from "drizzle-orm";
-import { db, users, pricingPlans, schools } from "@/db";
+import { and, eq, like } from "drizzle-orm";
+import { db, users, memberships, pricingPlans, schools } from "@/db";
 
 /** Ambil paket aktif sebuah sekolah. */
 export async function getSchoolPlan(schoolId: string) {
@@ -17,9 +17,35 @@ export async function getSchoolPlan(schoolId: string) {
   return plan ?? null;
 }
 
-/** Jumlah pengguna sekolah dengan peran tertentu. */
-export function countRole(schoolId: string, role: string) {
-  return db.$count(users, and(eq(users.schoolId, schoolId), eq(users.role, role)));
+/**
+ * Jumlah pengguna sebuah workspace dengan peran tertentu — sadar-membership.
+ * Menghitung gabungan (distinct per user):
+ *  - akun home: users.schoolId = workspace & users.role = role, dan
+ *  - anggota via memberships aktif yang punya `role` di daftar perannya
+ *    (mis. pemilik workspace yang akunnya "milik" sekolah lain).
+ */
+export async function countRole(schoolId: string, role: string): Promise<number> {
+  const [legacy, viaMembership] = await Promise.all([
+    db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.schoolId, schoolId), eq(users.role, role))),
+    db
+      .select({ id: memberships.userId })
+      .from(memberships)
+      .where(
+        and(
+          eq(memberships.schoolId, schoolId),
+          eq(memberships.status, "active"),
+          like(memberships.roles, `%${role}%`),
+        ),
+      ),
+  ]);
+
+  const set = new Set<string>();
+  for (const r of legacy) set.add(r.id);
+  for (const r of viaMembership) set.add(r.id);
+  return set.size;
 }
 
 /**

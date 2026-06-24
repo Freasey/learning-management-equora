@@ -40,6 +40,12 @@ export default function GabungPage() {
           Daftar lewat halaman siswa
         </Link>
       </p>
+      <p className="mt-2 text-center text-xs text-muted">
+        Tidak terikat sekolah?{" "}
+        <Link href="/daftar-guru" className="font-semibold text-teal-700">
+          Buat kelas pribadi (les/bimbel)
+        </Link>
+      </p>
     </div>
   );
 }

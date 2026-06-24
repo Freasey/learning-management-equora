@@ -27,7 +27,7 @@ export default async function StudentLayout({
               {session?.user?.name ?? "Siswa"}
             </span>
             <Link
-              href="/dokumentasi#siswa"
+              href="/panduan/siswa"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Panduan cara pakai"

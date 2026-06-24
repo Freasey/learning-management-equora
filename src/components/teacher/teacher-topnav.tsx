@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, LogOut, HelpCircle } from "lucide-react";
+import { GraduationCap, LogOut, HelpCircle, Settings2, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { doSignOut } from "@/app/(teacher)/guru/actions";
 
@@ -38,11 +38,14 @@ function matches(pathname: string, href: string) {
 export function TeacherTopNav({
   name,
   email,
+  roles = [],
 }: {
   name: string;
   email?: string | null;
+  roles?: string[];
 }) {
   const pathname = usePathname();
+  const canManage = roles.includes("school_admin");
 
   const activeGroup =
     groups.find((g) =>
@@ -87,6 +90,16 @@ export function TeacherTopNav({
           </div>
 
           <div className="flex items-center gap-3">
+            {canManage && (
+              <Link
+                href="/admin"
+                title="Kelola kelas / workspace"
+                className="hidden items-center gap-1.5 rounded-md border border-paper/20 px-2.5 py-1.5 text-xs font-semibold text-paper/90 transition-colors hover:bg-paper/10 sm:flex"
+              >
+                <Settings2 className="h-3.5 w-3.5" />
+                Kelola
+              </Link>
+            )}
             <div className="hidden text-right leading-tight sm:block">
               <div className="text-sm font-medium">{name}</div>
               {email && (
@@ -94,7 +107,15 @@ export function TeacherTopNav({
               )}
             </div>
             <Link
-              href="/dokumentasi#guru"
+              href="/workspace"
+              aria-label="Kelola workspace"
+              title="Kelola workspace"
+              className="grid h-8 w-8 place-items-center rounded-md border border-paper/20 text-paper/90 transition-colors hover:bg-paper/10"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/panduan/guru"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Panduan & dokumentasi"

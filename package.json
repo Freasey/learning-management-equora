@@ -16,7 +16,9 @@
     "db:seed": "tsx --env-file=.env.local src/db/seed.ts",
     "seed:superadmin": "tsx --env-file=.env.local scripts/seed-superadmin.ts",
     "seed:demo": "tsx --env-file=.env.local scripts/seed-demo.ts",
-    "demo:reset": "npm run db:reset && npm run db:generate && npm run db:apply && npm run db:seed && npm run seed:superadmin && npm run seed:demo"
+    "seed:docs": "tsx --env-file=.env.local scripts/seed-docs.ts",
+    "seed:teacher": "tsx --env-file=.env.local scripts/seed-teacher-dual.ts",
+    "demo:reset": "npm run db:reset && npm run db:generate && npm run db:apply && npm run db:seed && npm run seed:superadmin && npm run seed:demo && npm run seed:docs && npm run seed:teacher"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

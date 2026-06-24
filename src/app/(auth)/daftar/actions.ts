@@ -4,7 +4,7 @@ import { AuthError } from "next-auth";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { db, schools, users } from "@/db";
+import { db, schools, users, memberships } from "@/db";
 import { signIn } from "@/auth";
 import { slugify, randomCode } from "@/lib/ids";
 
@@ -63,14 +63,26 @@ export async function registerSchool(
     })
     .returning();
 
-  // Buat akun admin sekolah.
+  // Buat akun admin sekolah (= pemilik workspace).
   const passwordHash = await bcrypt.hash(password, 10);
-  await db.insert(users).values({
+  const [admin] = await db
+    .insert(users)
+    .values({
+      schoolId: school.id,
+      role: "school_admin",
+      name: adminName,
+      email,
+      passwordHash,
+      status: "active",
+    })
+    .returning({ id: users.id });
+
+  // Keanggotaan pemilik — peran bisa ditambah (mis. "teacher") nanti.
+  await db.insert(memberships).values({
+    userId: admin.id,
     schoolId: school.id,
-    role: "school_admin",
-    name: adminName,
-    email,
-    passwordHash,
+    roles: "school_admin",
+    isOwner: true,
     status: "active",
   });
 

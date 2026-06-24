@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, users, enrollments } from "@/db";
+import { db, users, enrollments, memberships } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { assertQuota } from "@/lib/quota";
 
@@ -39,5 +39,48 @@ export async function rejectMember(formData: FormData) {
   await db
     .delete(users)
     .where(and(eq(users.id, id), eq(users.schoolId, schoolId), eq(users.status, "pending")));
+  revalidatePath("/admin/pendaftaran");
+}
+
+// ── Permintaan KEANGGOTAAN lintas-sekolah (guru dengan akun yang sudah ada,
+// mis. pemilik kelas pribadi yang ingin mengajar di sekolah ini). ──────────
+
+export async function approveMembership(formData: FormData) {
+  const { schoolId } = await requireSchoolAdmin();
+  const id = z.string().uuid().parse(formData.get("id"));
+
+  const [m] = await db
+    .select()
+    .from(memberships)
+    .where(
+      and(
+        eq(memberships.id, id),
+        eq(memberships.schoolId, schoolId),
+        eq(memberships.status, "pending"),
+      ),
+    )
+    .limit(1);
+  if (!m) throw new Error("Permintaan tidak ditemukan.");
+
+  await assertQuota(schoolId, "teacher");
+  await db
+    .update(memberships)
+    .set({ status: "active" })
+    .where(eq(memberships.id, id));
+  revalidatePath("/admin/pendaftaran");
+}
+
+export async function rejectMembership(formData: FormData) {
+  const { schoolId } = await requireSchoolAdmin();
+  const id = z.string().uuid().parse(formData.get("id"));
+  await db
+    .delete(memberships)
+    .where(
+      and(
+        eq(memberships.id, id),
+        eq(memberships.schoolId, schoolId),
+        eq(memberships.status, "pending"),
+      ),
+    );
   revalidatePath("/admin/pendaftaran");
 }

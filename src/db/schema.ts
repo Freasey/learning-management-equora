@@ -48,6 +48,8 @@ export const schools = pgTable("schools", {
     .default("starting"),
   billingCycle: text("billing_cycle").notNull().default("monthly"), // monthly | yearly
   status: text("status").notNull().default("trial"), // trial | active | suspended
+  // school = lembaga formal; personal = ruang kerja pribadi guru independen (les/freelance).
+  type: text("type").notNull().default("school"), // school | personal
   level: text("level"), // jenjang: SD | SMP | SMA | SMK
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
@@ -82,6 +84,39 @@ export const users = pgTable(
     // NIS/username unik per sekolah (bukan global).
     uniqueIndex("users_school_username_unq").on(t.schoolId, t.username),
   ],
+);
+
+/**
+ * Keanggotaan: hubungkan SATU akun ke BANYAK workspace (sekolah/personal).
+ *
+ * `users.schoolId` tetap menjadi "workspace utama / home" (dipakai untuk
+ * sinkron dengan alur lama & sebagai default aktif saat login). Tabel ini
+ * ADITIF — hanya dibuat untuk user yang benar-benar lintas-workspace
+ * (mis. guru yang mengajar di sekolah + punya kelas freelance sendiri).
+ * Bila user tidak punya baris di sini, konteks aktif disintesis dari
+ * users.schoolId + users.role (kompatibel mundur).
+ *
+ * `roles` = daftar peran dipisah koma dalam workspace itu, mis:
+ *   "teacher"               → guru biasa di sebuah sekolah
+ *   "school_admin,teacher"  → pemilik workspace personal (mengelola + mengajar)
+ *   "student"               → siswa
+ */
+export const memberships = pgTable(
+  "memberships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    roles: text("roles").notNull(), // daftar peran dipisah koma
+    isOwner: boolean("is_owner").notNull().default(false),
+    status: text("status").notNull().default("active"), // active | pending | suspended
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("memberships_user_school_unq").on(t.userId, t.schoolId)],
 );
 
 /**
@@ -392,7 +427,46 @@ export const answers = pgTable("answers", {
   isCorrect: boolean("is_correct"), // PG
 });
 
+/**
+ * Knowledge Base / Pusat Bantuan — konten dokumentasi dikelola dari DB
+ * (bukan hardcode), bisa diedit Super Admin. Satu sumber konten dipakai
+ * untuk help center publik + contextual help di dalam aplikasi.
+ */
+export const docArticles = pgTable("doc_articles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  // Untuk peran mana: guest | student | teacher | school_admin (super_admin baca semua).
+  audience: text("audience").notNull().default("guest"),
+  category: text("category").notNull().default("Umum"), // pengelompokan dalam satu audience
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull().default(""),
+  body: text("body").notNull().default(""), // markdown
+  // Route in-app yang artikel ini jelaskan (mis "/guru/kuis") → contextual help.
+  route: text("route"),
+  icon: text("icon"), // nama ikon lucide opsional
+  sortOrder: integer("sort_order").notNull().default(0),
+  status: text("status").notNull().default("published"), // draft | published
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Riwayat revisi artikel dokumentasi (snapshot tiap simpan). */
+export const docRevisions = pgTable("doc_revisions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  articleId: uuid("article_id")
+    .notNull()
+    .references(() => docArticles.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  body: text("body").notNull().default(""),
+  editedBy: uuid("edited_by").references(() => users.id, { onDelete: "set null" }),
+  editedAt: timestamp("edited_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type PricingPlan = typeof pricingPlans.$inferSelect;
+export type Membership = typeof memberships.$inferSelect;
+export type DocArticle = typeof docArticles.$inferSelect;
+export type DocRevision = typeof docRevisions.$inferSelect;
 export type ContactRequest = typeof contactRequests.$inferSelect;
 export type School = typeof schools.$inferSelect;
 export type User = typeof users.$inferSelect;

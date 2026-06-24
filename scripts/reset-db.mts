@@ -15,10 +15,34 @@ if (!url) throw new Error("DATABASE_URL belum diatur di .env.local");
 
 const sql = neon(url);
 
-// Tabel milik project (urutan apa pun — pakai CASCADE).
+// Tabel milik project (urutan apa pun — pakai CASCADE). Harus mencakup SEMUA
+// tabel di src/db/schema.ts agar baseline `CREATE TABLE` tidak bentrok.
 const projectTables = [
-  "users",
+  // konten & penilaian
+  "answers",
+  "attempts",
+  "grades",
+  "grade_items",
+  "questions",
+  "assessments",
+  "materials",
+  // akademik
+  "school_announcements",
+  "schedules",
+  "class_subjects",
+  "enrollments",
+  "classes",
+  "subjects",
+  "curriculum_subjects",
+  "academic_years",
+  // dokumentasi
+  "doc_revisions",
+  "doc_articles",
+  // inti
+  "memberships",
+  "contact_requests",
   "announcements",
+  "users",
   "schools",
   "tenants", // nama lama, jaga-jaga bila masih ada
   "pricing_plans",

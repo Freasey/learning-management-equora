@@ -24,7 +24,7 @@ const cols = [
   {
     title: "Bantuan",
     links: [
-      { href: "/dokumentasi", label: "Panduan & Dokumentasi" },
+      { href: "/panduan", label: "Panduan & Dokumentasi" },
       { href: "/faq", label: "FAQ" },
       { href: "/kebijakan-privasi", label: "Kebijakan Privasi" },
       { href: "/syarat", label: "Syarat & Ketentuan" },

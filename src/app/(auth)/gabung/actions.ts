@@ -3,7 +3,8 @@
 import { and, eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { db, schools, users } from "@/db";
+import { db, schools, users, memberships } from "@/db";
+import { auth } from "@/auth";
 
 export type JoinState = { ok: boolean; message: string } | undefined;
 
@@ -19,8 +20,51 @@ export async function joinSchool(
   _prev: JoinState,
   formData: FormData,
 ): Promise<JoinState> {
+  const code = String(formData.get("code") || "").trim().toUpperCase();
+  if (code.length < 4) return { ok: false, message: "Kode sekolah tidak valid." };
+
+  const [school] = await db
+    .select()
+    .from(schools)
+    .where(eq(schools.code, code))
+    .limit(1);
+  if (!school) return { ok: false, message: "Kode sekolah tidak ditemukan." };
+
+  // ── Jalur A: sudah login (mis. guru dengan workspace pribadi) → tambahkan
+  // KEANGGOTAAN ke sekolah ini tanpa membuat akun baru. Menunggu persetujuan.
+  const session = await auth();
+  if (session?.user?.id) {
+    if (school.id === session.user.schoolId) {
+      return { ok: false, message: "Ini adalah workspace utama Anda." };
+    }
+    const [dup] = await db
+      .select({ id: memberships.id })
+      .from(memberships)
+      .where(
+        and(
+          eq(memberships.userId, session.user.id),
+          eq(memberships.schoolId, school.id),
+        ),
+      )
+      .limit(1);
+    if (dup) {
+      return { ok: false, message: "Anda sudah terhubung / menunggu di sekolah ini." };
+    }
+    await db.insert(memberships).values({
+      userId: session.user.id,
+      schoolId: school.id,
+      roles: "teacher",
+      status: "pending",
+    });
+    return {
+      ok: true,
+      message: `Permintaan gabung ke ${school.name} terkirim dari akun Anda. Menunggu persetujuan admin.`,
+    };
+  }
+
+  // ── Jalur B: belum punya akun → buat akun baru berstatus pending (alur lama).
   const parsed = schema.safeParse({
-    code: formData.get("code"),
+    code,
     role: formData.get("role"),
     name: formData.get("name"),
     identifier: formData.get("identifier"),
@@ -30,17 +74,7 @@ export async function joinSchool(
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." };
   }
 
-  const { code, role, name, identifier, password } = parsed.data;
-
-  const [school] = await db
-    .select()
-    .from(schools)
-    .where(eq(schools.code, code.toUpperCase()))
-    .limit(1);
-  if (!school) {
-    return { ok: false, message: "Kode sekolah tidak ditemukan." };
-  }
-
+  const { role, name, identifier, password } = parsed.data;
   const passwordHash = await bcrypt.hash(password, 10);
 
   if (role === "teacher") {

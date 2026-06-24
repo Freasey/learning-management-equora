@@ -11,6 +11,7 @@ export default async function AdminLayout({
       <SchoolTopNav
         name={session?.user?.name ?? "—"}
         email={session?.user?.email}
+        roles={session?.user?.roles ?? []}
       />
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
         {children}

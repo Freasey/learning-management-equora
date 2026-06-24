@@ -8,5 +8,5 @@ export const dynamic = "force-dynamic";
 export default async function DashboardDispatch() {
   const session = await auth();
   if (!session?.user) redirect("/masuk");
-  redirect(roleHome(session.user.role));
+  redirect(roleHome(session.user.roles));
 }

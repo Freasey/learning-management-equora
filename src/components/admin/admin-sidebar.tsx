@@ -8,6 +8,7 @@ import {
   School,
   Megaphone,
   Inbox,
+  BookText,
   GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ const links = [
   { href: "/super/schools", label: "Sekolah", icon: School },
   { href: "/super/leads", label: "Lead & Demo", icon: Inbox },
   { href: "/super/announcements", label: "Pengumuman", icon: Megaphone },
+  { href: "/super/dokumentasi", label: "Dokumentasi", icon: BookText },
 ];
 
 export function AdminSidebar() {

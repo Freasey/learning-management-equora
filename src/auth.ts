@@ -2,10 +2,76 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { and, eq, or } from "drizzle-orm";
-import { db, schools, users } from "@/db";
+import { db, schools, users, memberships } from "@/db";
 import { authConfig } from "@/auth.config";
+import { primaryRole, type WorkspaceMembership } from "@/lib/roles";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+/**
+ * Susun daftar workspace + konteks aktif untuk sebuah user.
+ *
+ * - Bila user punya baris `memberships` → itulah sumber kebenaran.
+ * - Bila tidak → sintesis SATU workspace dari users.schoolId + users.role
+ *   (kompatibel mundur: alur lama single-workspace tetap jalan tanpa
+ *   harus membuat baris membership).
+ */
+async function loadWorkspaces(user: typeof users.$inferSelect): Promise<{
+  list: WorkspaceMembership[];
+  activeSchoolId: string | null;
+}> {
+  // super_admin lintas-sekolah — tidak terikat workspace.
+  if (user.role === "super_admin") {
+    return { list: [], activeSchoolId: null };
+  }
+
+  const rows = await db
+    .select({
+      schoolId: memberships.schoolId,
+      roles: memberships.roles,
+      isOwner: memberships.isOwner,
+      status: memberships.status,
+      schoolName: schools.name,
+      schoolType: schools.type,
+    })
+    .from(memberships)
+    .innerJoin(schools, eq(schools.id, memberships.schoolId))
+    .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active")));
+
+  let list: WorkspaceMembership[];
+  if (rows.length > 0) {
+    list = rows.map((r) => ({
+      schoolId: r.schoolId,
+      schoolName: r.schoolName,
+      type: r.schoolType,
+      roles: r.roles.split(",").map((s) => s.trim()).filter(Boolean),
+      isOwner: r.isOwner,
+    }));
+  } else if (user.schoolId) {
+    // Fallback: workspace tunggal dari kolom legacy.
+    const [school] = await db
+      .select({ name: schools.name, type: schools.type })
+      .from(schools)
+      .where(eq(schools.id, user.schoolId))
+      .limit(1);
+    list = [
+      {
+        schoolId: user.schoolId,
+        schoolName: school?.name ?? "Sekolah",
+        type: school?.type ?? "school",
+        roles: [user.role],
+        isOwner: false,
+      },
+    ];
+  } else {
+    list = [];
+  }
+
+  // Default aktif: workspace yang cocok dengan users.schoolId (home), atau yang pertama.
+  const active =
+    list.find((m) => m.schoolId === user.schoolId) ?? list[0] ?? null;
+  return { list, activeSchoolId: active?.schoolId ?? null };
+}
+
+export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   ...authConfig,
   providers: [
     Credentials({
@@ -57,12 +123,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 
+        const { list, activeSchoolId } = await loadWorkspaces(user);
+        const active = list.find((m) => m.schoolId === activeSchoolId) ?? null;
+        const roles = active?.roles ?? [user.role];
+
         return {
           id: user.id,
           name: user.name,
           email: user.email ?? undefined,
-          role: user.role,
-          schoolId: user.schoolId,
+          role: primaryRole(roles),
+          roles,
+          schoolId: activeSchoolId,
+          activeSchoolId,
+          memberships: list,
         };
       },
     }),

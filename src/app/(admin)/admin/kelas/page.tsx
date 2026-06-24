@@ -4,6 +4,7 @@ import { and, asc, count, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, classes, users, enrollments } from "@/db";
 import { getActiveYear } from "@/lib/academic";
+import { listWorkspaceTeachers } from "@/lib/membership";
 import { Button } from "@/components/ui/button";
 import { PageHeader, Field, SelectField, RowAction, Th, EmptyRow } from "@/components/admin/ui";
 import { addClass, deleteClass } from "./actions";
@@ -49,11 +50,7 @@ export default async function KelasPage() {
       .leftJoin(users, eq(users.id, classes.homeroomTeacherId))
       .where(and(eq(classes.schoolId, schoolId), eq(classes.academicYearId, year.id)))
       .orderBy(asc(classes.name)),
-    db
-      .select({ id: users.id, name: users.name })
-      .from(users)
-      .where(and(eq(users.schoolId, schoolId), eq(users.role, "teacher")))
-      .orderBy(asc(users.name)),
+    listWorkspaceTeachers(schoolId),
     db
       .select({ classId: enrollments.classId, n: count() })
       .from(enrollments)

@@ -3,6 +3,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, schedules, classes, subjects, users } from "@/db";
 import { getActiveYear } from "@/lib/academic";
+import { listWorkspaceTeachers } from "@/lib/membership";
 import { Button } from "@/components/ui/button";
 import { PageHeader, Field, SelectField, RowAction, Th, EmptyRow } from "@/components/admin/ui";
 import { addSchedule, deleteSchedule } from "./actions";
@@ -49,11 +50,7 @@ export default async function JadwalPage() {
       .from(subjects)
       .where(eq(subjects.schoolId, schoolId))
       .orderBy(asc(subjects.name)),
-    db
-      .select({ id: users.id, name: users.name })
-      .from(users)
-      .where(and(eq(users.schoolId, schoolId), eq(users.role, "teacher")))
-      .orderBy(asc(users.name)),
+    listWorkspaceTeachers(schoolId),
   ]);
 
   return (

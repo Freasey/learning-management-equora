@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, LogOut, HelpCircle } from "lucide-react";
+import { GraduationCap, LogOut, HelpCircle, BookOpen, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { doSignOut } from "@/app/(admin)/admin/actions";
 
@@ -47,11 +47,14 @@ function matches(pathname: string, href: string) {
 export function SchoolTopNav({
   name,
   email,
+  roles = [],
 }: {
   name: string;
   email?: string | null;
+  roles?: string[];
 }) {
   const pathname = usePathname();
+  const canTeach = roles.includes("teacher");
 
   const activeGroup =
     groups.find((g) =>
@@ -94,6 +97,16 @@ export function SchoolTopNav({
           </div>
 
           <div className="flex items-center gap-3">
+            {canTeach && (
+              <Link
+                href="/guru"
+                title="Beralih ke mode mengajar"
+                className="hidden items-center gap-1.5 rounded-md border border-paper/20 px-2.5 py-1.5 text-xs font-semibold text-paper/90 transition-colors hover:bg-paper/10 sm:flex"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                Mengajar
+              </Link>
+            )}
             <div className="hidden text-right leading-tight sm:block">
               <div className="text-sm font-medium">{name}</div>
               {email && (
@@ -101,7 +114,15 @@ export function SchoolTopNav({
               )}
             </div>
             <Link
-              href="/dokumentasi#admin"
+              href="/workspace"
+              aria-label="Kelola workspace"
+              title="Kelola workspace"
+              className="grid h-8 w-8 place-items-center rounded-md border border-paper/20 text-paper/90 transition-colors hover:bg-paper/10"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/panduan/admin"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Panduan & dokumentasi"
