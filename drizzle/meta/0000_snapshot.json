@@ -1,5 +1,5 @@
 {
-  "id": "60240215-e485-47ee-b1d3-24786bff431f",
+  "id": "88d25a7d-52b0-4f1a-9630-ed0b67ad726e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -249,6 +249,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "teacher_id": {
           "name": "teacher_id",
           "type": "uuid",
@@ -330,6 +336,19 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
+        "assessments_academic_year_id_academic_years_id_fk": {
+          "name": "assessments_academic_year_id_academic_years_id_fk",
+          "tableFrom": "assessments",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
         "assessments_teacher_id_users_id_fk": {
           "name": "assessments_teacher_id_users_id_fk",
           "tableFrom": "assessments",
@@ -392,6 +411,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "assessment_id": {
           "name": "assessment_id",
@@ -475,6 +500,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "attempts_academic_year_id_academic_years_id_fk": {
+          "name": "attempts_academic_year_id_academic_years_id_fk",
+          "tableFrom": "attempts",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "attempts_assessment_id_assessments_id_fk": {
@@ -1079,6 +1117,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "class_id": {
           "name": "class_id",
           "type": "uuid",
@@ -1136,6 +1180,19 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
+        "enrollments_academic_year_id_academic_years_id_fk": {
+          "name": "enrollments_academic_year_id_academic_years_id_fk",
+          "tableFrom": "enrollments",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
         "enrollments_class_id_classes_id_fk": {
           "name": "enrollments_class_id_classes_id_fk",
           "tableFrom": "enrollments",
@@ -1185,6 +1242,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "teacher_id": {
           "name": "teacher_id",
@@ -1251,6 +1314,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "grade_items_academic_year_id_academic_years_id_fk": {
+          "name": "grade_items_academic_year_id_academic_years_id_fk",
+          "tableFrom": "grade_items",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "grade_items_teacher_id_users_id_fk": {
@@ -1329,6 +1405,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "grade_item_id": {
           "name": "grade_item_id",
           "type": "uuid",
@@ -1390,6 +1472,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "grades_academic_year_id_academic_years_id_fk": {
+          "name": "grades_academic_year_id_academic_years_id_fk",
+          "tableFrom": "grades",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "grades_grade_item_id_grade_items_id_fk": {

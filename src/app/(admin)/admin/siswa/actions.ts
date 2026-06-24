@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, users, enrollments } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { assertQuota, getSchoolPlan, countRole } from "@/lib/quota";
+import { getClassYear } from "@/lib/academic";
 
 async function usernameTaken(schoolId: string, username: string) {
   const [row] = await db
@@ -23,7 +24,8 @@ async function enroll(schoolId: string, studentId: string, classId: string) {
     and(eq(enrollments.schoolId, schoolId), eq(enrollments.studentId, studentId)),
   );
   if (classId) {
-    await db.insert(enrollments).values({ schoolId, classId, studentId });
+    const academicYearId = await getClassYear(schoolId, classId);
+    await db.insert(enrollments).values({ schoolId, classId, studentId, academicYearId });
   }
 }
 

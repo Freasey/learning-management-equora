@@ -6,12 +6,14 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, assessments, questions, gradeItems, attempts, answers, grades } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
+import { getActiveYear } from "@/lib/academic";
 
 async function writeGrade(
   schoolId: string,
   assessmentId: string,
   studentId: string,
   score: number,
+  academicYearId: string | null,
 ) {
   const [gi] = await db
     .select({ id: gradeItems.id })
@@ -21,7 +23,7 @@ async function writeGrade(
   if (!gi) return;
   await db
     .insert(grades)
-    .values({ schoolId, gradeItemId: gi.id, studentId, score })
+    .values({ schoolId, academicYearId, gradeItemId: gi.id, studentId, score })
     .onConflictDoUpdate({
       target: [grades.gradeItemId, grades.studentId],
       set: { score },
@@ -75,7 +77,7 @@ export async function gradeEssays(formData: FormData) {
     .where(eq(attempts.id, attemptId));
 
   if (!anyPending) {
-    await writeGrade(schoolId, att.assessmentId, att.studentId, total);
+    await writeGrade(schoolId, att.assessmentId, att.studentId, total, att.academicYearId);
   }
   revalidatePath(`/guru/kuis/${att.assessmentId}`);
   revalidatePath(`/guru/kuis/${att.assessmentId}/koreksi/${attemptId}`);
@@ -101,6 +103,7 @@ async function ensureGradeItem(schoolId: string, a: AssessmentRow) {
 
   await db.insert(gradeItems).values({
     schoolId,
+    academicYearId: a.academicYearId,
     teacherId: a.teacherId,
     classId: a.classId,
     subjectId: a.subjectId,
@@ -143,10 +146,12 @@ export async function createAssessment(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
+  const year = await getActiveYear(schoolId);
   const [created] = await db
     .insert(assessments)
     .values({
       schoolId,
+      academicYearId: year?.id ?? null,
       teacherId,
       subjectId: parsed.data.subjectId,
       classId: parsed.data.classId,

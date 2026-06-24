@@ -96,9 +96,11 @@ async function main() {
   console.log(`✓ Sekolah: ${SCHOOL.name} (kode ${SCHOOL.code})`);
 
   // 2) Tahun ajaran aktif
-  await db
+  const [year] = await db
     .insert(academicYears)
-    .values({ schoolId, name: ACADEMIC_YEAR, isActive: true });
+    .values({ schoolId, name: ACADEMIC_YEAR, isActive: true })
+    .returning({ id: academicYears.id });
+  const academicYearId = year.id;
   console.log(`✓ Tahun ajaran: ${ACADEMIC_YEAR}`);
 
   // 3) Admin sekolah
@@ -150,6 +152,7 @@ async function main() {
       .insert(classes)
       .values({
         schoolId,
+        academicYearId,
         name: c.name,
         level: c.level,
         capacity: 30,
@@ -189,7 +192,7 @@ async function main() {
       })
       .returning({ id: users.id });
     const classId = classIds[Math.floor(i / 5)]; // 0-4 -> kelas A, 5-9 -> kelas B
-    await db.insert(enrollments).values({ schoolId, classId, studentId: row.id });
+    await db.insert(enrollments).values({ schoolId, academicYearId, classId, studentId: row.id });
     students.push({ name: STUDENT_NAMES[i], nis });
   }
   console.log(`✓ ${STUDENT_NAMES.length} siswa (ter-enroll ke kelas)`);

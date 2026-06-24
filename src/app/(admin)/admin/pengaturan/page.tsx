@@ -11,6 +11,7 @@ import {
   addAcademicYear,
   setActiveYear,
   deleteAcademicYear,
+  rolloverAcademicYear,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export default async function PengaturanPage() {
     .where(eq(schools.id, schoolId))
     .limit(1);
   const years = await listYears(schoolId);
+  const activeYear = years.find((y) => y.isActive);
 
   return (
     <div>
@@ -128,6 +130,53 @@ export default async function PengaturanPage() {
           )}
         </div>
       </div>
+
+      {years.length > 0 && (
+        <div className="mt-8 rounded-xl border border-line bg-paper p-6">
+          <h2 className="mb-1 font-display text-lg font-medium text-ink">
+            Mulai Tahun Ajaran Baru
+          </h2>
+          <p className="mb-4 text-sm text-muted">
+            Menyalin <strong>kelas, pengampu, dan jadwal</strong> dari tahun
+            ajaran sumber ke tahun baru lalu menjadikannya aktif. Nilai dan kuis
+            tahun lama tetap tersimpan (tidak ikut disalin).
+          </p>
+
+          <form action={rolloverAcademicYear} className="space-y-4">
+            <div className="grid items-end gap-4 md:grid-cols-2">
+              <SelectField
+                label="Salin dari tahun ajaran"
+                name="sourceYearId"
+                defaultValue={activeYear?.id ?? years[0]?.id}
+              >
+                {years.map((y) => (
+                  <option key={y.id} value={y.id}>
+                    {y.name}
+                    {y.isActive ? " (aktif)" : ""}
+                  </option>
+                ))}
+              </SelectField>
+              <Field
+                label="Nama tahun ajaran baru"
+                name="name"
+                placeholder="cth. 2026/2027 Ganjil"
+                required
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-ink">
+              <input
+                type="checkbox"
+                name="includeStudents"
+                className="h-4 w-4 rounded border-line text-teal-700 focus:ring-teal-700"
+              />
+              Naikkan siswa ke kelas yang sepadan (re-enroll otomatis)
+            </label>
+            <Button type="submit" variant="primary" size="sm">
+              Buat &amp; Aktifkan
+            </Button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

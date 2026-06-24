@@ -55,13 +55,14 @@ async function newUser(v: typeof users.$inferInsert) {
  */
 async function seedQuizWithGrades(opts: {
   schoolId: string;
+  academicYearId: string;
   teacherId: string;
   classId: string;
   subjectId: string;
   title: string;
   students: { id: string; correct: number }[]; // jumlah jawaban benar (dari 5)
 }) {
-  const { schoolId, teacherId, classId, subjectId, title, students } = opts;
+  const { schoolId, academicYearId, teacherId, classId, subjectId, title, students } = opts;
   const POINTS = 20;
   const N = 5;
   const MAX = POINTS * N;
@@ -70,6 +71,7 @@ async function seedQuizWithGrades(opts: {
     .insert(assessments)
     .values({
       schoolId,
+      academicYearId,
       teacherId,
       subjectId,
       classId,
@@ -105,6 +107,7 @@ async function seedQuizWithGrades(opts: {
     .insert(gradeItems)
     .values({
       schoolId,
+      academicYearId,
       teacherId,
       classId,
       subjectId,
@@ -123,6 +126,7 @@ async function seedQuizWithGrades(opts: {
       .insert(attempts)
       .values({
         schoolId,
+        academicYearId,
         assessmentId: a.id,
         studentId: s.id,
         status: "graded",
@@ -146,7 +150,7 @@ async function seedQuizWithGrades(opts: {
 
     await db
       .insert(grades)
-      .values({ schoolId, gradeItemId: gi.id, studentId: s.id, score });
+      .values({ schoolId, academicYearId, gradeItemId: gi.id, studentId: s.id, score });
   }
 
   return a.id;
@@ -180,7 +184,11 @@ async function main() {
     })
     .returning({ id: schools.id });
   const schoolId = school.id;
-  await db.insert(academicYears).values({ schoolId, name: YEAR, isActive: true });
+  const [schoolYear] = await db
+    .insert(academicYears)
+    .values({ schoolId, name: YEAR, isActive: true })
+    .returning({ id: academicYears.id });
+  const schoolYearId = schoolYear.id;
 
   // Admin sekolah (untuk menguji area /admin sekolah ini).
   await newUser({
@@ -216,7 +224,7 @@ async function main() {
     .returning({ id: subjects.id });
   const [classSchool] = await db
     .insert(classes)
-    .values({ schoolId, name: "XI IPA 1", level: "XI", capacity: 32, homeroomTeacherId: teacherId })
+    .values({ schoolId, academicYearId: schoolYearId, name: "XI IPA 1", level: "XI", capacity: 32, homeroomTeacherId: teacherId })
     .returning({ id: classes.id });
 
   const schoolStudentNames = [
@@ -238,7 +246,7 @@ async function main() {
       passwordHash,
       status: "active",
     });
-    await db.insert(enrollments).values({ schoolId, classId: classSchool.id, studentId: id });
+    await db.insert(enrollments).values({ schoolId, academicYearId: schoolYearId, classId: classSchool.id, studentId: id });
     schoolStudents.push({ id, name: schoolStudentNames[i], nis });
   }
 
@@ -263,12 +271,13 @@ async function main() {
   // Item nilai manual + kuis ber-nilai.
   const [tugasGi] = await db
     .insert(gradeItems)
-    .values({ schoolId, teacherId, classId: classSchool.id, subjectId: mtkSchool.id, title: "Tugas Kelompok 1", maxScore: 100, source: "manual" })
+    .values({ schoolId, academicYearId: schoolYearId, teacherId, classId: classSchool.id, subjectId: mtkSchool.id, title: "Tugas Kelompok 1", maxScore: 100, source: "manual" })
     .returning({ id: gradeItems.id });
   const tugasScores = [88, 76, 92, 64, 70, 81];
   for (let i = 0; i < schoolStudents.length; i++) {
     await db.insert(grades).values({
       schoolId,
+      academicYearId: schoolYearId,
       gradeItemId: tugasGi.id,
       studentId: schoolStudents[i].id,
       score: tugasScores[i],
@@ -276,6 +285,7 @@ async function main() {
   }
   await seedQuizWithGrades({
     schoolId,
+    academicYearId: schoolYearId,
     teacherId,
     classId: classSchool.id,
     subjectId: mtkSchool.id,
@@ -307,7 +317,11 @@ async function main() {
     })
     .returning({ id: schools.id });
   const bimbelId = bimbel.id;
-  await db.insert(academicYears).values({ schoolId: bimbelId, name: YEAR, isActive: true });
+  const [bimbelYear] = await db
+    .insert(academicYears)
+    .values({ schoolId: bimbelId, name: YEAR, isActive: true })
+    .returning({ id: academicYears.id });
+  const bimbelYearId = bimbelYear.id;
 
   // Guru = PEMILIK workspace ini (kelola + mengajar). Akun sama dgn di sekolah.
   await db.insert(memberships).values({
@@ -324,7 +338,7 @@ async function main() {
     .returning({ id: subjects.id });
   const [classBimbel] = await db
     .insert(classes)
-    .values({ schoolId: bimbelId, name: "Kelas Intensif UTBK", level: "SMA", capacity: 12, homeroomTeacherId: teacherId })
+    .values({ schoolId: bimbelId, academicYearId: bimbelYearId, name: "Kelas Intensif UTBK", level: "SMA", capacity: 12, homeroomTeacherId: teacherId })
     .returning({ id: classes.id });
 
   const bimbelStudentNames = ["Gilang Ramadhan", "Hasna Aulia", "Irfan Maulana", "Jihan Salsabila"];
@@ -339,7 +353,7 @@ async function main() {
       passwordHash,
       status: "active",
     });
-    await db.insert(enrollments).values({ schoolId: bimbelId, classId: classBimbel.id, studentId: id });
+    await db.insert(enrollments).values({ schoolId: bimbelId, academicYearId: bimbelYearId, classId: classBimbel.id, studentId: id });
     bimbelStudents.push({ id, name: bimbelStudentNames[i], nis });
   }
 
@@ -364,6 +378,7 @@ async function main() {
   });
   await seedQuizWithGrades({
     schoolId: bimbelId,
+    academicYearId: bimbelYearId,
     teacherId,
     classId: classBimbel.id,
     subjectId: mtkBimbel.id,

@@ -218,6 +218,9 @@ export const enrollments = pgTable(
     schoolId: uuid("school_id")
       .notNull()
       .references(() => schools.id, { onDelete: "cascade" }),
+    academicYearId: uuid("academic_year_id").references(() => academicYears.id, {
+      onDelete: "set null",
+    }),
     classId: uuid("class_id")
       .notNull()
       .references(() => classes.id, { onDelete: "cascade" }),
@@ -308,6 +311,9 @@ export const assessments = pgTable("assessments", {
   schoolId: uuid("school_id")
     .notNull()
     .references(() => schools.id, { onDelete: "cascade" }),
+  academicYearId: uuid("academic_year_id").references(() => academicYears.id, {
+    onDelete: "set null",
+  }),
   teacherId: uuid("teacher_id").references(() => users.id, { onDelete: "set null" }),
   subjectId: uuid("subject_id")
     .notNull()
@@ -346,6 +352,9 @@ export const gradeItems = pgTable("grade_items", {
   schoolId: uuid("school_id")
     .notNull()
     .references(() => schools.id, { onDelete: "cascade" }),
+  academicYearId: uuid("academic_year_id").references(() => academicYears.id, {
+    onDelete: "set null",
+  }),
   teacherId: uuid("teacher_id").references(() => users.id, { onDelete: "set null" }),
   classId: uuid("class_id")
     .notNull()
@@ -370,6 +379,9 @@ export const grades = pgTable(
     schoolId: uuid("school_id")
       .notNull()
       .references(() => schools.id, { onDelete: "cascade" }),
+    academicYearId: uuid("academic_year_id").references(() => academicYears.id, {
+      onDelete: "set null",
+    }),
     gradeItemId: uuid("grade_item_id")
       .notNull()
       .references(() => gradeItems.id, { onDelete: "cascade" }),
@@ -394,6 +406,9 @@ export const attempts = pgTable(
     schoolId: uuid("school_id")
       .notNull()
       .references(() => schools.id, { onDelete: "cascade" }),
+    academicYearId: uuid("academic_year_id").references(() => academicYears.id, {
+      onDelete: "set null",
+    }),
     assessmentId: uuid("assessment_id")
       .notNull()
       .references(() => assessments.id, { onDelete: "cascade" }),

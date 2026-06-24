@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, gradeItems, grades } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
+import { getClassYear } from "@/lib/academic";
 
 function pairOf(classId: string, subjectId: string) {
   return encodeURIComponent(`${classId}:${subjectId}`);
@@ -27,8 +28,10 @@ export async function addGradeItem(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
+  const academicYearId = await getClassYear(schoolId, parsed.data.classId);
   await db.insert(gradeItems).values({
     schoolId,
+    academicYearId,
     teacherId,
     classId: parsed.data.classId,
     subjectId: parsed.data.subjectId,
@@ -79,7 +82,7 @@ export async function saveGrades(formData: FormData) {
 
     await db
       .insert(grades)
-      .values({ schoolId, gradeItemId, studentId, score })
+      .values({ schoolId, academicYearId: item.academicYearId, gradeItemId, studentId, score })
       .onConflictDoUpdate({
         target: [grades.gradeItemId, grades.studentId],
         set: { score },

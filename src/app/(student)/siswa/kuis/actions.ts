@@ -13,6 +13,7 @@ async function writeGrade(
   assessmentId: string,
   studentId: string,
   score: number,
+  academicYearId: string | null,
 ) {
   const [gi] = await db
     .select({ id: gradeItems.id })
@@ -22,7 +23,7 @@ async function writeGrade(
   if (!gi) return;
   await db
     .insert(grades)
-    .values({ schoolId, gradeItemId: gi.id, studentId, score })
+    .values({ schoolId, academicYearId, gradeItemId: gi.id, studentId, score })
     .onConflictDoUpdate({
       target: [grades.gradeItemId, grades.studentId],
       set: { score },
@@ -98,7 +99,16 @@ export async function submitAttempt(formData: FormData) {
 
   const [att] = await db
     .insert(attempts)
-    .values({ schoolId, assessmentId, studentId, status, autoScore, totalScore, maxScore })
+    .values({
+      schoolId,
+      academicYearId: a.academicYearId,
+      assessmentId,
+      studentId,
+      status,
+      autoScore,
+      totalScore,
+      maxScore,
+    })
     .returning({ id: attempts.id });
 
   if (rows.length) {
@@ -108,7 +118,7 @@ export async function submitAttempt(formData: FormData) {
   }
 
   if (status === "graded") {
-    await writeGrade(schoolId, assessmentId, studentId, autoScore);
+    await writeGrade(schoolId, assessmentId, studentId, autoScore, a.academicYearId);
   }
 
   redirect(`/siswa/kuis/${assessmentId}`);
