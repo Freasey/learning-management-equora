@@ -1,9 +1,39 @@
 import type { Session } from "next-auth";
+import { eq } from "drizzle-orm";
+import { db, users } from "@/db";
 import { auth } from "@/auth";
 
 /** Kumpulan peran pada workspace aktif (kosong bila belum login). */
 function rolesOf(session: Session | null): string[] {
   return session?.user?.roles ?? [];
+}
+
+/**
+ * A3: pastikan akun masih AKTIF di DB (bukan hanya token JWT lama).
+ * Membuat suspend/hapus berlaku langsung tanpa menunggu re-login.
+ * Lempar error bila status bukan "active".
+ */
+export async function assertActiveUser(userId: string | undefined) {
+  if (!userId) throw new Error("Tidak diizinkan: sesi tidak valid.");
+  const [u] = await db
+    .select({ status: users.status })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!u || u.status !== "active") {
+    throw new Error("Akun Anda tidak aktif. Hubungi admin sekolah.");
+  }
+}
+
+/** Versi non-throw untuk dipakai di layout (blokir baca). */
+export async function isUserActive(userId: string | undefined): Promise<boolean> {
+  if (!userId) return false;
+  const [u] = await db
+    .select({ status: users.status })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return u?.status === "active";
 }
 
 /**
@@ -15,6 +45,7 @@ export async function requireSuperAdmin() {
   if (!rolesOf(session).includes("super_admin")) {
     throw new Error("Tidak diizinkan: butuh akses super admin.");
   }
+  await assertActiveUser(session?.user?.id);
   return session;
 }
 
@@ -28,6 +59,7 @@ export async function requireSchoolAdmin() {
   if (!rolesOf(session).includes("school_admin") || !schoolId) {
     throw new Error("Tidak diizinkan: butuh akses admin sekolah.");
   }
+  await assertActiveUser(session?.user?.id);
   return { session, schoolId };
 }
 
@@ -38,6 +70,7 @@ export async function requireTeacher() {
   if (!rolesOf(session).includes("teacher") || !schoolId || !session?.user?.id) {
     throw new Error("Tidak diizinkan: butuh akses guru.");
   }
+  await assertActiveUser(session.user.id);
   return { session, schoolId, teacherId: session.user.id };
 }
 
@@ -48,5 +81,6 @@ export async function requireStudent() {
   if (!rolesOf(session).includes("student") || !schoolId || !session?.user?.id) {
     throw new Error("Tidak diizinkan: butuh akses siswa.");
   }
+  await assertActiveUser(session.user.id);
   return { session, schoolId, studentId: session.user.id };
 }

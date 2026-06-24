@@ -9,6 +9,7 @@ import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { assertQuota, getSchoolPlan, countRole } from "@/lib/quota";
 import { getClassYear } from "@/lib/academic";
 import { ensureMembership } from "@/lib/membership";
+import { logAudit } from "@/lib/audit";
 
 async function usernameTaken(schoolId: string, username: string) {
   const [row] = await db
@@ -132,12 +133,18 @@ export async function setStudentClass(formData: FormData) {
 }
 
 export async function deleteStudent(formData: FormData) {
-  const { schoolId } = await requireSchoolAdmin();
+  const { session, schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
   // Soft-delete: tandai inactive agar nilai & pengerjaan siswa tetap tersimpan.
   await db
     .update(users)
     .set({ status: "inactive", updatedAt: new Date() })
     .where(and(eq(users.id, id), eq(users.schoolId, schoolId), eq(users.role, "student")));
+  await logAudit({
+    schoolId,
+    actorId: session?.user?.id,
+    action: "student.delete",
+    target: id,
+  });
   revalidatePath("/admin/siswa");
 }

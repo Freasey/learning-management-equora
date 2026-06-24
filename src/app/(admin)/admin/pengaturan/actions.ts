@@ -13,6 +13,7 @@ import {
   enrollments,
 } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
+import { logAudit } from "@/lib/audit";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Nama sekolah minimal 2 karakter"),
@@ -94,7 +95,7 @@ const rolloverSchema = z.object({
  * (nilai, kuis, pengerjaan) TIDAK disalin — tetap diarsip di tahun lama.
  */
 export async function rolloverAcademicYear(formData: FormData) {
-  const { schoolId } = await requireSchoolAdmin();
+  const { session, schoolId } = await requireSchoolAdmin();
   const parsed = rolloverSchema.safeParse({
     name: formData.get("name"),
     sourceYearId: formData.get("sourceYearId"),
@@ -224,6 +225,14 @@ export async function rolloverAcademicYear(formData: FormData) {
       });
     }
   }
+
+  await logAudit({
+    schoolId,
+    actorId: session?.user?.id,
+    action: "year.rollover",
+    target: newYear.id,
+    meta: { name: parsed.data.name, includeStudents: parsed.data.includeStudents },
+  });
 
   revalidatePath("/admin/pengaturan");
   revalidatePath("/admin/kelas");

@@ -1,10 +1,13 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { isUserActive } from "@/lib/auth-guard";
 import { SchoolTopNav } from "@/components/admin/school-topnav";
 
 export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
+  if (!(await isUserActive(session?.user?.id))) redirect("/masuk");
 
   return (
     <div className="flex min-h-screen flex-col bg-paper">

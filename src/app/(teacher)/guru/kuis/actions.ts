@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, assessments, questions, gradeItems, attempts, answers, grades } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
 import { getActiveYear } from "@/lib/academic";
+import { assertTeacherTeachesClass, teacherTeachesClass } from "@/lib/teaching";
 
 async function writeGrade(
   schoolId: string,
@@ -32,7 +33,7 @@ async function writeGrade(
 
 /** Beri nilai jawaban esai → hitung ulang total → tulis ke gradebook. */
 export async function gradeEssays(formData: FormData) {
-  const { schoolId } = await requireTeacher();
+  const { schoolId, teacherId } = await requireTeacher();
   const attemptId = z.string().uuid().parse(formData.get("attemptId"));
 
   const [att] = await db
@@ -41,6 +42,7 @@ export async function gradeEssays(formData: FormData) {
     .where(and(eq(attempts.id, attemptId), eq(attempts.schoolId, schoolId)))
     .limit(1);
   if (!att) throw new Error("Pengerjaan tidak ditemukan.");
+  await ownAssessment(schoolId, teacherId, att.assessmentId); // A2
 
   const rows = await db
     .select({
@@ -114,13 +116,18 @@ async function ensureGradeItem(schoolId: string, a: AssessmentRow) {
   });
 }
 
-async function ownAssessment(schoolId: string, id: string) {
+async function ownAssessment(schoolId: string, teacherId: string, id: string) {
   const [a] = await db
     .select()
     .from(assessments)
     .where(and(eq(assessments.id, id), eq(assessments.schoolId, schoolId)))
     .limit(1);
   if (!a) throw new Error("Kuis tidak ditemukan.");
+  // A2: hanya pembuat kuis atau guru pengampu kelasnya yang boleh mengelola.
+  const owner = a.teacherId === teacherId;
+  if (!owner && !(a.classId && (await teacherTeachesClass(schoolId, teacherId, a.classId)))) {
+    throw new Error("Anda tidak berhak mengelola kuis ini.");
+  }
   return a;
 }
 
@@ -146,6 +153,9 @@ export async function createAssessment(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
+  // A2: guru hanya boleh membuat kuis untuk kelas yang ia ampu.
+  await assertTeacherTeachesClass(schoolId, teacherId, parsed.data.classId);
+
   const year = await getActiveYear(schoolId);
   const [created] = await db
     .insert(assessments)
@@ -166,8 +176,9 @@ export async function createAssessment(formData: FormData) {
 }
 
 export async function deleteAssessment(formData: FormData) {
-  const { schoolId } = await requireTeacher();
+  const { schoolId, teacherId } = await requireTeacher();
   const id = z.string().uuid().parse(formData.get("id"));
+  await ownAssessment(schoolId, teacherId, id); // A2
   await db
     .delete(assessments)
     .where(and(eq(assessments.id, id), eq(assessments.schoolId, schoolId)));
@@ -175,10 +186,10 @@ export async function deleteAssessment(formData: FormData) {
 }
 
 export async function setAssessmentStatus(formData: FormData) {
-  const { schoolId } = await requireTeacher();
+  const { schoolId, teacherId } = await requireTeacher();
   const id = z.string().uuid().parse(formData.get("id"));
   const status = z.enum(["draft", "published"]).parse(formData.get("status"));
-  const a = await ownAssessment(schoolId, id);
+  const a = await ownAssessment(schoolId, teacherId, id);
   await db.update(assessments).set({ status }).where(eq(assessments.id, id));
   // Saat diterbitkan & dihitung ke nilai → buat item nilai tertaut.
   if (status === "published" && a.countToGrade) await ensureGradeItem(schoolId, a);
@@ -186,9 +197,9 @@ export async function setAssessmentStatus(formData: FormData) {
 }
 
 export async function toggleCountToGrade(formData: FormData) {
-  const { schoolId } = await requireTeacher();
+  const { schoolId, teacherId } = await requireTeacher();
   const id = z.string().uuid().parse(formData.get("id"));
-  const a = await ownAssessment(schoolId, id);
+  const a = await ownAssessment(schoolId, teacherId, id);
   const next = !a.countToGrade;
   await db.update(assessments).set({ countToGrade: next }).where(eq(assessments.id, id));
 
@@ -214,7 +225,7 @@ export async function addQuestion(
   _prev: QuestionState,
   formData: FormData,
 ): Promise<QuestionState> {
-  const { schoolId } = await requireTeacher();
+  const { schoolId, teacherId } = await requireTeacher();
   const parsed = questionSchema.safeParse({
     assessmentId: formData.get("assessmentId"),
     type: formData.get("type"),
@@ -226,11 +237,16 @@ export async function addQuestion(
   }
 
   const [owned] = await db
-    .select({ id: assessments.id })
+    .select({ id: assessments.id, teacherId: assessments.teacherId, classId: assessments.classId })
     .from(assessments)
     .where(and(eq(assessments.id, parsed.data.assessmentId), eq(assessments.schoolId, schoolId)))
     .limit(1);
   if (!owned) return { error: "Kuis tidak ditemukan." };
+  // A2: hanya pembuat / pengampu kelas yang boleh menambah soal.
+  const allowed =
+    owned.teacherId === teacherId ||
+    (owned.classId ? await teacherTeachesClass(schoolId, teacherId, owned.classId) : false);
+  if (!allowed) return { error: "Anda tidak berhak mengubah kuis ini." };
 
   let options: string[] | null = null;
   let correctIndex: number | null = null;
@@ -266,9 +282,10 @@ export async function addQuestion(
 }
 
 export async function deleteQuestion(formData: FormData) {
-  const { schoolId } = await requireTeacher();
+  const { schoolId, teacherId } = await requireTeacher();
   const id = z.string().uuid().parse(formData.get("id"));
   const assessmentId = z.string().uuid().parse(formData.get("assessmentId"));
+  await ownAssessment(schoolId, teacherId, assessmentId); // A2
   await db
     .delete(questions)
     .where(and(eq(questions.id, id), eq(questions.schoolId, schoolId)));

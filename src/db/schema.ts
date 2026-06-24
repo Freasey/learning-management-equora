@@ -481,6 +481,39 @@ export const docRevisions = pgTable("doc_revisions", {
   editedAt: timestamp("edited_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Audit log — jejak tindakan sensitif (login, hapus user, aktivasi paket, dll).
+ * schoolId null = peristiwa lintas-sekolah / login gagal tanpa konteks sekolah.
+ */
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id").references(() => schools.id, { onDelete: "cascade" }),
+  actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+  actorLabel: text("actor_label"), // snapshot identitas (mis. email saat login gagal)
+  action: text("action").notNull(), // cth. login.success | user.delete | plan.activate
+  target: text("target"), // deskripsi objek terkait
+  meta: jsonb("meta").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Pembatas laju login — cegah brute-force. Satu baris per identifier
+ * (email/username, opsional + kode sekolah). Jendela waktu digeser saat
+ * kedaluwarsa; blockedUntil disetel setelah melewati ambang.
+ */
+export const loginAttempts = pgTable(
+  "login_attempts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    identifier: text("identifier").notNull(),
+    count: integer("count").notNull().default(0),
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull().defaultNow(),
+    blockedUntil: timestamp("blocked_until", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("login_attempts_identifier_unq").on(t.identifier)],
+);
+
+export type AuditLog = typeof auditLogs.$inferSelect;
 export type PricingPlan = typeof pricingPlans.$inferSelect;
 export type Membership = typeof memberships.$inferSelect;
 export type DocArticle = typeof docArticles.$inferSelect;

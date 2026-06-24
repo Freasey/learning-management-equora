@@ -36,6 +36,7 @@ const groups: Group[] = [
       { href: "/admin/pengumuman", label: "Pengumuman" },
       { href: "/admin/pengaturan", label: "Pengaturan" },
       { href: "/admin/langganan", label: "Langganan" },
+      { href: "/admin/audit", label: "Log Aktivitas" },
     ],
   },
 ];

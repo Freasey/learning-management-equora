@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db, schools, pricingPlans } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { isFreePlan, ownedFreeWorkspaceCount } from "@/lib/workspace";
+import { logAudit } from "@/lib/audit";
 
 /**
  * Aktivasi paket. NOTE: pembayaran nyata (Midtrans/Xendit) DI-BYPASS untuk
@@ -42,6 +43,14 @@ export async function activatePlan(formData: FormData) {
     .update(schools)
     .set({ planKey, billingCycle: cycle, status: "active", updatedAt: new Date() })
     .where(eq(schools.id, schoolId));
+
+  await logAudit({
+    schoolId,
+    actorId: session?.user?.id,
+    action: "plan.activate",
+    target: planKey,
+    meta: { cycle },
+  });
 
   redirect("/admin/langganan?activated=1");
 }

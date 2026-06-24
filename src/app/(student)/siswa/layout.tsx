@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { isUserActive } from "@/lib/auth-guard";
 import { kidFontVars } from "@/lib/kid-fonts";
 import { LogoBook, IconLogout, IconHelp } from "@/components/kid/icons";
 import { StudentBackBar } from "@/components/kid/back-bar";
@@ -9,6 +11,7 @@ export default async function StudentLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
+  if (!(await isUserActive(session?.user?.id))) redirect("/masuk-siswa");
 
   return (
     <div className={`${kidFontVars} font-kid min-h-screen bg-cream`}>

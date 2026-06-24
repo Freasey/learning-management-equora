@@ -58,6 +58,17 @@ CREATE TABLE "attempts" (
 	"submitted_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "audit_logs" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"school_id" uuid,
+	"actor_id" uuid,
+	"actor_label" text,
+	"action" text NOT NULL,
+	"target" text,
+	"meta" jsonb,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "class_subjects" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"school_id" uuid NOT NULL,
@@ -157,6 +168,14 @@ CREATE TABLE "grades" (
 	"student_id" uuid NOT NULL,
 	"score" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "login_attempts" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"identifier" text NOT NULL,
+	"count" integer DEFAULT 0 NOT NULL,
+	"window_start" timestamp with time zone DEFAULT now() NOT NULL,
+	"blocked_until" timestamp with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "materials" (
@@ -298,6 +317,8 @@ ALTER TABLE "attempts" ADD CONSTRAINT "attempts_school_id_schools_id_fk" FOREIGN
 ALTER TABLE "attempts" ADD CONSTRAINT "attempts_academic_year_id_academic_years_id_fk" FOREIGN KEY ("academic_year_id") REFERENCES "public"."academic_years"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attempts" ADD CONSTRAINT "attempts_assessment_id_assessments_id_fk" FOREIGN KEY ("assessment_id") REFERENCES "public"."assessments"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attempts" ADD CONSTRAINT "attempts_student_id_users_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_actor_id_users_id_fk" FOREIGN KEY ("actor_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "class_subjects" ADD CONSTRAINT "class_subjects_school_id_schools_id_fk" FOREIGN KEY ("school_id") REFERENCES "public"."schools"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "class_subjects" ADD CONSTRAINT "class_subjects_class_id_classes_id_fk" FOREIGN KEY ("class_id") REFERENCES "public"."classes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "class_subjects" ADD CONSTRAINT "class_subjects_subject_id_subjects_id_fk" FOREIGN KEY ("subject_id") REFERENCES "public"."subjects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -343,5 +364,6 @@ CREATE UNIQUE INDEX "attempts_assessment_student_unq" ON "attempts" USING btree 
 CREATE UNIQUE INDEX "curriculum_subjects_level_name_unq" ON "curriculum_subjects" USING btree ("level","name");--> statement-breakpoint
 CREATE UNIQUE INDEX "enrollments_class_student_unq" ON "enrollments" USING btree ("class_id","student_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "grades_item_student_unq" ON "grades" USING btree ("grade_item_id","student_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "login_attempts_identifier_unq" ON "login_attempts" USING btree ("identifier");--> statement-breakpoint
 CREATE UNIQUE INDEX "memberships_user_school_unq" ON "memberships" USING btree ("user_id","school_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "users_school_username_unq" ON "users" USING btree ("school_id","username");

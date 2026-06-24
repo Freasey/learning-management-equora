@@ -5,6 +5,12 @@ import { and, eq, or } from "drizzle-orm";
 import { db, schools, users, memberships } from "@/db";
 import { authConfig } from "@/auth.config";
 import { primaryRole, type WorkspaceMembership } from "@/lib/roles";
+import {
+  isLoginBlocked,
+  recordLoginFailure,
+  clearLoginAttempts,
+  logAudit,
+} from "@/lib/audit";
 
 /**
  * Susun daftar workspace + konteks aktif untuk sebuah user.
@@ -88,6 +94,10 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           .toUpperCase();
         if (!identifier || !password) return null;
 
+        // A9: rate-limit brute-force per identifier (+ kode sekolah bila ada).
+        const rlKey = (schoolCode ? `${schoolCode}:` : "") + identifier.toLowerCase();
+        if (await isLoginBlocked(rlKey)) return null;
+
         let user;
         if (schoolCode) {
           // Jalur siswa: NIS unik PER sekolah, jadi wajib disempitkan lewat
@@ -118,14 +128,35 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
             .limit(1);
         }
 
-        if (!user || user.status !== "active") return null;
+        if (!user || user.status !== "active") {
+          await recordLoginFailure(rlKey);
+          await logAudit({ action: "login.failure", actorLabel: identifier });
+          return null;
+        }
 
         const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+        if (!valid) {
+          await recordLoginFailure(rlKey);
+          await logAudit({
+            action: "login.failure",
+            actorLabel: identifier,
+            schoolId: user.schoolId,
+          });
+          return null;
+        }
+
+        await clearLoginAttempts(rlKey);
 
         const { list, activeSchoolId } = await loadWorkspaces(user);
         const active = list.find((m) => m.schoolId === activeSchoolId) ?? null;
         const roles = active?.roles ?? [user.role];
+
+        await logAudit({
+          action: "login.success",
+          actorId: user.id,
+          actorLabel: user.email ?? user.username,
+          schoolId: activeSchoolId,
+        });
 
         return {
           id: user.id,

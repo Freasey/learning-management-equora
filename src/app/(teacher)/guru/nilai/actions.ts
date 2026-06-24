@@ -6,6 +6,17 @@ import { z } from "zod";
 import { db, gradeItems, grades } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
 import { getClassYear } from "@/lib/academic";
+import { assertTeacherTeachesClass, teacherTeachesClass } from "@/lib/teaching";
+
+/** A2: boleh kelola item nilai bila pembuatnya atau pengampu kelasnya. */
+async function canManageItem(
+  schoolId: string,
+  teacherId: string,
+  item: { teacherId: string | null; classId: string },
+) {
+  if (item.teacherId === teacherId) return true;
+  return teacherTeachesClass(schoolId, teacherId, item.classId);
+}
 
 function pairOf(classId: string, subjectId: string) {
   return encodeURIComponent(`${classId}:${subjectId}`);
@@ -28,6 +39,9 @@ export async function addGradeItem(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
+  // A2: hanya boleh menilai kelas yang diampu.
+  await assertTeacherTeachesClass(schoolId, teacherId, parsed.data.classId);
+
   const academicYearId = await getClassYear(schoolId, parsed.data.classId);
   await db.insert(gradeItems).values({
     schoolId,
@@ -42,18 +56,25 @@ export async function addGradeItem(formData: FormData) {
 }
 
 export async function deleteGradeItem(formData: FormData) {
-  const { schoolId } = await requireTeacher();
+  const { schoolId, teacherId } = await requireTeacher();
   const id = z.string().uuid().parse(formData.get("id"));
   const classId = z.string().uuid().parse(formData.get("classId"));
   const subjectId = z.string().uuid().parse(formData.get("subjectId"));
-  await db
-    .delete(gradeItems)
-    .where(and(eq(gradeItems.id, id), eq(gradeItems.schoolId, schoolId)));
+  const [item] = await db
+    .select({ teacherId: gradeItems.teacherId, classId: gradeItems.classId })
+    .from(gradeItems)
+    .where(and(eq(gradeItems.id, id), eq(gradeItems.schoolId, schoolId)))
+    .limit(1);
+  if (item && (await canManageItem(schoolId, teacherId, item))) {
+    await db
+      .delete(gradeItems)
+      .where(and(eq(gradeItems.id, id), eq(gradeItems.schoolId, schoolId)));
+  }
   redirect(`/guru/nilai?pair=${pairOf(classId, subjectId)}`);
 }
 
 export async function saveGrades(formData: FormData) {
-  const { schoolId } = await requireTeacher();
+  const { schoolId, teacherId } = await requireTeacher();
   const gradeItemId = z.string().uuid().parse(formData.get("gradeItemId"));
   const classId = z.string().uuid().parse(formData.get("classId"));
   const subjectId = z.string().uuid().parse(formData.get("subjectId"));
@@ -65,6 +86,10 @@ export async function saveGrades(formData: FormData) {
     .where(and(eq(gradeItems.id, gradeItemId), eq(gradeItems.schoolId, schoolId)))
     .limit(1);
   if (!item) throw new Error("Item penilaian tidak ditemukan.");
+  // A2: hanya pembuat / pengampu kelas yang boleh menyimpan nilai.
+  if (!(await canManageItem(schoolId, teacherId, item))) {
+    throw new Error("Anda tidak berhak menilai item ini.");
+  }
 
   for (const [key, value] of formData.entries()) {
     if (!key.startsWith("score_")) continue;

@@ -8,6 +8,7 @@ import { db, users, memberships } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { assertQuota } from "@/lib/quota";
 import { ensureMembership, parseRoles, serializeRoles } from "@/lib/membership";
+import { logAudit } from "@/lib/audit";
 
 const addSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter"),
@@ -111,7 +112,7 @@ export async function toggleMemberRole(formData: FormData) {
 }
 
 export async function deleteTeacher(formData: FormData) {
-  const { schoolId } = await requireSchoolAdmin();
+  const { session, schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
   // Soft-delete: tandai inactive (auth & listing otomatis mengabaikan) agar
   // jejak akademik (nilai yang ia buat, dll.) tak hilang permanen.
@@ -119,5 +120,11 @@ export async function deleteTeacher(formData: FormData) {
     .update(users)
     .set({ status: "inactive", updatedAt: new Date() })
     .where(and(eq(users.id, id), eq(users.schoolId, schoolId), eq(users.role, "teacher")));
+  await logAudit({
+    schoolId,
+    actorId: session?.user?.id,
+    action: "teacher.delete",
+    target: id,
+  });
   revalidatePath("/admin/guru");
 }
