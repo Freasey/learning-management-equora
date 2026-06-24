@@ -204,6 +204,14 @@ function EmptyClass() {
         Sepertinya kamu belum ditempatkan di kelas. Hubungi guru atau admin
         sekolahmu, ya.
       </p>
+      <Link
+        href="/panduan/siswa"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 inline-block rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm font-bold text-sky transition hover:border-sky"
+      >
+        Buka panduan
+      </Link>
     </div>
   );
 }

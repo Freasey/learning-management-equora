@@ -19,10 +19,12 @@ async function main() {
   // Drop SEMUA tabel di schema public (generik) — robust terhadap penambahan
   // tabel baru di src/db/schema.ts tanpa harus memperbarui daftar manual.
   console.log("Menghapus semua tabel di schema public...");
-  const res = await sql.query(
+  const res: unknown = await sql.query(
     `SELECT tablename FROM pg_tables WHERE schemaname = 'public'`,
   );
-  const rows = (Array.isArray(res) ? res : res.rows) as { tablename: string }[];
+  const rows: { tablename: string }[] = Array.isArray(res)
+    ? (res as { tablename: string }[])
+    : ((res as { rows?: { tablename: string }[] }).rows ?? []);
   for (const { tablename } of rows) {
     await sql.query(`DROP TABLE IF EXISTS "public"."${tablename}" CASCADE`);
     console.log(`  ✓ drop ${tablename}`);

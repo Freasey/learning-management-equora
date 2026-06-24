@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
-import { Users, GraduationCap, ShieldCheck, Copy } from "lucide-react";
+import { and, eq, isNull } from "drizzle-orm";
+import { Users, GraduationCap, ShieldCheck, Copy, Check, ArrowRight } from "lucide-react";
 import { auth } from "@/auth";
-import { db, schools, pricingPlans } from "@/db";
+import { db, schools, pricingPlans, subjects, classes, schedules } from "@/db";
 import { countRole } from "@/lib/quota";
+import { getActiveYear } from "@/lib/academic";
 import { quotaLabel } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { createInstantClass } from "./kelas/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -38,11 +41,28 @@ export default async function AdminHome() {
     .where(eq(pricingPlans.key, school.planKey))
     .limit(1);
 
-  const [studentCount, teacherCount, adminCount] = await Promise.all([
-    countRole(schoolId, "student"),
-    countRole(schoolId, "teacher"),
-    countRole(schoolId, "school_admin"),
-  ]);
+  const [studentCount, teacherCount, adminCount, year, subjectCount, classCount, scheduleCount] =
+    await Promise.all([
+      countRole(schoolId, "student"),
+      countRole(schoolId, "teacher"),
+      countRole(schoolId, "school_admin"),
+      getActiveYear(schoolId),
+      db.$count(subjects, and(eq(subjects.schoolId, schoolId), isNull(subjects.deletedAt))),
+      db.$count(classes, and(eq(classes.schoolId, schoolId), isNull(classes.deletedAt))),
+      db.$count(schedules, eq(schedules.schoolId, schoolId)),
+    ]);
+
+  // B2 — daftar langkah penyiapan. Urut sesuai dependensi.
+  const setup = [
+    { label: "Aktifkan tahun ajaran", done: Boolean(year), href: "/admin/pengaturan" },
+    { label: "Tambah mata pelajaran", done: subjectCount > 0, href: "/admin/mapel" },
+    { label: "Buat kelas", done: classCount > 0, href: "/admin/kelas" },
+    { label: "Tambah guru", done: teacherCount > 0, href: "/admin/guru" },
+    { label: "Tambah siswa", done: studentCount > 0, href: "/admin/siswa" },
+    { label: "Susun jadwal (tugaskan guru)", done: scheduleCount > 0, href: "/admin/jadwal" },
+  ];
+  const doneCount = setup.filter((s) => s.done).length;
+  const nextStep = setup.find((s) => !s.done);
 
   const usage = [
     { label: "Siswa", icon: Users, used: studentCount, quota: plan?.quotaStudents ?? null },
@@ -98,6 +118,91 @@ export default async function AdminHome() {
         </Link>
         .
       </p>
+
+      {school.type === "personal" && scheduleCount === 0 && (
+        <div className="mb-8 rounded-xl border border-accent/40 bg-accent/5 p-6">
+          <h2 className="font-display text-lg font-medium text-ink">
+            Mulai cepat — buat kelas instan
+          </h2>
+          <p className="mb-4 mt-1 text-sm text-muted">
+            Khusus ruang kerja pribadi: satu langkah menyiapkan tahun ajaran,
+            mata pelajaran, kelas, dan jadwal — Anda langsung bisa mengajar.
+          </p>
+          <form
+            action={createInstantClass}
+            className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]"
+          >
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted">Nama kelas</span>
+              <input
+                name="className"
+                required
+                placeholder="cth. Kelas Intensif"
+                className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-teal-600"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted">Mata pelajaran</span>
+              <input
+                name="subjectName"
+                required
+                placeholder="cth. Matematika"
+                className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-teal-600"
+              />
+            </label>
+            <Button type="submit" variant="primary" size="md">
+              Buat &amp; mulai mengajar
+            </Button>
+          </form>
+        </div>
+      )}
+
+      {doneCount < setup.length && (
+        <div className="mb-8 rounded-xl border border-teal-700/30 bg-teal-700/5 p-6">
+          <div className="mb-1 flex items-center justify-between gap-3">
+            <h2 className="font-display text-lg font-medium text-ink">
+              Penyiapan sekolah
+            </h2>
+            <span className="font-mono text-xs text-muted">
+              {doneCount}/{setup.length} selesai
+            </span>
+          </div>
+          <p className="mb-4 text-sm text-muted">
+            Selesaikan langkah berikut agar guru &amp; siswa bisa mulai memakai
+            sistem. Ikuti urutannya.
+          </p>
+          <ol className="space-y-2">
+            {setup.map((s) => (
+              <li key={s.href}>
+                <Link
+                  href={s.href}
+                  className={`flex items-center gap-3 rounded-lg border px-4 py-2.5 text-sm transition-colors ${
+                    s.done
+                      ? "border-line bg-paper/60 text-muted"
+                      : s === nextStep
+                        ? "border-teal-600 bg-paper font-semibold text-ink hover:bg-sand/40"
+                        : "border-line bg-paper text-ink hover:bg-sand/40"
+                  }`}
+                >
+                  <span
+                    className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
+                      s.done
+                        ? "border-teal-700 bg-teal-700 text-paper"
+                        : "border-line text-transparent"
+                    }`}
+                  >
+                    <Check className="h-3 w-3" />
+                  </span>
+                  <span className={s.done ? "line-through" : ""}>{s.label}</span>
+                  {s === nextStep && (
+                    <ArrowRight className="ml-auto h-4 w-4 text-teal-700" />
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         {usage.map((u) => {

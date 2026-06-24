@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { and, asc, eq, isNull, ne } from "drizzle-orm";
 import { auth } from "@/auth";
@@ -75,9 +76,17 @@ export default async function SiswaPage() {
   return (
     <div>
       <PageHeader title="Manajemen Siswa" description="Kelola akun & penempatan kelas siswa.">
-        <span className="rounded-lg border border-line bg-sand/50 px-4 py-2 font-mono text-xs text-muted">
-          {used} / {quotaLabel(quota)} siswa
-        </span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/siswa/kartu"
+            className="rounded-lg border border-line bg-paper px-4 py-2 text-xs font-semibold text-teal-700 transition-colors hover:bg-sand"
+          >
+            Kartu Akun
+          </Link>
+          <span className="rounded-lg border border-line bg-sand/50 px-4 py-2 font-mono text-xs text-muted">
+            {used} / {quotaLabel(quota)} siswa
+          </span>
+        </div>
       </PageHeader>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-2">

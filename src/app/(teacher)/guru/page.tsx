@@ -60,6 +60,29 @@ export default async function GuruHome() {
         </p>
       </header>
 
+      {assignments.length === 0 && (
+        <div className="mb-6 rounded-xl border border-accent/40 bg-accent/5 p-5">
+          <h2 className="font-display text-lg font-medium text-ink">
+            Belum ada kelas yang ditugaskan
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Anda akan bisa membuat materi, kuis, dan menilai begitu admin
+            menugaskan Anda mengajar sebuah kelas &amp; mata pelajaran lewat{" "}
+            <strong className="text-ink">Jadwal</strong>. Hubungi admin sekolah
+            Anda, atau buka{" "}
+            <Link
+              href="/panduan/guru"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-teal-700"
+            >
+              panduan guru
+            </Link>
+            .
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((s) => (
           <div key={s.label} className="rounded-xl border border-line bg-paper p-5">
@@ -132,12 +155,6 @@ export default async function GuruHome() {
         </section>
       </div>
 
-      {assignments.length === 0 && (
-        <p className="mt-6 rounded-lg border border-dashed border-line bg-paper px-4 py-3 text-sm text-muted">
-          Anda belum punya jadwal mengajar. Hubungi admin sekolah untuk
-          menambahkan Anda ke jadwal kelas &amp; mata pelajaran.
-        </p>
-      )}
     </div>
   );
 }

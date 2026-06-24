@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db, users, enrollments } from "@/db";
@@ -130,6 +130,78 @@ export async function setStudentClass(formData: FormData) {
   const classId = String(formData.get("classId") || "");
   await enroll(schoolId, studentId, classId);
   revalidatePath("/admin/siswa");
+}
+
+// ── B3: Distribusi kredensial siswa (reset sandi sekelas + kartu cetak) ──────
+
+export type CredRow = { name: string; username: string | null };
+export type CredState =
+  | { ok: true; password: string; students: CredRow[] }
+  | { error: string }
+  | undefined;
+
+/**
+ * Setel ulang kata sandi SEMUA siswa aktif di sebuah kelas ke satu sandi
+ * sementara, lalu kembalikan daftarnya untuk dicetak/dibagikan. Dipakai saat
+ * onboarding (siswa tak punya email → admin membagikan kartu akun).
+ */
+export async function generateClassCredentials(
+  _prev: CredState,
+  formData: FormData,
+): Promise<CredState> {
+  const { session, schoolId } = await requireSchoolAdmin();
+  const parse = z
+    .object({
+      classId: z.string().uuid("Pilih kelas dulu."),
+      password: z.string().min(4, "Sandi minimal 4 karakter"),
+    })
+    .safeParse({
+      classId: formData.get("classId"),
+      password: String(formData.get("password") || "").trim(),
+    });
+  if (!parse.success) return { error: parse.error.issues[0]?.message ?? "Data tidak valid." };
+
+  const studs = await db
+    .select({ id: users.id, name: users.name, username: users.username })
+    .from(users)
+    .innerJoin(enrollments, eq(enrollments.studentId, users.id))
+    .where(
+      and(
+        eq(enrollments.classId, parse.data.classId),
+        eq(enrollments.schoolId, schoolId),
+        eq(users.role, "student"),
+        ne(users.status, "inactive"),
+      ),
+    );
+  if (studs.length === 0) return { error: "Kelas ini belum punya siswa." };
+
+  const passwordHash = await bcrypt.hash(parse.data.password, 10);
+  await db
+    .update(users)
+    .set({ passwordHash, updatedAt: new Date() })
+    .where(
+      and(
+        inArray(
+          users.id,
+          studs.map((s) => s.id),
+        ),
+        eq(users.schoolId, schoolId),
+      ),
+    );
+
+  await logAudit({
+    schoolId,
+    actorId: session?.user?.id,
+    action: "student.credentials_reset",
+    target: parse.data.classId,
+    meta: { count: studs.length },
+  });
+
+  return {
+    ok: true,
+    password: parse.data.password,
+    students: studs.map((s) => ({ name: s.name, username: s.username })),
+  };
 }
 
 export async function deleteStudent(formData: FormData) {
