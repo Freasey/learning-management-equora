@@ -9,6 +9,7 @@ import { assertQuota } from "@/lib/quota";
 import { getClassYear } from "@/lib/academic";
 import { ensureMembership } from "@/lib/membership";
 import { notify } from "@/lib/notify";
+import { sendEmail } from "@/lib/email";
 
 export async function approveMember(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
@@ -43,6 +44,13 @@ export async function approveMember(formData: FormData) {
     body: "Akun Anda telah diterima. Selamat datang!",
     href: member.role === "student" ? "/siswa" : "/guru",
   });
+  if (member.email) {
+    await sendEmail({
+      to: member.email,
+      subject: "Pendaftaran Anda disetujui — Equora",
+      html: `<p>Halo ${member.name},</p><p>Akun Anda telah disetujui. Silakan masuk untuk mulai menggunakan Equora.</p>`,
+    });
+  }
 
   revalidatePath("/admin/pendaftaran");
 }

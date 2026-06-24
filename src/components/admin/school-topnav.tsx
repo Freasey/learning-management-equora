@@ -27,6 +27,7 @@ const groups: Group[] = [
     items: [
       { href: "/admin/siswa", label: "Siswa" },
       { href: "/admin/guru", label: "Guru" },
+      { href: "/admin/ortu", label: "Orang Tua" },
       { href: "/admin/pendaftaran", label: "Pendaftaran" },
     ],
   },

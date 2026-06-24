@@ -532,7 +532,55 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Metadata berkas di object storage (R2). Kuota storage = SUM(size_bytes). */
+export const files = pgTable("files", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  ownerId: uuid("owner_id").references(() => users.id, { onDelete: "set null" }),
+  key: text("key").notNull(), // object key di bucket
+  url: text("url"),
+  sizeBytes: integer("size_bytes").notNull().default(0),
+  contentType: text("content_type"),
+  kind: text("kind").notNull().default("material"), // material | attachment | avatar
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Catatan pemakaian AI per sekolah (kuota AI = COUNT per bulan berjalan). */
+export const aiUsage = pgTable("ai_usage", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  kind: text("kind").notNull(), // cth. material.generate
+  tokens: integer("tokens").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Tautan orang tua → siswa (B8). Satu ortu bisa banyak anak, & sebaliknya. */
+export const parentLinks = pgTable(
+  "parent_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    parentId: uuid("parent_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("parent_links_parent_student_unq").on(t.parentId, t.studentId)],
+);
+
 export type Notification = typeof notifications.$inferSelect;
+export type FileObject = typeof files.$inferSelect;
+export type ParentLink = typeof parentLinks.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type PricingPlan = typeof pricingPlans.$inferSelect;
 export type Membership = typeof memberships.$inferSelect;

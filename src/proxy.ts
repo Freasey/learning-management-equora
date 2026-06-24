@@ -7,5 +7,11 @@ export default NextAuth(authConfig).auth;
 
 export const config = {
   // Jaga area terproteksi (tambah /guru, /siswa di sini nanti).
-  matcher: ["/super/:path*", "/admin/:path*", "/guru/:path*", "/siswa/:path*"],
+  matcher: [
+    "/super/:path*",
+    "/admin/:path*",
+    "/guru/:path*",
+    "/siswa/:path*",
+    "/ortu/:path*",
+  ],
 };

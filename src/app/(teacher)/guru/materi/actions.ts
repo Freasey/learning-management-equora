@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, materials } from "@/db";
+import { db, materials, subjects } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
+import { assertAiQuota, generateText, isAiConfigured, recordAiUsage } from "@/lib/ai";
 
 const addSchema = z.object({
   title: z.string().min(2, "Judul minimal 2 karakter"),
@@ -44,9 +45,8 @@ export async function addMaterial(formData: FormData) {
 }
 
 /**
- * STUB generate AI. Integrasi nyata (ingest PDF panduan kurikulum + Claude →
- * .pptx) menyusul; ANTHROPIC_API_KEY juga belum diisi. Untuk sekarang membuat
- * entri materi penanda agar alurnya terlihat.
+ * Generate materi via AI (Gemini). Bila kunci AI belum diatur, jatuh ke mode
+ * demo (entri penanda). Kuota AI ditegakkan (assertAiQuota) & pemakaian dicatat.
  */
 const aiSchema = z.object({
   subjectId: z.string().uuid("Pilih mapel"),
@@ -63,15 +63,36 @@ export async function generateAiMaterial(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
+  await assertAiQuota(schoolId);
+
+  const [subj] = await db
+    .select({ name: subjects.name })
+    .from(subjects)
+    .where(and(eq(subjects.id, parsed.data.subjectId), eq(subjects.schoolId, schoolId)))
+    .limit(1);
+
+  let notes =
+    "Dihasilkan AI (mode demo — kunci AI belum diatur). Isi materi nyata muncul setelah GEMINI_API_KEY diisi.";
+  if (isAiConfigured()) {
+    const prompt = `Buat ringkasan materi ajar untuk mata pelajaran "${
+      subj?.name ?? "umum"
+    }" dengan topik "${parsed.data.topic}". Tulis dalam Bahasa Indonesia, terstruktur: tujuan pembelajaran, poin-poin utama, contoh sederhana, dan ringkasan. Format ringkas dengan poin.`;
+    const out = await generateText(prompt);
+    if (out) {
+      notes = out;
+      await recordAiUsage(schoolId, teacherId, "material.generate");
+    }
+  }
+
   await db.insert(materials).values({
     schoolId,
     teacherId,
     subjectId: parsed.data.subjectId,
     classId: parsed.data.classId || null,
-    title: `PPT: ${parsed.data.topic}`,
+    title: `Materi: ${parsed.data.topic}`,
     topic: parsed.data.topic,
     type: "ai",
-    notes: "Dihasilkan AI (mode demo). Integrasi Claude + panduan kurikulum menyusul.",
+    notes,
     status: "ready",
   });
   revalidatePath("/guru/materi");

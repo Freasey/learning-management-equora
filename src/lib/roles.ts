@@ -1,4 +1,9 @@
-export type Role = "super_admin" | "school_admin" | "teacher" | "student";
+export type Role =
+  | "super_admin"
+  | "school_admin"
+  | "teacher"
+  | "student"
+  | "parent";
 
 /** Ringkasan satu workspace (sekolah/personal) yang dimiliki user. */
 export type WorkspaceMembership = {
@@ -21,6 +26,7 @@ export function primaryRole(roles: string[]): string {
   if (roles.includes("teacher")) return "teacher";
   if (roles.includes("school_admin")) return "school_admin";
   if (roles.includes("student")) return "student";
+  if (roles.includes("parent")) return "parent";
   return roles[0] ?? "";
 }
 
@@ -36,6 +42,8 @@ export function roleHome(roles?: string[] | string | null): string {
       return "/guru";
     case "student":
       return "/siswa";
+    case "parent":
+      return "/ortu";
     default:
       return "/";
   }

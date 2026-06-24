@@ -6,9 +6,12 @@ import { auth } from "@/auth";
 import { db, schools, pricingPlans, subjects, classes, schedules } from "@/db";
 import { countRole } from "@/lib/quota";
 import { getActiveYear } from "@/lib/academic";
+import { storageUsedBytes } from "@/lib/storage";
+import { aiUsedThisMonth } from "@/lib/ai";
 import { quotaLabel } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { createInstantClass } from "./kelas/actions";
+import { seedSampleData } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +54,13 @@ export default async function AdminHome() {
       db.$count(classes, and(eq(classes.schoolId, schoolId), isNull(classes.deletedAt))),
       db.$count(schedules, eq(schedules.schoolId, schoolId)),
     ]);
+
+  const [storageBytes, aiUsed] = await Promise.all([
+    storageUsedBytes(schoolId),
+    aiUsedThisMonth(schoolId),
+  ]);
+  const storageGb = plan?.storageGb ?? null;
+  const aiCredits = plan?.aiCredits ?? null;
 
   // B2 — daftar langkah penyiapan. Urut sesuai dependensi.
   const setup = [
@@ -201,6 +211,19 @@ export default async function AdminHome() {
               </li>
             ))}
           </ol>
+
+          {school.type === "school" && classCount === 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+              <p className="text-sm text-muted">
+                Ingin mencoba dulu tanpa input manual?
+              </p>
+              <form action={seedSampleData}>
+                <Button type="submit" variant="ghost" size="sm">
+                  Muat data contoh
+                </Button>
+              </form>
+            </div>
+          )}
         </div>
       )}
 
@@ -237,6 +260,29 @@ export default async function AdminHome() {
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-line bg-paper p-5">
+          <div className="text-xs uppercase tracking-wide text-muted">Penyimpanan</div>
+          <div className="mt-3 font-display text-2xl font-medium text-ink">
+            {(storageBytes / 1e9).toFixed(2)} GB
+            <span className="text-base font-normal text-muted">
+              {" "}
+              / {storageGb === null ? "∞" : `${storageGb} GB`}
+            </span>
+          </div>
+        </div>
+        <div className="rounded-xl border border-line bg-paper p-5">
+          <div className="text-xs uppercase tracking-wide text-muted">AI bulan ini</div>
+          <div className="mt-3 font-display text-2xl font-medium text-ink">
+            {aiUsed}
+            <span className="text-base font-normal text-muted">
+              {" "}
+              / {aiCredits === null ? "∞" : aiCredits}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

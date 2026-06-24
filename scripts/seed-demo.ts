@@ -23,6 +23,7 @@ import {
   classes,
   enrollments,
   classSubjects,
+  parentLinks,
 } from "../src/db/index";
 
 // ── Konstanta sekolah demo ────────────────────────────────────────────────
@@ -178,6 +179,7 @@ async function main() {
 
   // 8) Siswa (NIS 2026001..2026010), 5 per kelas, langsung di-enroll.
   const students: { name: string; nis: string }[] = [];
+  let firstStudentId = "";
   for (let i = 0; i < STUDENT_NAMES.length; i++) {
     const nis = `2026${String(i + 1).padStart(3, "0")}`;
     const [row] = await db
@@ -191,11 +193,27 @@ async function main() {
         status: "active",
       })
       .returning({ id: users.id });
+    if (i === 0) firstStudentId = row.id;
     const classId = classIds[Math.floor(i / 5)]; // 0-4 -> kelas A, 5-9 -> kelas B
     await db.insert(enrollments).values({ schoolId, academicYearId, classId, studentId: row.id });
     students.push({ name: STUDENT_NAMES[i], nis });
   }
   console.log(`✓ ${STUDENT_NAMES.length} siswa (ter-enroll ke kelas)`);
+
+  // Orang tua contoh — tertaut ke siswa pertama (B8). Login via email.
+  const [parent] = await db
+    .insert(users)
+    .values({
+      schoolId,
+      role: "parent",
+      name: "Orang Tua Demo",
+      email: "ortu@demo.equora.id",
+      passwordHash,
+      status: "active",
+    })
+    .returning({ id: users.id });
+  await db.insert(parentLinks).values({ schoolId, parentId: parent.id, studentId: firstStudentId });
+  console.log("✓ Orang tua: ortu@demo.equora.id (anak: " + STUDENT_NAMES[0] + ")");
 
   // ── Tulis berkas kredensial ─────────────────────────────────────────────
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
