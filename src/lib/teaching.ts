@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db, schedules, classes, subjects } from "@/db";
 
 export type Assignment = {
@@ -26,7 +26,13 @@ export async function getTeacherAssignments(
     .from(schedules)
     .leftJoin(classes, eq(classes.id, schedules.classId))
     .leftJoin(subjects, eq(subjects.id, schedules.subjectId))
-    .where(and(eq(schedules.schoolId, schoolId), eq(schedules.teacherId, teacherId)));
+    .where(
+      and(
+        eq(schedules.schoolId, schoolId),
+        eq(schedules.teacherId, teacherId),
+        isNull(classes.deletedAt),
+      ),
+    );
 
   return rows.filter((r): r is Assignment => Boolean(r.subjectId && r.classId));
 }

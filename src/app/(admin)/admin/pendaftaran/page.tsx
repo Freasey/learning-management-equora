@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, users, classes, memberships } from "@/db";
 import { getActiveYear } from "@/lib/academic";
@@ -36,7 +36,13 @@ export default async function PendaftaranPage() {
       ? db
           .select()
           .from(classes)
-          .where(and(eq(classes.schoolId, schoolId), eq(classes.academicYearId, year.id)))
+          .where(
+            and(
+              eq(classes.schoolId, schoolId),
+              eq(classes.academicYearId, year.id),
+              isNull(classes.deletedAt),
+            ),
+          )
           .orderBy(asc(classes.name))
       : Promise.resolve([]),
     // Permintaan keanggotaan dari akun yang sudah ada (guru lintas-sekolah).

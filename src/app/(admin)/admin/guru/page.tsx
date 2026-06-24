@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, users, memberships } from "@/db";
 import { getSchoolPlan, countRole } from "@/lib/quota";
@@ -33,7 +33,13 @@ export default async function GuruPage() {
         memberships,
         and(eq(memberships.userId, users.id), eq(memberships.schoolId, schoolId)),
       )
-      .where(and(eq(users.schoolId, schoolId), eq(users.role, "teacher")))
+      .where(
+        and(
+          eq(users.schoolId, schoolId),
+          eq(users.role, "teacher"),
+          ne(users.status, "inactive"),
+        ),
+      )
       .orderBy(asc(users.name)),
     getSchoolPlan(schoolId),
     countRole(schoolId, "teacher"),

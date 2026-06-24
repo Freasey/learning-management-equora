@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { BookOpen, Sparkles, Plus } from "lucide-react";
 import { auth } from "@/auth";
 import { db, subjects, curriculumSubjects, schools } from "@/db";
@@ -45,7 +45,7 @@ export default async function MapelPage() {
     db
       .select()
       .from(subjects)
-      .where(eq(subjects.schoolId, schoolId))
+      .where(and(eq(subjects.schoolId, schoolId), isNull(subjects.deletedAt)))
       .orderBy(asc(subjects.name)),
     db
       .select()

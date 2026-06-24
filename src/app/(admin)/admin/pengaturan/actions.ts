@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
@@ -52,7 +52,10 @@ export async function addAcademicYear(formData: FormData) {
   );
 
   // Jadikan aktif bila ini tahun ajaran pertama.
-  const existing = await db.$count(academicYears, eq(academicYears.schoolId, schoolId));
+  const existing = await db.$count(
+    academicYears,
+    and(eq(academicYears.schoolId, schoolId), isNull(academicYears.deletedAt)),
+  );
   await db.insert(academicYears).values({
     schoolId,
     name,
@@ -126,7 +129,13 @@ export async function rolloverAcademicYear(formData: FormData) {
   const srcClasses = await db
     .select()
     .from(classes)
-    .where(and(eq(classes.schoolId, schoolId), eq(classes.academicYearId, src.id)));
+    .where(
+      and(
+        eq(classes.schoolId, schoolId),
+        eq(classes.academicYearId, src.id),
+        isNull(classes.deletedAt),
+      ),
+    );
   const classMap = new Map<string, string>();
   for (const c of srcClasses) {
     const [nc] = await db
@@ -224,7 +233,8 @@ export async function deleteAcademicYear(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
   await db
-    .delete(academicYears)
+    .update(academicYears)
+    .set({ deletedAt: new Date() })
     .where(and(eq(academicYears.id, id), eq(academicYears.schoolId, schoolId)));
   revalidatePath("/admin/pengaturan");
 }

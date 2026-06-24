@@ -157,6 +157,7 @@ export const academicYears = pgTable("academic_years", {
   name: text("name").notNull(), // cth. "2025/2026 Ganjil"
   isActive: boolean("is_active").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }), // soft-delete
 });
 
 /**
@@ -190,6 +191,7 @@ export const subjects = pgTable("subjects", {
     onDelete: "set null",
   }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }), // soft-delete
 });
 
 /** Kelas/rombel, terikat tahun ajaran. */
@@ -208,6 +210,7 @@ export const classes = pgTable("classes", {
     onDelete: "set null",
   }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }), // soft-delete
 });
 
 /** Penempatan siswa ke kelas. */

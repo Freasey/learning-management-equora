@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db, subjects, curriculumSubjects } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
@@ -20,7 +20,7 @@ export async function adoptCatalogSubjects(formData: FormData) {
   const existing = await db
     .select({ catalogId: subjects.catalogId })
     .from(subjects)
-    .where(eq(subjects.schoolId, schoolId));
+    .where(and(eq(subjects.schoolId, schoolId), isNull(subjects.deletedAt)));
   const taken = new Set(existing.map((e) => e.catalogId).filter(Boolean));
 
   const cats = await db
@@ -75,7 +75,8 @@ export async function deleteSubject(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
   await db
-    .delete(subjects)
+    .update(subjects)
+    .set({ deletedAt: new Date() })
     .where(and(eq(subjects.id, id), eq(subjects.schoolId, schoolId)));
   revalidatePath("/admin/mapel");
 }

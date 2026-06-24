@@ -46,8 +46,10 @@ export async function addClass(formData: FormData) {
 export async function deleteClass(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
+  // Soft-delete: jangan hard-delete agar enrolment & nilai historis tak hilang.
   await db
-    .delete(classes)
+    .update(classes)
+    .set({ deletedAt: new Date() })
     .where(and(eq(classes.id, id), eq(classes.schoolId, schoolId)));
   revalidatePath("/admin/kelas");
 }

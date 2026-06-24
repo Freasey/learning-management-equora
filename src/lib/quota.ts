@@ -1,4 +1,4 @@
-import { and, eq, like } from "drizzle-orm";
+import { and, eq, like, ne } from "drizzle-orm";
 import { db, users, memberships, pricingPlans, schools } from "@/db";
 
 /** Ambil paket aktif sebuah sekolah. */
@@ -29,7 +29,13 @@ export async function countRole(schoolId: string, role: string): Promise<number>
     db
       .select({ id: users.id })
       .from(users)
-      .where(and(eq(users.schoolId, schoolId), eq(users.role, role))),
+      .where(
+        and(
+          eq(users.schoolId, schoolId),
+          eq(users.role, role),
+          ne(users.status, "inactive"),
+        ),
+      ),
     db
       .select({ id: memberships.userId })
       .from(memberships)

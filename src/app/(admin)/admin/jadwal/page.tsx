@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, schedules, classes, subjects, users } from "@/db";
 import { getActiveYear } from "@/lib/academic";
@@ -36,19 +36,25 @@ export default async function JadwalPage() {
       .leftJoin(classes, eq(classes.id, schedules.classId))
       .leftJoin(subjects, eq(subjects.id, schedules.subjectId))
       .leftJoin(users, eq(users.id, schedules.teacherId))
-      .where(eq(schedules.schoolId, schoolId))
+      .where(and(eq(schedules.schoolId, schoolId), isNull(classes.deletedAt)))
       .orderBy(asc(schedules.dayOfWeek), asc(schedules.startTime)),
     year
       ? db
           .select({ id: classes.id, name: classes.name })
           .from(classes)
-          .where(and(eq(classes.schoolId, schoolId), eq(classes.academicYearId, year.id)))
+          .where(
+            and(
+              eq(classes.schoolId, schoolId),
+              eq(classes.academicYearId, year.id),
+              isNull(classes.deletedAt),
+            ),
+          )
           .orderBy(asc(classes.name))
       : Promise.resolve([]),
     db
       .select({ id: subjects.id, name: subjects.name })
       .from(subjects)
-      .where(eq(subjects.schoolId, schoolId))
+      .where(and(eq(subjects.schoolId, schoolId), isNull(subjects.deletedAt)))
       .orderBy(asc(subjects.name)),
     listWorkspaceTeachers(schoolId),
   ]);

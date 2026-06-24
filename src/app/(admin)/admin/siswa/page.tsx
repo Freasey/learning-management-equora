@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull, ne } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, users, enrollments, classes } from "@/db";
 import { getActiveYear } from "@/lib/academic";
@@ -45,7 +45,13 @@ export default async function SiswaPage() {
       .from(users)
       .leftJoin(enrollments, eq(enrollments.studentId, users.id))
       .leftJoin(classes, eq(classes.id, enrollments.classId))
-      .where(and(eq(users.schoolId, schoolId), eq(users.role, "student")))
+      .where(
+        and(
+          eq(users.schoolId, schoolId),
+          eq(users.role, "student"),
+          ne(users.status, "inactive"),
+        ),
+      )
       .orderBy(asc(users.name)),
     getSchoolPlan(schoolId),
     countRole(schoolId, "student"),
@@ -53,7 +59,13 @@ export default async function SiswaPage() {
       ? db
           .select()
           .from(classes)
-          .where(and(eq(classes.schoolId, schoolId), eq(classes.academicYearId, year.id)))
+          .where(
+            and(
+              eq(classes.schoolId, schoolId),
+              eq(classes.academicYearId, year.id),
+              isNull(classes.deletedAt),
+            ),
+          )
           .orderBy(asc(classes.name))
       : Promise.resolve([]),
   ]);

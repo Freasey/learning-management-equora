@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { db, academicYears, classes } from "@/db";
 
 /** Tahun ajaran aktif sekolah (atau null bila belum ada). */
@@ -6,7 +6,13 @@ export async function getActiveYear(schoolId: string) {
   const [year] = await db
     .select()
     .from(academicYears)
-    .where(and(eq(academicYears.schoolId, schoolId), eq(academicYears.isActive, true)))
+    .where(
+      and(
+        eq(academicYears.schoolId, schoolId),
+        eq(academicYears.isActive, true),
+        isNull(academicYears.deletedAt),
+      ),
+    )
     .limit(1);
   return year ?? null;
 }
@@ -16,7 +22,7 @@ export function listYears(schoolId: string) {
   return db
     .select()
     .from(academicYears)
-    .where(eq(academicYears.schoolId, schoolId))
+    .where(and(eq(academicYears.schoolId, schoolId), isNull(academicYears.deletedAt)))
     .orderBy(desc(academicYears.createdAt));
 }
 
@@ -31,7 +37,13 @@ export async function getClassYear(
   const [c] = await db
     .select({ y: classes.academicYearId })
     .from(classes)
-    .where(and(eq(classes.id, classId), eq(classes.schoolId, schoolId)))
+    .where(
+      and(
+        eq(classes.id, classId),
+        eq(classes.schoolId, schoolId),
+        isNull(classes.deletedAt),
+      ),
+    )
     .limit(1);
   return c?.y ?? null;
 }

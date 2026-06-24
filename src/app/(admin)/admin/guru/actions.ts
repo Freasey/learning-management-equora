@@ -34,14 +34,19 @@ export async function addTeacher(formData: FormData) {
   if (existing) throw new Error("Email sudah dipakai.");
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  await db.insert(users).values({
-    schoolId,
-    role: "teacher",
-    name: parsed.data.name,
-    email: parsed.data.email,
-    passwordHash,
-    status: "active",
-  });
+  const [created] = await db
+    .insert(users)
+    .values({
+      schoolId,
+      role: "teacher",
+      name: parsed.data.name,
+      email: parsed.data.email,
+      passwordHash,
+      status: "active",
+    })
+    .returning({ id: users.id });
+  // A7: materialkan membership agar peran punya satu sumber yang konsisten.
+  await ensureMembership(created.id, schoolId, ["teacher"]);
 
   revalidatePath("/admin/guru");
 }
@@ -108,8 +113,11 @@ export async function toggleMemberRole(formData: FormData) {
 export async function deleteTeacher(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
+  // Soft-delete: tandai inactive (auth & listing otomatis mengabaikan) agar
+  // jejak akademik (nilai yang ia buat, dll.) tak hilang permanen.
   await db
-    .delete(users)
+    .update(users)
+    .set({ status: "inactive", updatedAt: new Date() })
     .where(and(eq(users.id, id), eq(users.schoolId, schoolId), eq(users.role, "teacher")));
   revalidatePath("/admin/guru");
 }

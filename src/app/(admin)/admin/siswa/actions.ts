@@ -8,6 +8,7 @@ import { db, users, enrollments } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { assertQuota, getSchoolPlan, countRole } from "@/lib/quota";
 import { getClassYear } from "@/lib/academic";
+import { ensureMembership } from "@/lib/membership";
 
 async function usernameTaken(schoolId: string, username: string) {
   const [row] = await db
@@ -63,6 +64,7 @@ export async function addStudent(formData: FormData) {
       status: "active",
     })
     .returning({ id: users.id });
+  await ensureMembership(student.id, schoolId, ["student"]);
 
   if (parsed.data.classId) {
     await enroll(schoolId, student.id, parsed.data.classId);
@@ -112,6 +114,7 @@ export async function bulkAddStudents(formData: FormData) {
         status: "active",
       })
       .returning({ id: users.id });
+    await ensureMembership(student.id, schoolId, ["student"]);
     if (classId) await enroll(schoolId, student.id, classId);
     added++;
   }
@@ -131,8 +134,10 @@ export async function setStudentClass(formData: FormData) {
 export async function deleteStudent(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
+  // Soft-delete: tandai inactive agar nilai & pengerjaan siswa tetap tersimpan.
   await db
-    .delete(users)
+    .update(users)
+    .set({ status: "inactive", updatedAt: new Date() })
     .where(and(eq(users.id, id), eq(users.schoolId, schoolId), eq(users.role, "student")));
   revalidatePath("/admin/siswa");
 }

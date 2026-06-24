@@ -7,6 +7,7 @@ import { db, users, enrollments, memberships } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { assertQuota } from "@/lib/quota";
 import { getClassYear } from "@/lib/academic";
+import { ensureMembership } from "@/lib/membership";
 
 export async function approveMember(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
@@ -26,6 +27,7 @@ export async function approveMember(formData: FormData) {
     .update(users)
     .set({ status: "active", updatedAt: new Date() })
     .where(eq(users.id, id));
+  await ensureMembership(id, schoolId, [member.role]);
 
   if (member.role === "student" && classId) {
     const academicYearId = await getClassYear(schoolId, classId);

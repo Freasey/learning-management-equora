@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, classes, users, enrollments } from "@/db";
 import { getActiveYear } from "@/lib/academic";
@@ -48,7 +48,13 @@ export default async function KelasPage() {
       })
       .from(classes)
       .leftJoin(users, eq(users.id, classes.homeroomTeacherId))
-      .where(and(eq(classes.schoolId, schoolId), eq(classes.academicYearId, year.id)))
+      .where(
+        and(
+          eq(classes.schoolId, schoolId),
+          eq(classes.academicYearId, year.id),
+          isNull(classes.deletedAt),
+        ),
+      )
       .orderBy(asc(classes.name)),
     listWorkspaceTeachers(schoolId),
     db

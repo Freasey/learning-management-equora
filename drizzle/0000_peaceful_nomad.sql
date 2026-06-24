@@ -3,7 +3,8 @@ CREATE TABLE "academic_years" (
 	"school_id" uuid NOT NULL,
 	"name" text NOT NULL,
 	"is_active" boolean DEFAULT false NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "announcements" (
@@ -74,7 +75,8 @@ CREATE TABLE "classes" (
 	"level" text,
 	"capacity" integer,
 	"homeroom_teacher_id" uuid,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "contact_requests" (
@@ -264,7 +266,8 @@ CREATE TABLE "subjects" (
 	"kkm" integer DEFAULT 75 NOT NULL,
 	"source" text DEFAULT 'custom' NOT NULL,
 	"catalog_id" uuid,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
