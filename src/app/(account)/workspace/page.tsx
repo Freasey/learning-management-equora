@@ -2,9 +2,10 @@ import { redirect } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { Building2, User, Check, Crown, Plus, ExternalLink } from "lucide-react";
 import { auth } from "@/auth";
-import { db, pricingPlans } from "@/db";
+import { db, pricingPlans, users } from "@/db";
 import { roleHome } from "@/lib/roles";
 import { formatRupiah } from "@/lib/format";
+import { isStorageConfigured } from "@/lib/storage";
 import {
   listMyWorkspaces,
   ownedFreeWorkspaceCount,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/workspace";
 import { switchWorkspace } from "@/components/workspace/actions";
 import { createWorkspace, leaveWorkspace } from "./actions";
+import { updateAvatar, removeAvatar } from "../account-actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kelola Workspace · Equora" };
@@ -30,7 +32,7 @@ export default async function WorkspacePage() {
   const activeSchoolId = session.user.activeSchoolId ?? session.user.schoolId ?? null;
   const canCreate = !session.user.roles?.includes("student"); // siswa murni tak bikin workspace
 
-  const [list, ownedFree, plans] = await Promise.all([
+  const [list, ownedFree, plans, me] = await Promise.all([
     listMyWorkspaces(session.user.id),
     ownedFreeWorkspaceCount(session.user.id),
     db
@@ -38,9 +40,16 @@ export default async function WorkspacePage() {
       .from(pricingPlans)
       .where(eq(pricingPlans.isActive, true))
       .orderBy(asc(pricingPlans.sortOrder)),
+    db
+      .select({ name: users.name, avatarUrl: users.avatarUrl })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1),
   ]);
 
   const hasFree = ownedFree >= 1;
+  const profile = me[0];
+  const storageOn = isStorageConfigured();
 
   return (
     <div>
@@ -51,6 +60,58 @@ export default async function WorkspacePage() {
           yang baru.
         </p>
       </header>
+
+      {/* Profil saya — foto profil */}
+      <div className="mb-8 rounded-xl border border-line bg-paper p-6">
+        <h2 className="mb-4 font-display text-lg font-medium text-ink">Profil Saya</h2>
+        <div className="flex flex-wrap items-center gap-5">
+          <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border border-line bg-sand/40 text-muted">
+            {profile?.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.avatarUrl} alt="Foto profil" className="h-full w-full object-cover" />
+            ) : (
+              <User className="h-8 w-8" />
+            )}
+          </span>
+          <div className="flex flex-1 flex-col gap-1">
+            <span className="font-display text-lg font-medium text-ink">{profile?.name}</span>
+            {storageOn ? (
+              <div className="flex flex-wrap items-end gap-3">
+                <form action={updateAvatar} className="flex items-end gap-3">
+                  <input
+                    name="avatar"
+                    type="file"
+                    accept="image/*"
+                    required
+                    className="block text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-teal-700/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-teal-700 hover:file:bg-teal-700/15"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-teal-700 px-3 py-1.5 text-xs font-semibold text-paper transition-colors hover:opacity-90"
+                  >
+                    Unggah
+                  </button>
+                </form>
+                {profile?.avatarUrl && (
+                  <form action={removeAvatar}>
+                    <button
+                      type="submit"
+                      className="rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-600 hover:text-paper"
+                    >
+                      Hapus
+                    </button>
+                  </form>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted">
+                Unggah foto nonaktif — atur{" "}
+                <code className="font-mono">BLOB_READ_WRITE_TOKEN</code>.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Daftar workspace */}
       <div className="space-y-3">

@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, assessments, questions, gradeItems, attempts, answers, grades, enrollments } from "@/db";
+import { db, withTenant, assessments, questions, gradeItems, attempts, answers, grades, enrollments } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
 import { getActiveYear } from "@/lib/academic";
 import { assertTeacherTeachesClass, teacherTeachesClass } from "@/lib/teaching";
 import { notify, notifyMany } from "@/lib/notify";
+import { uploadFile, deleteFile } from "@/lib/storage";
 
 async function writeGrade(
   schoolId: string,
@@ -37,62 +38,64 @@ export async function gradeEssays(formData: FormData) {
   const { schoolId, teacherId } = await requireTeacher();
   const attemptId = z.string().uuid().parse(formData.get("attemptId"));
 
-  const [att] = await db
-    .select()
-    .from(attempts)
-    .where(and(eq(attempts.id, attemptId), eq(attempts.schoolId, schoolId)))
-    .limit(1);
-  if (!att) throw new Error("Pengerjaan tidak ditemukan.");
-  await ownAssessment(schoolId, teacherId, att.assessmentId); // A2
+  await withTenant(schoolId, async () => {
+    const [att] = await db
+      .select()
+      .from(attempts)
+      .where(and(eq(attempts.id, attemptId), eq(attempts.schoolId, schoolId)))
+      .limit(1);
+    if (!att) throw new Error("Pengerjaan tidak ditemukan.");
+    await ownAssessment(schoolId, teacherId, att.assessmentId); // A2
 
-  const rows = await db
-    .select({
-      answerId: answers.id,
-      type: questions.type,
-      points: questions.points,
-      awarded: answers.awardedPoints,
-    })
-    .from(answers)
-    .innerJoin(questions, eq(questions.id, answers.questionId))
-    .where(eq(answers.attemptId, attemptId));
+    const rows = await db
+      .select({
+        answerId: answers.id,
+        type: questions.type,
+        points: questions.points,
+        awarded: answers.awardedPoints,
+      })
+      .from(answers)
+      .innerJoin(questions, eq(questions.id, answers.questionId))
+      .where(eq(answers.attemptId, attemptId));
 
-  let total = 0;
-  let anyPending = false;
-  for (const r of rows) {
-    if (r.type === "essay") {
-      const raw = formData.get(`award_${r.answerId}`);
-      if (raw === null || String(raw).trim() === "") {
-        anyPending = true;
-        continue;
+    let total = 0;
+    let anyPending = false;
+    for (const r of rows) {
+      if (r.type === "essay") {
+        const raw = formData.get(`award_${r.answerId}`);
+        if (raw === null || String(raw).trim() === "") {
+          anyPending = true;
+          continue;
+        }
+        const val = Math.max(0, Math.min(r.points, Math.trunc(Number(raw))));
+        await db.update(answers).set({ awardedPoints: val }).where(eq(answers.id, r.answerId));
+        total += val;
+      } else {
+        total += r.awarded ?? 0;
       }
-      const val = Math.max(0, Math.min(r.points, Math.trunc(Number(raw))));
-      await db.update(answers).set({ awardedPoints: val }).where(eq(answers.id, r.answerId));
-      total += val;
-    } else {
-      total += r.awarded ?? 0;
     }
-  }
 
-  const status = anyPending ? "submitted" : "graded";
-  await db
-    .update(attempts)
-    .set({ status, totalScore: anyPending ? null : total })
-    .where(eq(attempts.id, attemptId));
+    const status = anyPending ? "submitted" : "graded";
+    await db
+      .update(attempts)
+      .set({ status, totalScore: anyPending ? null : total })
+      .where(eq(attempts.id, attemptId));
 
-  if (!anyPending) {
-    await writeGrade(schoolId, att.assessmentId, att.studentId, total, att.academicYearId);
-    // B1: beri tahu siswa nilainya sudah keluar.
-    await notify({
-      userId: att.studentId,
-      schoolId,
-      type: "grade",
-      title: "Nilai kuis sudah keluar",
-      body: "Koreksi selesai. Ketuk untuk melihat hasilmu.",
-      href: `/siswa/kuis/${att.assessmentId}`,
-    });
-  }
-  revalidatePath(`/guru/kuis/${att.assessmentId}`);
-  revalidatePath(`/guru/kuis/${att.assessmentId}/koreksi/${attemptId}`);
+    if (!anyPending) {
+      await writeGrade(schoolId, att.assessmentId, att.studentId, total, att.academicYearId);
+      // B1: beri tahu siswa nilainya sudah keluar.
+      await notify({
+        userId: att.studentId,
+        schoolId,
+        type: "grade",
+        title: "Nilai kuis sudah keluar",
+        body: "Koreksi selesai. Ketuk untuk melihat hasilmu.",
+        href: `/siswa/kuis/${att.assessmentId}`,
+      });
+    }
+    revalidatePath(`/guru/kuis/${att.assessmentId}`);
+    revalidatePath(`/guru/kuis/${att.assessmentId}/koreksi/${attemptId}`);
+  });
 }
 
 type AssessmentRow = typeof assessments.$inferSelect;
@@ -163,35 +166,39 @@ export async function createAssessment(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
-  // A2: guru hanya boleh membuat kuis untuk kelas yang ia ampu.
-  await assertTeacherTeachesClass(schoolId, teacherId, parsed.data.classId);
+  await withTenant(schoolId, async () => {
+    // A2: guru hanya boleh membuat kuis untuk kelas yang ia ampu.
+    await assertTeacherTeachesClass(schoolId, teacherId, parsed.data.classId);
 
-  const year = await getActiveYear(schoolId);
-  const [created] = await db
-    .insert(assessments)
-    .values({
-      schoolId,
-      academicYearId: year?.id ?? null,
-      teacherId,
-      subjectId: parsed.data.subjectId,
-      classId: parsed.data.classId,
-      title: parsed.data.title,
-      type: parsed.data.type,
-      durationMin: parsed.data.durationMin,
-      status: "draft",
-    })
-    .returning({ id: assessments.id });
+    const year = await getActiveYear(schoolId);
+    const [created] = await db
+      .insert(assessments)
+      .values({
+        schoolId,
+        academicYearId: year?.id ?? null,
+        teacherId,
+        subjectId: parsed.data.subjectId,
+        classId: parsed.data.classId,
+        title: parsed.data.title,
+        type: parsed.data.type,
+        durationMin: parsed.data.durationMin,
+        status: "draft",
+      })
+      .returning({ id: assessments.id });
 
-  redirect(`/guru/kuis/${created.id}`);
+    redirect(`/guru/kuis/${created.id}`);
+  });
 }
 
 export async function deleteAssessment(formData: FormData) {
   const { schoolId, teacherId } = await requireTeacher();
   const id = z.string().uuid().parse(formData.get("id"));
-  await ownAssessment(schoolId, teacherId, id); // A2
-  await db
-    .delete(assessments)
-    .where(and(eq(assessments.id, id), eq(assessments.schoolId, schoolId)));
+  await withTenant(schoolId, async () => {
+    await ownAssessment(schoolId, teacherId, id); // A2
+    await db
+      .delete(assessments)
+      .where(and(eq(assessments.id, id), eq(assessments.schoolId, schoolId)));
+  });
   revalidatePath("/guru/kuis");
 }
 
@@ -199,43 +206,47 @@ export async function setAssessmentStatus(formData: FormData) {
   const { schoolId, teacherId } = await requireTeacher();
   const id = z.string().uuid().parse(formData.get("id"));
   const status = z.enum(["draft", "published"]).parse(formData.get("status"));
-  const a = await ownAssessment(schoolId, teacherId, id);
-  await db.update(assessments).set({ status }).where(eq(assessments.id, id));
-  // Saat diterbitkan & dihitung ke nilai → buat item nilai tertaut.
-  if (status === "published" && a.countToGrade) await ensureGradeItem(schoolId, a);
-  // B1: beri tahu siswa kelas bahwa ada kuis baru.
-  if (status === "published" && a.classId) {
-    const studs = await db
-      .select({ id: enrollments.studentId })
-      .from(enrollments)
-      .where(and(eq(enrollments.classId, a.classId), eq(enrollments.schoolId, schoolId)));
-    await notifyMany(
-      studs.map((s) => s.id),
-      {
-        schoolId,
-        type: "quiz",
-        title: `Kuis baru: ${a.title}`,
-        body: "Ada kuis baru untukmu. Ketuk untuk mengerjakan.",
-        href: `/siswa/kuis/${a.id}`,
-      },
-    );
-  }
+  await withTenant(schoolId, async () => {
+    const a = await ownAssessment(schoolId, teacherId, id);
+    await db.update(assessments).set({ status }).where(eq(assessments.id, id));
+    // Saat diterbitkan & dihitung ke nilai → buat item nilai tertaut.
+    if (status === "published" && a.countToGrade) await ensureGradeItem(schoolId, a);
+    // B1: beri tahu siswa kelas bahwa ada kuis baru.
+    if (status === "published" && a.classId) {
+      const studs = await db
+        .select({ id: enrollments.studentId })
+        .from(enrollments)
+        .where(and(eq(enrollments.classId, a.classId), eq(enrollments.schoolId, schoolId)));
+      await notifyMany(
+        studs.map((s) => s.id),
+        {
+          schoolId,
+          type: "quiz",
+          title: `Kuis baru: ${a.title}`,
+          body: "Ada kuis baru untukmu. Ketuk untuk mengerjakan.",
+          href: `/siswa/kuis/${a.id}`,
+        },
+      );
+    }
+  });
   revalidatePath(`/guru/kuis/${id}`);
 }
 
 export async function toggleCountToGrade(formData: FormData) {
   const { schoolId, teacherId } = await requireTeacher();
   const id = z.string().uuid().parse(formData.get("id"));
-  const a = await ownAssessment(schoolId, teacherId, id);
-  const next = !a.countToGrade;
-  await db.update(assessments).set({ countToGrade: next }).where(eq(assessments.id, id));
+  await withTenant(schoolId, async () => {
+    const a = await ownAssessment(schoolId, teacherId, id);
+    const next = !a.countToGrade;
+    await db.update(assessments).set({ countToGrade: next }).where(eq(assessments.id, id));
 
-  if (next) {
-    if (a.status === "published") await ensureGradeItem(schoolId, a);
-  } else {
-    // Tidak dihitung → lepas item nilai tertaut.
-    await db.delete(gradeItems).where(eq(gradeItems.assessmentId, id));
-  }
+    if (next) {
+      if (a.status === "published") await ensureGradeItem(schoolId, a);
+    } else {
+      // Tidak dihitung → lepas item nilai tertaut.
+      await db.delete(gradeItems).where(eq(gradeItems.assessmentId, id));
+    }
+  });
   revalidatePath(`/guru/kuis/${id}`);
 }
 
@@ -263,18 +274,6 @@ export async function addQuestion(
     return { error: parsed.error.issues[0]?.message ?? "Data tidak valid." };
   }
 
-  const [owned] = await db
-    .select({ id: assessments.id, teacherId: assessments.teacherId, classId: assessments.classId })
-    .from(assessments)
-    .where(and(eq(assessments.id, parsed.data.assessmentId), eq(assessments.schoolId, schoolId)))
-    .limit(1);
-  if (!owned) return { error: "Kuis tidak ditemukan." };
-  // A2: hanya pembuat / pengampu kelas yang boleh menambah soal.
-  const allowed =
-    owned.teacherId === teacherId ||
-    (owned.classId ? await teacherTeachesClass(schoolId, teacherId, owned.classId) : false);
-  if (!allowed) return { error: "Anda tidak berhak mengubah kuis ini." };
-
   let options: string[] | null = null;
   let correctIndex: number | null = null;
 
@@ -289,32 +288,71 @@ export async function addQuestion(
     }
   }
 
-  const count = await db.$count(
-    questions,
-    eq(questions.assessmentId, parsed.data.assessmentId),
-  );
+  return withTenant(schoolId, async (): Promise<QuestionState> => {
+    const [owned] = await db
+      .select({ id: assessments.id, teacherId: assessments.teacherId, classId: assessments.classId })
+      .from(assessments)
+      .where(and(eq(assessments.id, parsed.data.assessmentId), eq(assessments.schoolId, schoolId)))
+      .limit(1);
+    if (!owned) return { error: "Kuis tidak ditemukan." };
+    // A2: hanya pembuat / pengampu kelas yang boleh menambah soal.
+    const allowed =
+      owned.teacherId === teacherId ||
+      (owned.classId ? await teacherTeachesClass(schoolId, teacherId, owned.classId) : false);
+    if (!allowed) return { error: "Anda tidak berhak mengubah kuis ini." };
 
-  await db.insert(questions).values({
-    schoolId,
-    assessmentId: parsed.data.assessmentId,
-    type: parsed.data.type,
-    text: parsed.data.text,
-    options,
-    correctIndex,
-    points: parsed.data.points,
-    sortOrder: count,
+    const count = await db.$count(
+      questions,
+      eq(questions.assessmentId, parsed.data.assessmentId),
+    );
+
+    // Lampiran gambar soal (opsional).
+    let imageUrl: string | null = null;
+    const image = formData.get("image");
+    if (image instanceof File && image.size > 0) {
+      const stored = await uploadFile({
+        schoolId,
+        ownerId: teacherId,
+        file: image,
+        kind: "image",
+        prefix: "questions",
+        maxBytes: 10_000_000,
+      });
+      imageUrl = stored.url;
+    }
+
+    await db.insert(questions).values({
+      schoolId,
+      assessmentId: parsed.data.assessmentId,
+      type: parsed.data.type,
+      text: parsed.data.text,
+      imageUrl,
+      options,
+      correctIndex,
+      points: parsed.data.points,
+      sortOrder: count,
+    });
+    revalidatePath(`/guru/kuis/${parsed.data.assessmentId}`);
+    return undefined;
   });
-  revalidatePath(`/guru/kuis/${parsed.data.assessmentId}`);
-  return undefined;
 }
 
 export async function deleteQuestion(formData: FormData) {
   const { schoolId, teacherId } = await requireTeacher();
   const id = z.string().uuid().parse(formData.get("id"));
   const assessmentId = z.string().uuid().parse(formData.get("assessmentId"));
-  await ownAssessment(schoolId, teacherId, assessmentId); // A2
-  await db
-    .delete(questions)
-    .where(and(eq(questions.id, id), eq(questions.schoolId, schoolId)));
+  const removed = await withTenant(schoolId, async () => {
+    await ownAssessment(schoolId, teacherId, assessmentId); // A2
+    const [row] = await db
+      .select({ imageUrl: questions.imageUrl })
+      .from(questions)
+      .where(and(eq(questions.id, id), eq(questions.schoolId, schoolId)))
+      .limit(1);
+    await db
+      .delete(questions)
+      .where(and(eq(questions.id, id), eq(questions.schoolId, schoolId)));
+    return row;
+  });
+  if (removed?.imageUrl) await deleteFile(removed.imageUrl);
   revalidatePath(`/guru/kuis/${assessmentId}`);
 }

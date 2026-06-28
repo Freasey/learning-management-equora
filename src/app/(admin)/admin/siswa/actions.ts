@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { db, users, enrollments } from "@/db";
+import { db, withTenant, users, enrollments } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { assertQuota, getSchoolPlan, countRole } from "@/lib/quota";
 import { getClassYear } from "@/lib/academic";
@@ -48,28 +48,30 @@ export async function addStudent(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
-  await assertQuota(schoolId, "student");
-  if (await usernameTaken(schoolId, parsed.data.username)) {
-    throw new Error(`NIS/username "${parsed.data.username}" sudah dipakai.`);
-  }
+  await withTenant(schoolId, async () => {
+    await assertQuota(schoolId, "student");
+    if (await usernameTaken(schoolId, parsed.data.username)) {
+      throw new Error(`NIS/username "${parsed.data.username}" sudah dipakai.`);
+    }
 
-  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  const [student] = await db
-    .insert(users)
-    .values({
-      schoolId,
-      role: "student",
-      name: parsed.data.name,
-      username: parsed.data.username,
-      passwordHash,
-      status: "active",
-    })
-    .returning({ id: users.id });
-  await ensureMembership(student.id, schoolId, ["student"]);
+    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+    const [student] = await db
+      .insert(users)
+      .values({
+        schoolId,
+        role: "student",
+        name: parsed.data.name,
+        username: parsed.data.username,
+        passwordHash,
+        status: "active",
+      })
+      .returning({ id: users.id });
+    await ensureMembership(student.id, schoolId, ["student"]);
 
-  if (parsed.data.classId) {
-    await enroll(schoolId, student.id, parsed.data.classId);
-  }
+    if (parsed.data.classId) {
+      await enroll(schoolId, student.id, parsed.data.classId);
+    }
+  });
 
   revalidatePath("/admin/siswa");
 }
@@ -86,41 +88,43 @@ export async function bulkAddStudents(formData: FormData) {
     .filter(Boolean);
   if (lines.length === 0) throw new Error("Tidak ada data untuk diimpor.");
 
-  // Cek kuota total.
-  const plan = await getSchoolPlan(schoolId);
-  if (plan?.quotaStudents != null) {
-    const used = await countRole(schoolId, "student");
-    if (used + lines.length > plan.quotaStudents) {
-      throw new Error(
-        `Impor melebihi kuota siswa (${used}+${lines.length} > ${plan.quotaStudents}).`,
-      );
+  await withTenant(schoolId, async () => {
+    // Cek kuota total.
+    const plan = await getSchoolPlan(schoolId);
+    if (plan?.quotaStudents != null) {
+      const used = await countRole(schoolId, "student");
+      if (used + lines.length > plan.quotaStudents) {
+        throw new Error(
+          `Impor melebihi kuota siswa (${used}+${lines.length} > ${plan.quotaStudents}).`,
+        );
+      }
     }
-  }
 
-  const passwordHash = await bcrypt.hash(password, 10);
-  let added = 0;
-  for (const line of lines) {
-    const [name, username] = line.split(",").map((s) => s.trim());
-    if (!name || !username) continue;
-    if (await usernameTaken(schoolId, username)) continue;
+    const passwordHash = await bcrypt.hash(password, 10);
+    let added = 0;
+    for (const line of lines) {
+      const [name, username] = line.split(",").map((s) => s.trim());
+      if (!name || !username) continue;
+      if (await usernameTaken(schoolId, username)) continue;
 
-    const [student] = await db
-      .insert(users)
-      .values({
-        schoolId,
-        role: "student",
-        name,
-        username,
-        passwordHash,
-        status: "active",
-      })
-      .returning({ id: users.id });
-    await ensureMembership(student.id, schoolId, ["student"]);
-    if (classId) await enroll(schoolId, student.id, classId);
-    added++;
-  }
+      const [student] = await db
+        .insert(users)
+        .values({
+          schoolId,
+          role: "student",
+          name,
+          username,
+          passwordHash,
+          status: "active",
+        })
+        .returning({ id: users.id });
+      await ensureMembership(student.id, schoolId, ["student"]);
+      if (classId) await enroll(schoolId, student.id, classId);
+      added++;
+    }
 
-  if (added === 0) throw new Error("Tidak ada siswa baru ditambahkan (mungkin semua NIS sudah ada).");
+    if (added === 0) throw new Error("Tidak ada siswa baru ditambahkan (mungkin semua NIS sudah ada).");
+  });
   revalidatePath("/admin/siswa");
 }
 
@@ -128,7 +132,9 @@ export async function setStudentClass(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const studentId = z.string().uuid().parse(formData.get("studentId"));
   const classId = String(formData.get("classId") || "");
-  await enroll(schoolId, studentId, classId);
+  await withTenant(schoolId, async () => {
+    await enroll(schoolId, studentId, classId);
+  });
   revalidatePath("/admin/siswa");
 }
 
@@ -161,53 +167,56 @@ export async function generateClassCredentials(
     });
   if (!parse.success) return { error: parse.error.issues[0]?.message ?? "Data tidak valid." };
 
-  const studs = await db
-    .select({ id: users.id, name: users.name, username: users.username })
-    .from(users)
-    .innerJoin(enrollments, eq(enrollments.studentId, users.id))
-    .where(
-      and(
-        eq(enrollments.classId, parse.data.classId),
-        eq(enrollments.schoolId, schoolId),
-        eq(users.role, "student"),
-        ne(users.status, "inactive"),
-      ),
-    );
-  if (studs.length === 0) return { error: "Kelas ini belum punya siswa." };
-
-  const passwordHash = await bcrypt.hash(parse.data.password, 10);
-  await db
-    .update(users)
-    .set({ passwordHash, updatedAt: new Date() })
-    .where(
-      and(
-        inArray(
-          users.id,
-          studs.map((s) => s.id),
+  return withTenant(schoolId, async (): Promise<CredState> => {
+    const studs = await db
+      .select({ id: users.id, name: users.name, username: users.username })
+      .from(users)
+      .innerJoin(enrollments, eq(enrollments.studentId, users.id))
+      .where(
+        and(
+          eq(enrollments.classId, parse.data.classId),
+          eq(enrollments.schoolId, schoolId),
+          eq(users.role, "student"),
+          ne(users.status, "inactive"),
         ),
-        eq(users.schoolId, schoolId),
-      ),
-    );
+      );
+    if (studs.length === 0) return { error: "Kelas ini belum punya siswa." };
 
-  await logAudit({
-    schoolId,
-    actorId: session?.user?.id,
-    action: "student.credentials_reset",
-    target: parse.data.classId,
-    meta: { count: studs.length },
+    const passwordHash = await bcrypt.hash(parse.data.password, 10);
+    await db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(
+        and(
+          inArray(
+            users.id,
+            studs.map((s) => s.id),
+          ),
+          eq(users.schoolId, schoolId),
+        ),
+      );
+
+    await logAudit({
+      schoolId,
+      actorId: session?.user?.id,
+      action: "student.credentials_reset",
+      target: parse.data.classId,
+      meta: { count: studs.length },
+    });
+
+    return {
+      ok: true,
+      password: parse.data.password,
+      students: studs.map((s) => ({ name: s.name, username: s.username })),
+    };
   });
-
-  return {
-    ok: true,
-    password: parse.data.password,
-    students: studs.map((s) => ({ name: s.name, username: s.username })),
-  };
 }
 
 export async function deleteStudent(formData: FormData) {
   const { session, schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
   // Soft-delete: tandai inactive agar nilai & pengerjaan siswa tetap tersimpan.
+  // (users bukan tabel RLS → tak perlu withTenant.)
   await db
     .update(users)
     .set({ status: "inactive", updatedAt: new Date() })

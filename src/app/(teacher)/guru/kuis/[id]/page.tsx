@@ -4,6 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { auth } from "@/auth";
 import { db, assessments, questions, subjects, classes, attempts, users } from "@/db";
+import { isStorageConfigured } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { RowAction, Th } from "@/components/admin/ui";
 import { deleteQuestion, setAssessmentStatus, toggleCountToGrade } from "../actions";
@@ -142,6 +143,14 @@ export default async function KuisDetailPage({
                     <span className="font-mono text-[10px] text-muted">{q.points} poin</span>
                   </div>
                   <p className="mt-2 text-ink">{q.text}</p>
+                  {q.imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={q.imageUrl}
+                      alt="Gambar soal"
+                      className="mt-2 max-h-48 rounded-lg border border-line"
+                    />
+                  )}
                   {q.type === "mc" && q.options && (
                     <ul className="mt-2 space-y-1 text-sm">
                       {q.options.map((opt, idx) => (
@@ -222,7 +231,7 @@ export default async function KuisDetailPage({
       </section>
 
       {/* Tambah soal */}
-      <QuestionForms assessmentId={a.id} />
+      <QuestionForms assessmentId={a.id} storageOn={isStorageConfigured()} />
     </div>
   );
 }

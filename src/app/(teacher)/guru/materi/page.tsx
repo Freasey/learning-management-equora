@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
-import { Sparkles, FileText, Link2 } from "lucide-react";
+import { Sparkles, FileText, Link2, Upload } from "lucide-react";
 import { auth } from "@/auth";
 import { db, materials, subjects, classes } from "@/db";
 import { getTeacherAssignments } from "@/lib/teaching";
+import { isStorageConfigured } from "@/lib/storage";
 import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { PageHeader, Field, SelectField, Textarea, RowAction, Th, EmptyRow } from "@/components/admin/ui";
-import { addMaterial, generateAiMaterial, deleteMaterial } from "./actions";
+import { PageHeader, Field, SelectField, FileField, RowAction, Th, EmptyRow } from "@/components/admin/ui";
+import { addMaterial, generateAiMaterial, uploadMaterialFile, deleteMaterial } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Materi · Guru" };
@@ -15,6 +16,7 @@ export const metadata = { title: "Materi · Guru" };
 const typeBadge: Record<string, { label: string; cls: string }> = {
   ai: { label: "AI", cls: "bg-accent/15 text-accent" },
   link: { label: "Tautan", cls: "bg-teal-700/10 text-teal-700" },
+  file: { label: "Berkas", cls: "bg-coral/15 text-coral" },
   manual: { label: "Manual", cls: "bg-sand-deep text-ink" },
 };
 
@@ -27,6 +29,7 @@ export default async function MateriPage() {
   const assignments = await getTeacherAssignments(schoolId, teacherId);
   const subjOptions = dedupe(assignments.map((a) => ({ id: a.subjectId, name: a.subjectName })));
   const classOptions = dedupe(assignments.map((a) => ({ id: a.classId, name: a.className })));
+  const storageOn = isStorageConfigured();
 
   const rows = await db
     .select({
@@ -123,6 +126,51 @@ export default async function MateriPage() {
           </div>
         </form>
       </div>
+
+      {/* Unggah berkas (Vercel Blob) */}
+      {storageOn ? (
+        <form action={uploadMaterialFile} className="mb-8 rounded-xl border border-line bg-paper p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-coral/15 text-coral">
+              <Upload className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="font-display text-lg font-medium text-ink">Unggah berkas</h2>
+              <p className="text-xs text-muted">PDF, PPT, DOCX, atau gambar (maks 25 MB)</p>
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Judul" name="title" required placeholder="cth. Slide Bab 1" />
+            <SelectField label="Mapel" name="subjectId" required>
+              {subjOptions.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </SelectField>
+            <SelectField label="Kelas" name="classId" defaultValue="">
+              <option value="">— Umum —</option>
+              {classOptions.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </SelectField>
+            <FileField
+              label="Berkas"
+              name="file"
+              required
+              accept=".pdf,.ppt,.pptx,.doc,.docx,image/*"
+            />
+          </div>
+          <div className="mt-4">
+            <Button type="submit" variant="accent" size="md">
+              <Upload className="h-4 w-4" /> Unggah
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <div className="mb-8 rounded-xl border border-dashed border-line bg-paper p-5 text-sm text-muted">
+          Unggah berkas materi nonaktif — penyimpanan (Vercel Blob) belum
+          dikonfigurasi. Atur <code className="font-mono text-xs">BLOB_READ_WRITE_TOKEN</code> untuk mengaktifkan.
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-line bg-paper">
         <table className="w-full text-sm">

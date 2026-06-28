@@ -6,12 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Field, Textarea, inputClass } from "@/components/admin/ui";
 import { addQuestion, type QuestionState } from "../actions";
 
-export function QuestionForms({ assessmentId }: { assessmentId: string }) {
+export function QuestionForms({
+  assessmentId,
+  storageOn,
+}: {
+  assessmentId: string;
+  storageOn: boolean;
+}) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <McForm assessmentId={assessmentId} />
-      <EssayForm assessmentId={assessmentId} />
+      <McForm assessmentId={assessmentId} storageOn={storageOn} />
+      <EssayForm assessmentId={assessmentId} storageOn={storageOn} />
     </div>
+  );
+}
+
+function ImageField({ storageOn }: { storageOn: boolean }) {
+  if (!storageOn) return null;
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold text-ink">
+        Gambar soal (opsional)
+      </span>
+      <input
+        name="image"
+        type="file"
+        accept="image/*"
+        className="block w-full text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-teal-700/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-teal-700 hover:file:bg-teal-700/15"
+      />
+    </label>
   );
 }
 
@@ -25,7 +48,7 @@ function ErrorNote({ message }: { message?: string }) {
   );
 }
 
-function McForm({ assessmentId }: { assessmentId: string }) {
+function McForm({ assessmentId, storageOn }: { assessmentId: string; storageOn: boolean }) {
   const [state, formAction, pending] = useActionState<QuestionState, FormData>(
     addQuestion,
     undefined,
@@ -62,6 +85,7 @@ function McForm({ assessmentId }: { assessmentId: string }) {
         <div className="max-w-[8rem]">
           <Field label="Poin" name="points" type="number" defaultValue={1} required />
         </div>
+        <ImageField storageOn={storageOn} />
         <ErrorNote message={state?.error} />
         <Button type="submit" variant="primary" size="md" disabled={pending}>
           {pending ? "Menyimpan…" : "Tambah Soal"}
@@ -71,7 +95,7 @@ function McForm({ assessmentId }: { assessmentId: string }) {
   );
 }
 
-function EssayForm({ assessmentId }: { assessmentId: string }) {
+function EssayForm({ assessmentId, storageOn }: { assessmentId: string; storageOn: boolean }) {
   const [state, formAction, pending] = useActionState<QuestionState, FormData>(
     addQuestion,
     undefined,
@@ -86,6 +110,7 @@ function EssayForm({ assessmentId }: { assessmentId: string }) {
         <div className="max-w-[8rem]">
           <Field label="Poin" name="points" type="number" defaultValue={5} required />
         </div>
+        <ImageField storageOn={storageOn} />
         <p className="text-xs text-muted">
           Soal esai dikoreksi manual setelah siswa mengerjakan.
         </p>

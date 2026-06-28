@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, users, enrollments, memberships } from "@/db";
+import { db, withTenant, users, enrollments, memberships } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { assertQuota } from "@/lib/quota";
 import { getClassYear } from "@/lib/academic";
@@ -16,25 +16,28 @@ export async function approveMember(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
   const classId = String(formData.get("classId") || "");
 
-  const [member] = await db
-    .select()
-    .from(users)
-    .where(and(eq(users.id, id), eq(users.schoolId, schoolId), eq(users.status, "pending")))
-    .limit(1);
-  if (!member) throw new Error("Pendaftar tidak ditemukan.");
+  const member = await withTenant(schoolId, async () => {
+    const [m] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, id), eq(users.schoolId, schoolId), eq(users.status, "pending")))
+      .limit(1);
+    if (!m) throw new Error("Pendaftar tidak ditemukan.");
 
-  await assertQuota(schoolId, member.role === "teacher" ? "teacher" : "student");
+    await assertQuota(schoolId, m.role === "teacher" ? "teacher" : "student");
 
-  await db
-    .update(users)
-    .set({ status: "active", updatedAt: new Date() })
-    .where(eq(users.id, id));
-  await ensureMembership(id, schoolId, [member.role]);
+    await db
+      .update(users)
+      .set({ status: "active", updatedAt: new Date() })
+      .where(eq(users.id, id));
+    await ensureMembership(id, schoolId, [m.role]);
 
-  if (member.role === "student" && classId) {
-    const academicYearId = await getClassYear(schoolId, classId);
-    await db.insert(enrollments).values({ schoolId, classId, studentId: id, academicYearId });
-  }
+    if (m.role === "student" && classId) {
+      const academicYearId = await getClassYear(schoolId, classId);
+      await db.insert(enrollments).values({ schoolId, classId, studentId: id, academicYearId });
+    }
+    return m;
+  });
 
   await notify({
     userId: id,

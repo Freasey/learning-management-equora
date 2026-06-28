@@ -13,15 +13,17 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:reset": "tsx --env-file=.env.local scripts/reset-db.mts",
+    "db:rls": "tsx --env-file=.env.local scripts/apply-rls.mts",
     "db:seed": "tsx --env-file=.env.local src/db/seed.ts",
     "seed:superadmin": "tsx --env-file=.env.local scripts/seed-superadmin.ts",
     "seed:demo": "tsx --env-file=.env.local scripts/seed-demo.ts",
     "seed:docs": "tsx --env-file=.env.local scripts/seed-docs.ts",
     "seed:teacher": "tsx --env-file=.env.local scripts/seed-teacher-dual.ts",
-    "demo:reset": "npm run db:reset && npm run db:generate && npm run db:apply && npm run db:seed && npm run seed:superadmin && npm run seed:demo && npm run seed:docs && npm run seed:teacher"
+    "demo:reset": "npm run db:reset && npm run db:generate && npm run db:apply && npm run db:seed && npm run seed:superadmin && npm run seed:demo && npm run seed:docs && npm run seed:teacher && npm run db:rls"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "@vercel/blob": "^2.5.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",

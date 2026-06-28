@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { signOut } from "@/auth";
 import {
   db,
+  withTenant,
   academicYears,
   subjects,
   classes,
@@ -32,6 +33,7 @@ export async function doSignOut() {
 export async function seedSampleData() {
   const { session, schoolId } = await requireSchoolAdmin();
 
+  await withTenant(schoolId, async () => {
   // Hindari menumpuk: lewati bila sudah ada kelas.
   const existingClasses = await db.$count(
     classes,
@@ -116,4 +118,5 @@ export async function seedSampleData() {
 
   await logAudit({ schoolId, actorId: session?.user?.id, action: "sample.seed" });
   revalidatePath("/admin");
+  });
 }

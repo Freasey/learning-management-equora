@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, schedules } from "@/db";
+import { db, withTenant, schedules } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 
 const addSchema = z.object({
@@ -29,15 +29,17 @@ export async function addSchedule(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
-  await db.insert(schedules).values({
-    schoolId,
-    classId: parsed.data.classId,
-    dayOfWeek: parsed.data.dayOfWeek,
-    startTime: parsed.data.startTime,
-    endTime: parsed.data.endTime,
-    subjectId: parsed.data.subjectId || null,
-    teacherId: parsed.data.teacherId || null,
-    room: parsed.data.room || null,
+  await withTenant(schoolId, async () => {
+    await db.insert(schedules).values({
+      schoolId,
+      classId: parsed.data.classId,
+      dayOfWeek: parsed.data.dayOfWeek,
+      startTime: parsed.data.startTime,
+      endTime: parsed.data.endTime,
+      subjectId: parsed.data.subjectId || null,
+      teacherId: parsed.data.teacherId || null,
+      room: parsed.data.room || null,
+    });
   });
   revalidatePath("/admin/jadwal");
 }
@@ -45,8 +47,10 @@ export async function addSchedule(formData: FormData) {
 export async function deleteSchedule(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
-  await db
-    .delete(schedules)
-    .where(and(eq(schedules.id, id), eq(schedules.schoolId, schoolId)));
+  await withTenant(schoolId, async () => {
+    await db
+      .delete(schedules)
+      .where(and(eq(schedules.id, id), eq(schedules.schoolId, schoolId)));
+  });
   revalidatePath("/admin/jadwal");
 }

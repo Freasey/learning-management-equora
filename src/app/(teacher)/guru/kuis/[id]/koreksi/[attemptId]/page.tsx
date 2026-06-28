@@ -44,10 +44,12 @@ export default async function KoreksiPage({
       text: questions.text,
       type: questions.type,
       points: questions.points,
+      imageUrl: questions.imageUrl,
       options: questions.options,
       correctIndex: questions.correctIndex,
       choiceIndex: answers.choiceIndex,
       essayText: answers.essayText,
+      fileUrl: answers.fileUrl,
       awarded: answers.awardedPoints,
     })
     .from(answers)
@@ -88,6 +90,10 @@ export default async function KoreksiPage({
               <span className="font-mono text-[10px] text-muted">{r.points} poin</span>
             </div>
             <p className="mt-2 text-ink">{r.text}</p>
+            {r.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={r.imageUrl} alt="Gambar soal" className="mt-2 max-h-48 rounded-lg border border-line" />
+            )}
 
             {r.type === "mc" ? (
               <div className="mt-2 text-sm">
@@ -104,6 +110,16 @@ export default async function KoreksiPage({
                 <div className="rounded-lg bg-sand/50 px-3 py-2 text-sm text-ink">
                   {r.essayText || <span className="text-muted">(kosong)</span>}
                 </div>
+                {r.fileUrl && (
+                  <a
+                    href={r.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-teal-700 hover:underline"
+                  >
+                    📎 Lihat lampiran jawaban
+                  </a>
+                )}
                 <label className="mt-3 flex items-center gap-2">
                   <span className="text-xs font-semibold text-ink">Nilai esai:</span>
                   <input

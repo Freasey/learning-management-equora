@@ -5,6 +5,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
+  withTenant,
   schools,
   academicYears,
   classes,
@@ -14,6 +15,7 @@ import {
 } from "@/db";
 import { requireSchoolAdmin } from "@/lib/auth-guard";
 import { logAudit } from "@/lib/audit";
+import { uploadFile, deleteFile } from "@/lib/storage";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Nama sekolah minimal 2 karakter"),
@@ -46,21 +48,70 @@ export async function updateSchoolProfile(formData: FormData) {
   revalidatePath("/admin/pengaturan");
 }
 
+/** Unggah / ganti logo sekolah (Vercel Blob). */
+export async function updateSchoolLogo(formData: FormData) {
+  const { schoolId } = await requireSchoolAdmin();
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Pilih berkas gambar logo.");
+  }
+
+  const [current] = await db
+    .select({ logoUrl: schools.logoUrl })
+    .from(schools)
+    .where(eq(schools.id, schoolId))
+    .limit(1);
+
+  const stored = await uploadFile({
+    schoolId,
+    file,
+    kind: "logo",
+    prefix: "logos",
+    maxBytes: 5_000_000,
+  });
+
+  await db
+    .update(schools)
+    .set({ logoUrl: stored.url, updatedAt: new Date() })
+    .where(eq(schools.id, schoolId));
+
+  if (current?.logoUrl) await deleteFile(current.logoUrl);
+  revalidatePath("/admin/pengaturan");
+}
+
+/** Hapus logo sekolah. */
+export async function removeSchoolLogo() {
+  const { schoolId } = await requireSchoolAdmin();
+  const [current] = await db
+    .select({ logoUrl: schools.logoUrl })
+    .from(schools)
+    .where(eq(schools.id, schoolId))
+    .limit(1);
+  await db
+    .update(schools)
+    .set({ logoUrl: null, updatedAt: new Date() })
+    .where(eq(schools.id, schoolId));
+  if (current?.logoUrl) await deleteFile(current.logoUrl);
+  revalidatePath("/admin/pengaturan");
+}
+
 export async function addAcademicYear(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const name = z.string().min(2, "Nama tahun ajaran minimal 2 karakter").parse(
     formData.get("name"),
   );
 
-  // Jadikan aktif bila ini tahun ajaran pertama.
-  const existing = await db.$count(
-    academicYears,
-    and(eq(academicYears.schoolId, schoolId), isNull(academicYears.deletedAt)),
-  );
-  await db.insert(academicYears).values({
-    schoolId,
-    name,
-    isActive: existing === 0,
+  await withTenant(schoolId, async () => {
+    // Jadikan aktif bila ini tahun ajaran pertama.
+    const existing = await db.$count(
+      academicYears,
+      and(eq(academicYears.schoolId, schoolId), isNull(academicYears.deletedAt)),
+    );
+    await db.insert(academicYears).values({
+      schoolId,
+      name,
+      isActive: existing === 0,
+    });
   });
 
   revalidatePath("/admin/pengaturan");
@@ -70,14 +121,16 @@ export async function setActiveYear(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
 
-  await db
-    .update(academicYears)
-    .set({ isActive: false })
-    .where(eq(academicYears.schoolId, schoolId));
-  await db
-    .update(academicYears)
-    .set({ isActive: true })
-    .where(and(eq(academicYears.id, id), eq(academicYears.schoolId, schoolId)));
+  await withTenant(schoolId, async () => {
+    await db
+      .update(academicYears)
+      .set({ isActive: false })
+      .where(eq(academicYears.schoolId, schoolId));
+    await db
+      .update(academicYears)
+      .set({ isActive: true })
+      .where(and(eq(academicYears.id, id), eq(academicYears.schoolId, schoolId)));
+  });
 
   revalidatePath("/admin/pengaturan");
 }
@@ -103,6 +156,7 @@ export async function rolloverAcademicYear(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
+  await withTenant(schoolId, async () => {
   // Tahun sumber wajib milik sekolah ini.
   const [src] = await db
     .select()
@@ -233,6 +287,7 @@ export async function rolloverAcademicYear(formData: FormData) {
     target: newYear.id,
     meta: { name: parsed.data.name, includeStudents: parsed.data.includeStudents },
   });
+  });
 
   revalidatePath("/admin/pengaturan");
   revalidatePath("/admin/kelas");
@@ -241,9 +296,11 @@ export async function rolloverAcademicYear(formData: FormData) {
 export async function deleteAcademicYear(formData: FormData) {
   const { schoolId } = await requireSchoolAdmin();
   const id = z.string().uuid().parse(formData.get("id"));
-  await db
-    .update(academicYears)
-    .set({ deletedAt: new Date() })
-    .where(and(eq(academicYears.id, id), eq(academicYears.schoolId, schoolId)));
+  await withTenant(schoolId, async () => {
+    await db
+      .update(academicYears)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(academicYears.id, id), eq(academicYears.schoolId, schoolId)));
+  });
   revalidatePath("/admin/pengaturan");
 }

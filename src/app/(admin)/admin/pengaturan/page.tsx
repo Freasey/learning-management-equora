@@ -4,10 +4,13 @@ import { auth } from "@/auth";
 import { db, schools } from "@/db";
 import { listYears } from "@/lib/academic";
 import { formatDate } from "@/lib/format";
+import { isStorageConfigured } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
-import { PageHeader, Field, SelectField, RowAction } from "@/components/admin/ui";
+import { PageHeader, Field, SelectField, FileField, RowAction } from "@/components/admin/ui";
 import {
   updateSchoolProfile,
+  updateSchoolLogo,
+  removeSchoolLogo,
   addAcademicYear,
   setActiveYear,
   deleteAcademicYear,
@@ -29,6 +32,7 @@ export default async function PengaturanPage() {
     .limit(1);
   const years = await listYears(schoolId);
   const activeYear = years.find((y) => y.isActive);
+  const storageOn = isStorageConfigured();
 
   return (
     <div>
@@ -70,6 +74,42 @@ export default async function PengaturanPage() {
           </Button>
         </div>
       </form>
+
+      {/* Logo sekolah */}
+      <div className="mb-8 rounded-xl border border-line bg-paper p-6">
+        <h2 className="mb-1 font-display text-lg font-medium text-ink">Logo Sekolah</h2>
+        <p className="mb-4 text-sm text-muted">
+          Tampil di kop kartu kredensial dan halaman sekolah.
+        </p>
+        <div className="flex flex-wrap items-center gap-5">
+          <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-sand/40">
+            {school.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={school.logoUrl} alt="Logo sekolah" className="h-full w-full object-contain" />
+            ) : (
+              <span className="font-mono text-[10px] uppercase text-muted">Belum ada</span>
+            )}
+          </span>
+          {storageOn ? (
+            <div className="flex flex-1 flex-wrap items-end gap-3">
+              <form action={updateSchoolLogo} className="flex items-end gap-3">
+                <FileField label="Pilih logo" name="logo" accept="image/*" required hint="PNG/JPG/SVG, maks 5 MB" />
+                <Button type="submit" variant="primary" size="sm">Unggah</Button>
+              </form>
+              {school.logoUrl && (
+                <form action={removeSchoolLogo}>
+                  <RowAction danger>Hapus logo</RowAction>
+                </form>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted">
+              Penyimpanan (Vercel Blob) belum dikonfigurasi. Atur{" "}
+              <code className="font-mono text-xs">BLOB_READ_WRITE_TOKEN</code> untuk mengunggah logo.
+            </p>
+          )}
+        </div>
+      </div>
 
       <div className="rounded-xl border border-line bg-paper p-6">
         <h2 className="mb-1 font-display text-lg font-medium text-ink">

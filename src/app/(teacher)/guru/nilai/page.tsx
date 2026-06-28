@@ -4,8 +4,9 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, enrollments, users, gradeItems, grades, subjects } from "@/db";
 import { getTeacherAssignments } from "@/lib/teaching";
+import { isStorageConfigured } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
-import { PageHeader, Field, RowAction, Th, EmptyRow, inputClass } from "@/components/admin/ui";
+import { PageHeader, Field, FileField, Th, EmptyRow, inputClass } from "@/components/admin/ui";
 import { addGradeItem, deleteGradeItem, saveGrades } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -78,6 +79,7 @@ async function GradeBook({
   selectedItem?: string;
 }) {
   const pairEnc = encodeURIComponent(pair);
+  const storageOn = isStorageConfigured();
 
   const [subject] = await db
     .select()
@@ -142,6 +144,11 @@ async function GradeBook({
           <div className="w-28">
             <Field label="Nilai maks" name="maxScore" type="number" defaultValue={100} required />
           </div>
+          {storageOn && (
+            <div className="w-56">
+              <FileField label="Berkas/rubrik (opsional)" name="attachment" accept=".pdf,.doc,.docx,image/*" />
+            </div>
+          )}
           <Button type="submit" variant="accent" size="md">Tambah</Button>
         </form>
 
@@ -170,6 +177,17 @@ async function GradeBook({
                   >
                     {auto ? "Otomatis" : "Manual"}
                   </span>
+                  {it.attachmentUrl && (
+                    <a
+                      href={it.attachmentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Lihat berkas/rubrik"
+                      className="text-teal-700 hover:underline"
+                    >
+                      📎
+                    </a>
+                  )}
                   {!auto && (
                     <form action={deleteGradeItem}>
                       <input type="hidden" name="id" value={it.id} />

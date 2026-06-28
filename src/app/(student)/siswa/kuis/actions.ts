@@ -3,10 +3,11 @@
 import { redirect } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, assessments, questions, attempts, answers, gradeItems, grades } from "@/db";
+import { db, withTenant, assessments, questions, attempts, answers, gradeItems, grades } from "@/db";
 import { requireStudent } from "@/lib/auth-guard";
 import { getStudentClass } from "@/lib/student";
 import { notify } from "@/lib/notify";
+import { uploadFile } from "@/lib/storage";
 
 /** Tulis/timpa nilai siswa ke item nilai tertaut assessment. */
 async function writeGrade(
@@ -35,6 +36,7 @@ export async function submitAttempt(formData: FormData) {
   const { schoolId, studentId } = await requireStudent();
   const assessmentId = z.string().uuid().parse(formData.get("assessmentId"));
 
+  await withTenant(schoolId, async () => {
   const [a] = await db
     .select()
     .from(assessments)
@@ -69,7 +71,16 @@ export async function submitAttempt(formData: FormData) {
   let maxScore = 0;
   let hasEssay = false;
 
-  const rows = qs.map((q) => {
+  const rows: {
+    questionId: string;
+    choiceIndex: number | null;
+    essayText: string | null;
+    fileUrl: string | null;
+    awardedPoints: number | null;
+    isCorrect: boolean | null;
+  }[] = [];
+
+  for (const q of qs) {
     maxScore += q.points;
     if (q.type === "mc") {
       const raw = formData.get(`choice_${q.id}`);
@@ -77,23 +88,40 @@ export async function submitAttempt(formData: FormData) {
       const isCorrect = choiceIndex !== null && choiceIndex === q.correctIndex;
       const awarded = isCorrect ? q.points : 0;
       autoScore += awarded;
-      return {
+      rows.push({
         questionId: q.id,
         choiceIndex,
-        essayText: null as string | null,
+        essayText: null,
+        fileUrl: null,
         awardedPoints: awarded,
         isCorrect,
-      };
+      });
+      continue;
     }
     hasEssay = true;
-    return {
+    // Lampiran jawaban esai (opsional).
+    let fileUrl: string | null = null;
+    const f = formData.get(`essayfile_${q.id}`);
+    if (f instanceof File && f.size > 0) {
+      const stored = await uploadFile({
+        schoolId,
+        ownerId: studentId,
+        file: f,
+        kind: "attachment",
+        prefix: "answers",
+        maxBytes: 10_000_000,
+      });
+      fileUrl = stored.url;
+    }
+    rows.push({
       questionId: q.id,
-      choiceIndex: null as number | null,
+      choiceIndex: null,
       essayText: String(formData.get(`essay_${q.id}`) || ""),
-      awardedPoints: null as number | null,
-      isCorrect: null as boolean | null,
-    };
-  });
+      fileUrl,
+      awardedPoints: null,
+      isCorrect: null,
+    });
+  }
 
   const status = hasEssay ? "submitted" : "graded";
   const totalScore = hasEssay ? null : autoScore;
@@ -133,4 +161,5 @@ export async function submitAttempt(formData: FormData) {
   }
 
   redirect(`/siswa/kuis/${assessmentId}`);
+  });
 }

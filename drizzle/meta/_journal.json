@@ -8,6 +8,13 @@
       "when": 1782319517723,
       "tag": "0000_motionless_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782641434423,
+      "tag": "0001_high_paibok",
+      "breakpoints": true
     }
   ]
 }

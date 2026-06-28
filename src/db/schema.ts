@@ -51,6 +51,7 @@ export const schools = pgTable("schools", {
   // school = lembaga formal; personal = ruang kerja pribadi guru independen (les/freelance).
   type: text("type").notNull().default("school"), // school | personal
   level: text("level"), // jenjang: SD | SMP | SMA | SMK
+  logoUrl: text("logo_url"), // logo sekolah (Vercel Blob)
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -76,6 +77,7 @@ export const users = pgTable(
     username: text("username"),
     passwordHash: text("password_hash").notNull(),
     status: text("status").notNull().default("active"), // active | pending | suspended
+    avatarUrl: text("avatar_url"), // foto profil (Vercel Blob)
     ttsEnabled: boolean("tts_enabled").notNull().default(false), // preferensi teks-ke-suara (siswa)
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -342,6 +344,7 @@ export const questions = pgTable("questions", {
     .references(() => assessments.id, { onDelete: "cascade" }),
   type: text("type").notNull().default("mc"), // mc | essay
   text: text("text").notNull(),
+  imageUrl: text("image_url"), // lampiran gambar soal (Vercel Blob)
   options: jsonb("options").$type<string[]>(),
   correctIndex: integer("correct_index"),
   points: integer("points").notNull().default(1),
@@ -367,6 +370,7 @@ export const gradeItems = pgTable("grade_items", {
     .references(() => subjects.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   maxScore: integer("max_score").notNull().default(100),
+  attachmentUrl: text("attachment_url"), // berkas pendukung/rubrik (Vercel Blob)
   source: text("source").notNull().default("manual"), // manual | assessment
   assessmentId: uuid("assessment_id").references(() => assessments.id, {
     onDelete: "cascade",
@@ -441,6 +445,7 @@ export const answers = pgTable("answers", {
     .references(() => questions.id, { onDelete: "cascade" }),
   choiceIndex: integer("choice_index"), // jawaban PG
   essayText: text("essay_text"), // jawaban esai
+  fileUrl: text("file_url"), // lampiran jawaban esai (Vercel Blob)
   awardedPoints: integer("awarded_points"), // null = belum dinilai (esai)
   isCorrect: boolean("is_correct"), // PG
 });

@@ -1,15 +1,11 @@
-import { and, eq, sql } from "drizzle-orm";
+import { put, del } from "@vercel/blob";
+import { eq, sql } from "drizzle-orm";
 import { db, files } from "@/db";
 import { getSchoolPlan } from "@/lib/quota";
 
-/** True bila kredensial Cloudflare R2 lengkap. */
+/** True bila token Vercel Blob tersedia (penyimpanan aktif). */
 export function isStorageConfigured(): boolean {
-  return Boolean(
-    process.env.R2_ACCOUNT_ID &&
-      process.env.R2_ACCESS_KEY_ID &&
-      process.env.R2_SECRET_ACCESS_KEY &&
-      process.env.R2_BUCKET,
-  );
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
 /** Total byte terpakai sebuah sekolah (dasar kuota storage). */
@@ -35,7 +31,7 @@ export async function assertStorageQuota(schoolId: string, addBytes: number) {
   }
 }
 
-/** Catat metadata berkas (dipanggil setelah unggah ke R2 berhasil). */
+/** Catat metadata berkas (dipanggil setelah unggah ke Blob berhasil). */
 export async function recordFile(input: {
   schoolId: string;
   ownerId?: string | null;
@@ -60,13 +56,93 @@ export async function recordFile(input: {
   return row;
 }
 
+/** Bersihkan nama berkas agar aman dipakai sebagai bagian path objek. */
+function safeName(name: string): string {
+  const cleaned = name
+    .normalize("NFKD")
+    .replace(/[^\w.\-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase();
+  return cleaned.slice(0, 80) || "berkas";
+}
+
+export type StoredFile = {
+  url: string;
+  key: string;
+  sizeBytes: number;
+  contentType: string | null;
+};
+
 /**
- * Unggah objek ke R2. Saat kredensial belum diatur, melempar error ramah
- * (UI memakai isStorageConfigured() untuk menyembunyikan tombol unggah).
- * Implementasi PUT S3 nyata ditambahkan saat kredensial tersedia.
+ * Unggah sebuah `File` (dari FormData) ke Vercel Blob, lalu catat metadatanya
+ * (untuk akuntansi kuota) di tabel `files`. Menegakkan kuota penyimpanan paket
+ * sekolah sebelum mengunggah.
+ *
+ * UI menyembunyikan tombol unggah saat isStorageConfigured() false; bila tetap
+ * dipanggil tanpa token, melempar error ramah.
  */
-export async function uploadObject(): Promise<never> {
-  throw new Error(
-    "Penyimpanan (Cloudflare R2) belum dikonfigurasi. Atur R2_* di environment.",
-  );
+export async function uploadFile(input: {
+  schoolId: string;
+  file: File;
+  kind?: string; // material | attachment | avatar | logo | image
+  prefix?: string; // segmen folder objek, mis. "materials"
+  ownerId?: string | null;
+  maxBytes?: number; // batas ukuran per-unggahan (opsional)
+}): Promise<StoredFile> {
+  if (!isStorageConfigured()) {
+    throw new Error(
+      "Penyimpanan (Vercel Blob) belum dikonfigurasi. Atur BLOB_READ_WRITE_TOKEN di environment.",
+    );
+  }
+  const { file, schoolId } = input;
+  if (!file || typeof file.size !== "number" || file.size === 0) {
+    throw new Error("Tidak ada berkas untuk diunggah.");
+  }
+  if (input.maxBytes && file.size > input.maxBytes) {
+    const mb = (input.maxBytes / 1_000_000).toFixed(0);
+    throw new Error(`Ukuran berkas melebihi batas ${mb} MB.`);
+  }
+
+  await assertStorageQuota(schoolId, file.size);
+
+  const folder = input.prefix ?? input.kind ?? "uploads";
+  const pathname = `${schoolId}/${folder}/${safeName(file.name)}`;
+
+  const blob = await put(pathname, file, {
+    access: "public",
+    addRandomSuffix: true,
+    contentType: file.type || undefined,
+  });
+
+  await recordFile({
+    schoolId,
+    ownerId: input.ownerId,
+    key: blob.pathname,
+    url: blob.url,
+    sizeBytes: file.size,
+    contentType: file.type || null,
+    kind: input.kind ?? "material",
+  });
+
+  return {
+    url: blob.url,
+    key: blob.pathname,
+    sizeBytes: file.size,
+    contentType: file.type || null,
+  };
+}
+
+/**
+ * Hapus sebuah objek dari Blob berdasarkan URL-nya & lepaskan kuota yang
+ * terpakai (hapus baris di tabel `files`). Aman dipanggil dengan url kosong.
+ */
+export async function deleteFile(url: string | null | undefined): Promise<void> {
+  if (!url) return;
+  try {
+    await del(url);
+  } catch {
+    // Objek mungkin sudah tidak ada — tetap bersihkan metadatanya.
+  }
+  await db.delete(files).where(eq(files.url, url));
 }

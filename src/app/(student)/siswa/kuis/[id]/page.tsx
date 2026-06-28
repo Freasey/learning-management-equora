@@ -3,6 +3,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, assessments, questions, attempts, answers, subjects } from "@/db";
 import { getStudentClass } from "@/lib/student";
+import { isStorageConfigured } from "@/lib/storage";
 import { submitAttempt } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +80,8 @@ async function AttemptForm({ assessmentId }: { assessmentId: string }) {
     );
   }
 
+  const storageOn = isStorageConfigured();
+
   return (
     <form action={submitAttempt} className="space-y-4">
       <input type="hidden" name="assessmentId" value={assessmentId} />
@@ -89,6 +92,10 @@ async function AttemptForm({ assessmentId }: { assessmentId: string }) {
             <span className="text-xs font-semibold text-slate-400">{q.points} poin</span>
           </div>
           <p className="mt-2 font-bold text-slate-800">{q.text}</p>
+          {q.imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={q.imageUrl} alt="Gambar soal" className="mt-3 max-h-72 rounded-2xl border-2 border-slate-200" />
+          )}
 
           {q.type === "mc" && q.options ? (
             <div className="mt-3 space-y-2">
@@ -103,12 +110,25 @@ async function AttemptForm({ assessmentId }: { assessmentId: string }) {
               ))}
             </div>
           ) : (
-            <textarea
-              name={`essay_${q.id}`}
-              rows={4}
-              placeholder="Tulis jawabanmu…"
-              className="mt-3 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-800 placeholder:text-slate-300 focus:border-sky focus:outline-none focus:ring-4 focus:ring-sky/15"
-            />
+            <div className="mt-3 space-y-2">
+              <textarea
+                name={`essay_${q.id}`}
+                rows={4}
+                placeholder="Tulis jawabanmu…"
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-800 placeholder:text-slate-300 focus:border-sky focus:outline-none focus:ring-4 focus:ring-sky/15"
+              />
+              {storageOn && (
+                <label className="block text-sm text-slate-500">
+                  Lampiran (opsional — foto/PDF):
+                  <input
+                    name={`essayfile_${q.id}`}
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="mt-1 block w-full text-xs text-slate-600 file:mr-2 file:rounded-full file:border-0 file:bg-sky/15 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-sky"
+                  />
+                </label>
+              )}
+            </div>
           )}
         </div>
       ))}
@@ -141,10 +161,12 @@ async function Result({
       text: questions.text,
       type: questions.type,
       points: questions.points,
+      imageUrl: questions.imageUrl,
       options: questions.options,
       correctIndex: questions.correctIndex,
       choiceIndex: answers.choiceIndex,
       essayText: answers.essayText,
+      fileUrl: answers.fileUrl,
       awarded: answers.awardedPoints,
       isCorrect: answers.isCorrect,
       sortOrder: questions.sortOrder,
@@ -186,6 +208,10 @@ async function Result({
             </span>
           </div>
           <p className="mt-2 font-bold text-slate-800">{r.text}</p>
+          {r.imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={r.imageUrl} alt="Gambar soal" className="mt-2 max-h-56 rounded-2xl border-2 border-slate-200" />
+          )}
 
           {r.type === "mc" && r.options ? (
             <ul className="mt-2 space-y-1 text-sm">
@@ -211,8 +237,20 @@ async function Result({
               })}
             </ul>
           ) : (
-            <div className="mt-2 rounded-2xl bg-cream px-3 py-2 text-sm text-slate-700">
-              {r.essayText || <span className="text-slate-400">(kosong)</span>}
+            <div className="mt-2 space-y-2">
+              <div className="rounded-2xl bg-cream px-3 py-2 text-sm text-slate-700">
+                {r.essayText || <span className="text-slate-400">(kosong)</span>}
+              </div>
+              {r.fileUrl && (
+                <a
+                  href={r.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-bold text-sky hover:underline"
+                >
+                  📎 Lihat lampiran
+                </a>
+              )}
             </div>
           )}
         </div>

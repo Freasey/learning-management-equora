@@ -3,10 +3,11 @@
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, gradeItems, grades } from "@/db";
+import { db, withTenant, gradeItems, grades } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
 import { getClassYear } from "@/lib/academic";
 import { assertTeacherTeachesClass, teacherTeachesClass } from "@/lib/teaching";
+import { uploadFile, deleteFile } from "@/lib/storage";
 
 /** A2: boleh kelola item nilai bila pembuatnya atau pengampu kelasnya. */
 async function canManageItem(
@@ -39,20 +40,38 @@ export async function addGradeItem(formData: FormData) {
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
-  // A2: hanya boleh menilai kelas yang diampu.
-  await assertTeacherTeachesClass(schoolId, teacherId, parsed.data.classId);
+  // Berkas pendukung/rubrik (opsional).
+  let attachmentUrl: string | null = null;
+  const file = formData.get("attachment");
+  if (file instanceof File && file.size > 0) {
+    const stored = await uploadFile({
+      schoolId,
+      ownerId: teacherId,
+      file,
+      kind: "attachment",
+      prefix: "grade-items",
+      maxBytes: 15_000_000,
+    });
+    attachmentUrl = stored.url;
+  }
 
-  const academicYearId = await getClassYear(schoolId, parsed.data.classId);
-  await db.insert(gradeItems).values({
-    schoolId,
-    academicYearId,
-    teacherId,
-    classId: parsed.data.classId,
-    subjectId: parsed.data.subjectId,
-    title: parsed.data.title,
-    maxScore: parsed.data.maxScore,
+  await withTenant(schoolId, async () => {
+    // A2: hanya boleh menilai kelas yang diampu.
+    await assertTeacherTeachesClass(schoolId, teacherId, parsed.data.classId);
+
+    const academicYearId = await getClassYear(schoolId, parsed.data.classId);
+    await db.insert(gradeItems).values({
+      schoolId,
+      academicYearId,
+      teacherId,
+      classId: parsed.data.classId,
+      subjectId: parsed.data.subjectId,
+      title: parsed.data.title,
+      maxScore: parsed.data.maxScore,
+      attachmentUrl,
+    });
+    redirect(`/guru/nilai?pair=${pairOf(parsed.data.classId, parsed.data.subjectId)}`);
   });
-  redirect(`/guru/nilai?pair=${pairOf(parsed.data.classId, parsed.data.subjectId)}`);
 }
 
 export async function deleteGradeItem(formData: FormData) {
@@ -60,16 +79,25 @@ export async function deleteGradeItem(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
   const classId = z.string().uuid().parse(formData.get("classId"));
   const subjectId = z.string().uuid().parse(formData.get("subjectId"));
-  const [item] = await db
-    .select({ teacherId: gradeItems.teacherId, classId: gradeItems.classId })
-    .from(gradeItems)
-    .where(and(eq(gradeItems.id, id), eq(gradeItems.schoolId, schoolId)))
-    .limit(1);
-  if (item && (await canManageItem(schoolId, teacherId, item))) {
-    await db
-      .delete(gradeItems)
-      .where(and(eq(gradeItems.id, id), eq(gradeItems.schoolId, schoolId)));
-  }
+  const removedUrl = await withTenant(schoolId, async () => {
+    const [item] = await db
+      .select({
+        teacherId: gradeItems.teacherId,
+        classId: gradeItems.classId,
+        attachmentUrl: gradeItems.attachmentUrl,
+      })
+      .from(gradeItems)
+      .where(and(eq(gradeItems.id, id), eq(gradeItems.schoolId, schoolId)))
+      .limit(1);
+    if (item && (await canManageItem(schoolId, teacherId, item))) {
+      await db
+        .delete(gradeItems)
+        .where(and(eq(gradeItems.id, id), eq(gradeItems.schoolId, schoolId)));
+      return item.attachmentUrl;
+    }
+    return null;
+  });
+  if (removedUrl) await deleteFile(removedUrl);
   redirect(`/guru/nilai?pair=${pairOf(classId, subjectId)}`);
 }
 
@@ -79,40 +107,42 @@ export async function saveGrades(formData: FormData) {
   const classId = z.string().uuid().parse(formData.get("classId"));
   const subjectId = z.string().uuid().parse(formData.get("subjectId"));
 
-  // Pastikan item milik sekolah ini.
-  const [item] = await db
-    .select()
-    .from(gradeItems)
-    .where(and(eq(gradeItems.id, gradeItemId), eq(gradeItems.schoolId, schoolId)))
-    .limit(1);
-  if (!item) throw new Error("Item penilaian tidak ditemukan.");
-  // A2: hanya pembuat / pengampu kelas yang boleh menyimpan nilai.
-  if (!(await canManageItem(schoolId, teacherId, item))) {
-    throw new Error("Anda tidak berhak menilai item ini.");
-  }
-
-  for (const [key, value] of formData.entries()) {
-    if (!key.startsWith("score_")) continue;
-    const studentId = key.slice(6);
-    const raw = String(value).trim();
-
-    if (raw === "") {
-      await db
-        .delete(grades)
-        .where(and(eq(grades.gradeItemId, gradeItemId), eq(grades.studentId, studentId)));
-      continue;
+  await withTenant(schoolId, async () => {
+    // Pastikan item milik sekolah ini.
+    const [item] = await db
+      .select()
+      .from(gradeItems)
+      .where(and(eq(gradeItems.id, gradeItemId), eq(gradeItems.schoolId, schoolId)))
+      .limit(1);
+    if (!item) throw new Error("Item penilaian tidak ditemukan.");
+    // A2: hanya pembuat / pengampu kelas yang boleh menyimpan nilai.
+    if (!(await canManageItem(schoolId, teacherId, item))) {
+      throw new Error("Anda tidak berhak menilai item ini.");
     }
-    const score = Math.max(0, Math.min(item.maxScore, Math.trunc(Number(raw))));
-    if (!Number.isFinite(score)) continue;
 
-    await db
-      .insert(grades)
-      .values({ schoolId, academicYearId: item.academicYearId, gradeItemId, studentId, score })
-      .onConflictDoUpdate({
-        target: [grades.gradeItemId, grades.studentId],
-        set: { score },
-      });
-  }
+    for (const [key, value] of formData.entries()) {
+      if (!key.startsWith("score_")) continue;
+      const studentId = key.slice(6);
+      const raw = String(value).trim();
 
-  redirect(`/guru/nilai?pair=${pairOf(classId, subjectId)}&item=${gradeItemId}`);
+      if (raw === "") {
+        await db
+          .delete(grades)
+          .where(and(eq(grades.gradeItemId, gradeItemId), eq(grades.studentId, studentId)));
+        continue;
+      }
+      const score = Math.max(0, Math.min(item.maxScore, Math.trunc(Number(raw))));
+      if (!Number.isFinite(score)) continue;
+
+      await db
+        .insert(grades)
+        .values({ schoolId, academicYearId: item.academicYearId, gradeItemId, studentId, score })
+        .onConflictDoUpdate({
+          target: [grades.gradeItemId, grades.studentId],
+          set: { score },
+        });
+    }
+
+    redirect(`/guru/nilai?pair=${pairOf(classId, subjectId)}&item=${gradeItemId}`);
+  });
 }

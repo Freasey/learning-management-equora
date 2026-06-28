@@ -53,6 +53,34 @@ export function Field({
   );
 }
 
+export function FileField({
+  label,
+  name,
+  accept,
+  required,
+  hint,
+}: {
+  label: string;
+  name: string;
+  accept?: string;
+  required?: boolean;
+  hint?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold text-ink">{label}</span>
+      <input
+        name={name}
+        type="file"
+        accept={accept}
+        required={required}
+        className="block w-full text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-teal-700/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-teal-700 hover:file:bg-teal-700/15"
+      />
+      {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
+    </label>
+  );
+}
+
 export function SelectField({
   label,
   name,
