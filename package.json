@@ -22,11 +22,15 @@
     "demo:reset": "npm run db:reset && npm run db:generate && npm run db:apply && npm run db:seed && npm run seed:superadmin && npm run seed:demo && npm run seed:docs && npm run seed:teacher && npm run db:rls"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.21",
+    "@livekit/components-styles": "^1.2.0",
     "@neondatabase/serverless": "^1.1.0",
     "@vercel/blob": "^2.5.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
+    "livekit-client": "^2.20.0",
+    "livekit-server-sdk": "^2.15.5",
     "lucide-react": "^1.21.0",
     "next": "16.2.9",
     "next-auth": "^5.0.0-beta.31",

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { MeetRoom } from "@/components/meet/meet-room";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kelas Online · Siswa" };
@@ -9,14 +10,14 @@ export default async function MeetSiswaPage() {
   if (session?.user?.role !== "student") redirect("/dashboard");
 
   return (
-    <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
-      <h1 className="font-kid-display text-2xl font-extrabold text-slate-800">
-        Kelas Online segera hadir
+    <div>
+      <h1 className="mb-1 font-kid-display text-2xl font-extrabold text-slate-800">
+        Kelas Online
       </h1>
-      <p className="mx-auto mt-2 max-w-md text-slate-500">
-        Sebentar lagi kamu bisa ikut kelas tatap muka daring di sini—lengkap
-        dengan teks langsung untuk teman tunarungu.
+      <p className="mb-6 text-slate-500">
+        Masukkan kode ruang dari gurumu untuk ikut kelas tatap muka daring.
       </p>
+      <MeetRoom defaultRoom="kelas" hint="Masukkan kode ruang yang dibagikan gurumu." />
     </div>
   );
 }
