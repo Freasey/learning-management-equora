@@ -7,6 +7,7 @@ import {
   boolean,
   timestamp,
   uniqueIndex,
+  index,
   jsonb,
 } from "drizzle-orm/pg-core";
 
@@ -401,9 +402,47 @@ export const grades = pgTable(
   (t) => [uniqueIndex("grades_item_student_unq").on(t.gradeItemId, t.studentId)],
 );
 
-// Group chat per Kelas+Mapel: ditunda — dibangun bareng WebSocket & server Meet
-// (lihat [[meet-architecture]]). Tabel chat_messages/chat_reads ditambahkan
-// saat transport realtime siap. Sekarang hanya stub UI.
+/**
+ * Group chat per Kelas+Mapel ("Obrolan"). Satu grup = satu baris `classSubjects`
+ * (kelas × mapel × guru) → `classSubjectId` adalah kunci grup. Anggota implisit:
+ * guru pengampu (classSubjects.teacherId) + siswa terdaftar di kelas tsb
+ * (enrollments). Realtime via LiveKit data channel; tabel ini = persistensi.
+ */
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    classSubjectId: uuid("class_subject_id")
+      .notNull()
+      .references(() => classSubjects.id, { onDelete: "cascade" }),
+    senderId: uuid("sender_id").references(() => users.id, { onDelete: "set null" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("chat_messages_group_created_idx").on(t.classSubjectId, t.createdAt)],
+);
+
+/** Penanda batas baca per (grup, user) → hitung pesan belum terbaca (titik merah). */
+export const chatReads = pgTable(
+  "chat_reads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    classSubjectId: uuid("class_subject_id")
+      .notNull()
+      .references(() => classSubjects.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    lastReadAt: timestamp("last_read_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("chat_reads_group_user_unq").on(t.classSubjectId, t.userId)],
+);
 
 /** Pengerjaan kuis/ujian oleh siswa (satu per assessment per siswa). */
 export const attempts = pgTable(
@@ -610,3 +649,5 @@ export type GradeItem = typeof gradeItems.$inferSelect;
 export type Grade = typeof grades.$inferSelect;
 export type Attempt = typeof attempts.$inferSelect;
 export type Answer = typeof answers.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type ChatRead = typeof chatReads.$inferSelect;

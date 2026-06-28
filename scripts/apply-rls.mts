@@ -44,6 +44,8 @@ const TENANT_TABLES = [
   "answers",
   "files",
   "ai_usage",
+  "chat_messages",
+  "chat_reads",
 ];
 
 async function q(text: string) {
