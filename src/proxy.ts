@@ -12,6 +12,5 @@ export const config = {
     "/admin/:path*",
     "/guru/:path*",
     "/siswa/:path*",
-    "/ortu/:path*",
   ],
 };

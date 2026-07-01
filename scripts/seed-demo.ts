@@ -1,6 +1,6 @@
 /**
  * Seed DATA DEMO: satu sekolah lengkap (kode DEMO01) — 1 admin, 5 guru,
- * 10 siswa, 1 orang tua, plus tahun ajaran, kelas, mapel & penempatan.
+ * 10 siswa, plus tahun ajaran, kelas, mapel & penempatan.
  *
  * Logika reset kini tinggal di `src/lib/demo.ts` (dipakai bersama oleh endpoint
  * cron & tombol reset di konsol Super Admin). Skrip ini membungkusnya untuk

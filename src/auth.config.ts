@@ -25,8 +25,6 @@ export const authConfig = {
         return roles.includes("teacher") || roles.includes("super_admin");
       if (pathname.startsWith("/siswa"))
         return roles.includes("student") || roles.includes("super_admin");
-      if (pathname.startsWith("/ortu"))
-        return roles.includes("parent") || roles.includes("super_admin");
       return true;
     },
     jwt({ token, user, trigger, session }) {

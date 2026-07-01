@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { GraduationCap, Users, Baby, ShieldCheck, ArrowRight } from "lucide-react";
+import { GraduationCap, Users, ShieldCheck, ArrowRight } from "lucide-react";
 import type { DemoRole } from "@/lib/demo";
 import { loginAsDemo } from "./actions";
 
@@ -28,12 +28,6 @@ const ROLES: {
     title: "Siswa",
     desc: "Ikuti pelajaran, kuis, dan ujian.",
     icon: GraduationCap,
-  },
-  {
-    role: "parent",
-    title: "Orang Tua",
-    desc: "Pantau perkembangan anak.",
-    icon: Baby,
   },
 ];
 

@@ -48,7 +48,7 @@ attempts, answers, files, ai_usage. (Lihat `TENANT_TABLES` di
 [scripts/apply-rls.mts](scripts/apply-rls.mts).)
 
 Tabel **lintas-sekolah / auth** sengaja TIDAK ber-RLS (diandalkan app-level):
-users, schools, memberships, notifications, audit_logs, parent_links,
+users, schools, memberships, notifications, audit_logs,
 pricing_plans, contact_requests, doc_articles, curriculum_subjects.
 
 ## Status pembungkusan call-site
@@ -59,12 +59,11 @@ karena `db` dialihkan via ALS selama berada di dalam `withTenant`.
 
 - ✅ **Semua server action tulisan** (guru: nilai/kuis/materi; siswa: kuis;
   admin: actions/kelas/mapel/jadwal/pengumuman/siswa/pengaturan/pendaftaran).
-  Action yang hanya menyentuh tabel non-RLS (guru, langganan, ortu, sebagian
+  Action yang hanya menyentuh tabel non-RLS (guru, langganan, sebagian
   siswa/pengaturan) sengaja tidak dibungkus.
 - ⏳ **Page loader read-only** — BELUM dibungkus. Sebelum enforcement
   dinyalakan, bungkus loader yang menyentuh tabel RLS (lewat tabel langsung
-  ATAU helper) di area (admin)/admin, (teacher)/guru, (student)/siswa,
-  (parent)/ortu dengan pola yang sama:
+  ATAU helper) di area (admin)/admin, (teacher)/guru, (student)/siswa dengan pola yang sama:
 
   ```ts
   export default async function Page(props) {

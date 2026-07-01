@@ -605,28 +605,8 @@ export const aiUsage = pgTable("ai_usage", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** Tautan orang tua → siswa (B8). Satu ortu bisa banyak anak, & sebaliknya. */
-export const parentLinks = pgTable(
-  "parent_links",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    schoolId: uuid("school_id")
-      .notNull()
-      .references(() => schools.id, { onDelete: "cascade" }),
-    parentId: uuid("parent_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    studentId: uuid("student_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [uniqueIndex("parent_links_parent_student_unq").on(t.parentId, t.studentId)],
-);
-
 export type Notification = typeof notifications.$inferSelect;
 export type FileObject = typeof files.$inferSelect;
-export type ParentLink = typeof parentLinks.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type PricingPlan = typeof pricingPlans.$inferSelect;
 export type Membership = typeof memberships.$inferSelect;

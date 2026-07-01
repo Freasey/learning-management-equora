@@ -30,7 +30,6 @@ export const DEMO_SCHOOL = {
 export const DEMO_PASSWORD = "demo12345";
 export const DEMO_ACADEMIC_YEAR = "2025/2026 Ganjil";
 export const DEMO_ADMIN_EMAIL = "admin@demo.equora.id";
-export const DEMO_PARENT_EMAIL = "ortu@demo.equora.id";
 
 export const DEMO_SUBJECTS = [
   { name: "Matematika", code: "MAT" },
@@ -85,13 +84,12 @@ export const DEMO_LIMITS = {
 
 /**
  * Kredensial login instan per peran (halaman /demo). schoolCode hanya diisi
- * untuk siswa — jalur guru/admin/ortu login pakai email.
+ * untuk siswa — jalur guru/admin login pakai email.
  */
 export const DEMO_LOGINS = {
   admin: { identifier: DEMO_ADMIN_EMAIL, schoolCode: "" },
   teacher: { identifier: DEMO_TEACHERS[0].email, schoolCode: "" },
   student: { identifier: DEMO_STUDENT_NIS, schoolCode: DEMO_SCHOOL.code },
-  parent: { identifier: DEMO_PARENT_EMAIL, schoolCode: "" },
 } as const;
 
 export type DemoRole = keyof typeof DEMO_LOGINS;
@@ -131,7 +129,6 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
     classes,
     enrollments,
     classSubjects,
-    parentLinks,
   } = schema;
 
   try {
@@ -230,7 +227,6 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
     }
 
     // 8) Siswa (NIS 2026001..), 5 per kelas, langsung di-enroll.
-    let firstStudentId = "";
     for (let i = 0; i < DEMO_STUDENT_NAMES.length; i++) {
       const nis = `2026${String(i + 1).padStart(3, "0")}`;
       const [row] = await db
@@ -244,28 +240,11 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
           status: "active",
         })
         .returning({ id: users.id });
-      if (i === 0) firstStudentId = row.id;
       const classId = classIds[Math.floor(i / 5)];
       await db
         .insert(enrollments)
         .values({ schoolId, academicYearId, classId, studentId: row.id });
     }
-
-    // 9) Orang tua contoh — tertaut ke siswa pertama (B8).
-    const [parent] = await db
-      .insert(users)
-      .values({
-        schoolId,
-        role: "parent",
-        name: "Orang Tua Demo",
-        email: DEMO_PARENT_EMAIL,
-        passwordHash,
-        status: "active",
-      })
-      .returning({ id: users.id });
-    await db
-      .insert(parentLinks)
-      .values({ schoolId, parentId: parent.id, studentId: firstStudentId });
 
     return {
       schoolId,

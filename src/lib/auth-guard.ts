@@ -85,12 +85,3 @@ export async function requireStudent() {
   return { session, schoolId, studentId: session.user.id };
 }
 
-/** Pastikan pemanggil adalah orang tua (B8). Kembalikan parentId. */
-export async function requireParent() {
-  const session = await auth();
-  if (!rolesOf(session).includes("parent") || !session?.user?.id) {
-    throw new Error("Tidak diizinkan: butuh akses orang tua.");
-  }
-  await assertActiveUser(session.user.id);
-  return { session, parentId: session.user.id };
-}
