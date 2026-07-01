@@ -96,18 +96,9 @@ export const DEMO_LOGINS = {
 
 export type DemoRole = keyof typeof DEMO_LOGINS;
 
-// ── Jadwal reset otomatis ─────────────────────────────────────────────────
-/**
- * Cron berjalan tiap 6 jam pada jam UTC 0/6/12/18 (lihat vercel.json).
- * Kembalikan waktu reset otomatis BERIKUTNYA relatif terhadap `now`.
- */
-export function nextDemoResetAt(now: Date = new Date()): Date {
-  const next = new Date(now);
-  next.setUTCMinutes(0, 0, 0);
-  const nextHour = (Math.floor(now.getUTCHours() / 6) + 1) * 6; // 6|12|18|24
-  next.setUTCHours(nextHour); // 24 otomatis menggulung ke hari berikutnya 00:00
-  return next;
-}
+// ── Jadwal reset ──────────────────────────────────────────────────────────
+/** Isi sekolah demo dianggap "basi" setelah 6 jam sejak reset terakhir. */
+export const DEMO_RESET_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 // ── Reset isi sekolah demo ────────────────────────────────────────────────
 export type DemoResetSummary = {
@@ -285,6 +276,75 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
       resetAt: new Date(),
     };
   } finally {
+    await pool.end();
+  }
+}
+
+// ── Reset "malas" (lazy) — tanpa penjadwal, ramah Vercel Hobby ─────────────
+// Karena reset menghapus & membuat ulang sekolah demo, `schools.createdAt`
+// DEMO01 = waktu reset terakhir. Tak perlu kolom/tabel penanda tambahan.
+
+/** Waktu reset terakhir sekolah demo (createdAt DEMO01), atau null bila belum ada. */
+export async function getDemoLastReset(): Promise<Date | null> {
+  const ownerUrl = process.env.DATABASE_URL;
+  if (!ownerUrl) return null;
+  const pool = new Pool({ connectionString: ownerUrl });
+  const db = drizzle(pool, { schema });
+  try {
+    const [row] = await db
+      .select({ createdAt: schema.schools.createdAt })
+      .from(schema.schools)
+      .where(eq(schema.schools.code, DEMO_SCHOOL.code))
+      .limit(1);
+    return row?.createdAt ?? null;
+  } finally {
+    await pool.end();
+  }
+}
+
+/** Kunci advisory Postgres agar dua request bersamaan tak me-reset berbarengan. */
+const DEMO_RESET_LOCK_KEY = 4823917;
+
+/**
+ * Pastikan isi sekolah demo masih segar: bila belum ada atau usianya sudah
+ * melewati DEMO_RESET_INTERVAL_MS, reset. Dipanggil saat sekolah demo diakses
+ * (halaman /coba & aksi login demo) — pengganti cron presisi yang butuh Pro.
+ *
+ * Mengembalikan waktu reset terakhir yang berlaku (untuk hitung mundur).
+ */
+export async function ensureDemoFresh(): Promise<Date> {
+  const last = await getDemoLastReset();
+  if (last && Date.now() - last.getTime() < DEMO_RESET_INTERVAL_MS) return last;
+
+  // Basi / belum ada → reset, dijaga advisory lock terhadap request bersamaan.
+  const ownerUrl = process.env.DATABASE_URL;
+  if (!ownerUrl) throw new Error("DATABASE_URL belum diatur.");
+  const pool = new Pool({ connectionString: ownerUrl });
+  const client = await pool.connect();
+  let locked = false;
+  try {
+    const res = await client.query("SELECT pg_try_advisory_lock($1) AS locked", [
+      DEMO_RESET_LOCK_KEY,
+    ]);
+    locked = res.rows[0]?.locked === true;
+    if (!locked) {
+      // Request lain sedang me-reset — pakai info terbaik yang ada.
+      return (await getDemoLastReset()) ?? new Date();
+    }
+    // Cek ulang di dalam lock (mungkin sudah di-reset request lain barusan).
+    const current = await getDemoLastReset();
+    if (current && Date.now() - current.getTime() < DEMO_RESET_INTERVAL_MS) {
+      return current;
+    }
+    const summary = await resetDemoSchool();
+    return summary.resetAt;
+  } finally {
+    if (locked) {
+      await client
+        .query("SELECT pg_advisory_unlock($1)", [DEMO_RESET_LOCK_KEY])
+        .catch(() => {});
+    }
+    client.release();
     await pool.end();
   }
 }

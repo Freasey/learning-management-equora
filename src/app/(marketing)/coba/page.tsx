@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Sparkles, RotateCw } from "lucide-react";
-import { DEMO_SCHOOL, DEMO_PASSWORD } from "@/lib/demo";
+import {
+  DEMO_SCHOOL,
+  DEMO_PASSWORD,
+  DEMO_RESET_INTERVAL_MS,
+  ensureDemoFresh,
+} from "@/lib/demo";
 import { DemoCountdown } from "@/components/site/demo-countdown";
 import { DemoLoginButtons } from "./login-buttons";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Coba Langsung — Equora",
@@ -11,7 +18,13 @@ export const metadata: Metadata = {
     "Masuk ke sekolah demo Equora sekali klik. Tanpa daftar, tanpa kartu kredit.",
 };
 
-export default function CobaPage() {
+export default async function CobaPage() {
+  // "Reset malas": segarkan sekolah demo bila usianya sudah lewat 6 jam.
+  const lastReset = await ensureDemoFresh();
+  const nextResetIso = new Date(
+    lastReset.getTime() + DEMO_RESET_INTERVAL_MS,
+  ).toISOString();
+
   return (
     <section className="mx-auto max-w-3xl px-5 py-16 md:py-24">
       <div className="text-center">
@@ -33,8 +46,9 @@ export default function CobaPage() {
       <div className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-line bg-sand/40 px-4 py-3 text-sm text-muted">
         <RotateCw className="h-4 w-4 shrink-0 text-teal-700" />
         <span>
-          Sekolah demo dipakai bersama & disegarkan otomatis tiap 6 jam —{" "}
-          <DemoCountdown />. Semua perubahan Anda akan direset.
+          Sekolah demo dipakai bersama & disegarkan tiap 6 jam —{" "}
+          <DemoCountdown targetIso={nextResetIso} />. Semua perubahan Anda akan
+          direset.
         </span>
       </div>
 

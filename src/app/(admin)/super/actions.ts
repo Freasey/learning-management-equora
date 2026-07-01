@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { signOut } from "@/auth";
 import { requireSuperAdmin } from "@/lib/auth-guard";
-import { resetDemoSchool } from "@/lib/demo";
+import { resetDemoSchool, DEMO_RESET_INTERVAL_MS } from "@/lib/demo";
 import { logAudit } from "@/lib/audit";
 
 export async function doSignOut() {
@@ -13,8 +13,13 @@ export async function doSignOut() {
 /**
  * Reset MANUAL sekolah demo (kode DEMO01) dari konsol Super Admin. Hanya
  * menyentuh sekolah demo — sekolah pelanggan lain tidak tersentuh.
+ * Mengembalikan waktu reset & jatuh tempo reset berikutnya (untuk hitung mundur).
  */
-export async function resetDemoNow(): Promise<{ ok: true; at: string }> {
+export async function resetDemoNow(): Promise<{
+  ok: true;
+  at: string;
+  nextAt: string;
+}> {
   const session = await requireSuperAdmin();
 
   const summary = await resetDemoSchool();
@@ -27,5 +32,11 @@ export async function resetDemoNow(): Promise<{ ok: true; at: string }> {
   });
 
   revalidatePath("/super");
-  return { ok: true, at: summary.resetAt.toISOString() };
+  return {
+    ok: true,
+    at: summary.resetAt.toISOString(),
+    nextAt: new Date(
+      summary.resetAt.getTime() + DEMO_RESET_INTERVAL_MS,
+    ).toISOString(),
+  };
 }

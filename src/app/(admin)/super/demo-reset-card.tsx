@@ -5,9 +5,18 @@ import { RotateCw, CheckCircle2, TriangleAlert } from "lucide-react";
 import { DemoCountdown } from "@/components/site/demo-countdown";
 import { resetDemoNow } from "./actions";
 
-/** Kartu kelola sekolah demo: hitung mundur reset otomatis + tombol reset manual. */
-export function DemoResetCard() {
+/**
+ * Kartu kelola sekolah demo: hitung mundur ke reset berikutnya + tombol reset
+ * manual. `initialNextResetIso` = waktu reset terakhir + 6 jam (null bila demo
+ * belum pernah dibuat).
+ */
+export function DemoResetCard({
+  initialNextResetIso,
+}: {
+  initialNextResetIso: string | null;
+}) {
   const [pending, startTransition] = useTransition();
+  const [nextResetIso, setNextResetIso] = useState(initialNextResetIso);
   const [lastReset, setLastReset] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +34,7 @@ export function DemoResetCard() {
       try {
         const res = await resetDemoNow();
         setLastReset(new Date(res.at).toLocaleString("id-ID"));
+        setNextResetIso(res.nextAt);
       } catch {
         setError("Gagal me-reset sekolah demo. Coba lagi.");
       }
@@ -39,8 +49,13 @@ export function DemoResetCard() {
             Sekolah Demo
           </h3>
           <p className="mt-1 text-sm text-muted">
-            <code className="rounded bg-line/40 px-1">DEMO01</code> · reset
-            otomatis tiap 6 jam · <DemoCountdown />
+            <code className="rounded bg-line/40 px-1">DEMO01</code> · disegarkan
+            tiap 6 jam ·{" "}
+            {nextResetIso ? (
+              <DemoCountdown targetIso={nextResetIso} />
+            ) : (
+              <span className="text-muted">belum dibuat</span>
+            )}
           </p>
         </div>
         <button

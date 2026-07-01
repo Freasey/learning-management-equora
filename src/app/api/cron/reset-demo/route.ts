@@ -8,9 +8,16 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Reset otomatis sekolah demo (kode DEMO01). Dipicu Vercel Cron tiap 6 jam
- * (lihat vercel.json). Dikunci dengan CRON_SECRET: Vercel mengirim header
- * `Authorization: Bearer <CRON_SECRET>` otomatis saat env itu diset.
+ * Reset sekolah demo (kode DEMO01) — backstop harian.
+ *
+ * Penyegaran UTAMA bersifat "malas" (ensureDemoFresh saat sekolah demo
+ * diakses; ramah Vercel Hobby yang membatasi cron 1×/hari). Endpoint ini
+ * jaring pengaman: Vercel Cron memanggilnya sekali sehari (lihat vercel.json),
+ * dan bisa juga dipicu penjadwal luar (mis. GitHub Actions/cron-job.org) tiap
+ * 6 jam bila ingin presisi tanpa paket Pro.
+ *
+ * Dikunci CRON_SECRET: Vercel mengirim `Authorization: Bearer <CRON_SECRET>`
+ * otomatis saat env itu diset.
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { ArrowRight, School, Tags, Megaphone, Inbox } from "lucide-react";
 import { db, schools, pricingPlans, contactRequests } from "@/db";
+import { getDemoLastReset, DEMO_RESET_INTERVAL_MS } from "@/lib/demo";
 import { DemoResetCard } from "./demo-reset-card";
 
 export const dynamic = "force-dynamic";
@@ -9,13 +10,18 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Ringkasan · Super Admin" };
 
 export default async function SuperAdminHome() {
-  const [totalSchools, activeSchools, activePlans, leadCount] =
+  const [totalSchools, activeSchools, activePlans, leadCount, demoLastReset] =
     await Promise.all([
       db.$count(schools),
       db.$count(schools, eq(schools.status, "active")),
       db.$count(pricingPlans, eq(pricingPlans.isActive, true)),
       db.$count(contactRequests),
+      getDemoLastReset(),
     ]);
+
+  const demoNextResetIso = demoLastReset
+    ? new Date(demoLastReset.getTime() + DEMO_RESET_INTERVAL_MS).toISOString()
+    : null;
 
   const stats = [
     { label: "Total sekolah", value: totalSchools },
@@ -79,7 +85,7 @@ export default async function SuperAdminHome() {
       </div>
 
       <div className="mt-8">
-        <DemoResetCard />
+        <DemoResetCard initialNextResetIso={demoNextResetIso} />
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">

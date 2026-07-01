@@ -2,7 +2,12 @@
 
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
-import { DEMO_LOGINS, DEMO_PASSWORD, type DemoRole } from "@/lib/demo";
+import {
+  DEMO_LOGINS,
+  DEMO_PASSWORD,
+  ensureDemoFresh,
+  type DemoRole,
+} from "@/lib/demo";
 
 /**
  * Login instan sebagai salah satu akun sekolah demo (halaman /coba).
@@ -10,6 +15,10 @@ import { DEMO_LOGINS, DEMO_PASSWORD, type DemoRole } from "@/lib/demo";
  * naik agar Next mengarahkan ke /dashboard.
  */
 export async function loginAsDemo(role: DemoRole): Promise<string | undefined> {
+  // Jaga-jaga bila login dipicu tanpa lewat halaman /coba: pastikan akun demo
+  // sudah ada & segar sebelum autentikasi.
+  await ensureDemoFresh();
+
   const creds = DEMO_LOGINS[role];
   try {
     await signIn("credentials", {
