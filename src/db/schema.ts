@@ -80,6 +80,8 @@ export const users = pgTable(
     status: text("status").notNull().default("active"), // active | pending | suspended
     avatarUrl: text("avatar_url"), // foto profil (Vercel Blob)
     ttsEnabled: boolean("tts_enabled").notNull().default(false), // preferensi teks-ke-suara (siswa)
+    // kebutuhan khusus siswa: array kunci (netra | rungu | wicara | buta-warna).
+    disabilities: jsonb("disabilities").$type<string[]>().notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

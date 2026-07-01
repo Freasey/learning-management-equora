@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { UserRound } from "lucide-react";
 import { auth } from "@/auth";
 import { db, users } from "@/db";
 import { isStorageConfigured } from "@/lib/storage";
-import { toggleTts } from "./actions";
+import { DISABILITY_GUIDES, sanitizeDisabilities } from "@/lib/accessibility";
+import { DisabilityIcon, TONE_CLASS } from "@/components/kid/disability-icon";
+import { toggleTts, toggleDisability } from "./actions";
 import { updateAvatar, removeAvatar } from "../../../(account)/account-actions";
 
 export const dynamic = "force-dynamic";
@@ -16,11 +19,16 @@ export default async function PengaturanSiswaPage() {
   if (!studentId || session?.user?.role !== "student") redirect("/dashboard");
 
   const [u] = await db
-    .select({ tts: users.ttsEnabled, avatarUrl: users.avatarUrl })
+    .select({
+      tts: users.ttsEnabled,
+      avatarUrl: users.avatarUrl,
+      disabilities: users.disabilities,
+    })
     .from(users)
     .where(eq(users.id, studentId))
     .limit(1);
   const tts = u?.tts ?? false;
+  const mine = new Set(sanitizeDisabilities(u?.disabilities));
   const storageOn = isStorageConfigured();
 
   return (
@@ -79,6 +87,64 @@ export default async function PengaturanSiswaPage() {
               Segera
             </span>
           )}
+        </div>
+
+        {/* Kebutuhan khusus */}
+        <div className="rounded-3xl border-2 border-slate-200/70 bg-white p-5">
+          <div className="font-kid-display text-lg font-extrabold text-slate-800">
+            Kebutuhan Khususmu
+          </div>
+          <p className="mt-1 text-sm text-slate-500">
+            Pilih kebutuhanmu supaya kami bisa membantu caramu belajar. Setelah
+            dipilih, muncul tombol untuk melihat fitur apa saja yang kamu dapat.
+          </p>
+
+          <div className="mt-4 space-y-2.5">
+            {DISABILITY_GUIDES.map((g) => {
+              const on = mine.has(g.key);
+              return (
+                <div
+                  key={g.key}
+                  className={`rounded-2xl border-2 p-3.5 transition ${
+                    on ? "border-slate-300 bg-slate-50/60" : "border-slate-200/70"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${TONE_CLASS[g.tone]}`}
+                    >
+                      <DisabilityIcon kind={g.key} className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-slate-800">{g.label}</div>
+                      <div className="text-xs text-slate-400">{g.formal}</div>
+                    </div>
+                    <form action={toggleDisability}>
+                      <input type="hidden" name="key" value={g.key} />
+                      <button
+                        type="submit"
+                        aria-pressed={on}
+                        aria-label={`${on ? "Matikan" : "Pilih"} ${g.label}`}
+                        className={`relative h-8 w-14 rounded-full transition ${on ? "bg-mint" : "bg-slate-300"}`}
+                      >
+                        <span
+                          className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? "left-7" : "left-1"}`}
+                        />
+                      </button>
+                    </form>
+                  </div>
+                  {on && (
+                    <Link
+                      href={`/siswa/aksesibilitas/${g.key}`}
+                      className="mt-3 flex items-center justify-center gap-1.5 rounded-full bg-sky/10 px-4 py-2 text-sm font-extrabold text-sky transition hover:bg-sky/20"
+                    >
+                      Lihat fitur untukmu →
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* TTS */}

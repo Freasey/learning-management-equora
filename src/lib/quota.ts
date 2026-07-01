@@ -1,7 +1,19 @@
 import { and, eq, like, ne } from "drizzle-orm";
 import { db, users, memberships, pricingPlans, schools } from "@/db";
+import { DEMO_SCHOOL, DEMO_LIMITS } from "@/lib/demo";
 
-/** Ambil paket aktif sebuah sekolah. */
+/** Jepit kuota ke batas demo (ambil yang terkecil; null paket = tak terbatas). */
+function clamp(planValue: number | null, cap: number): number {
+  return planValue === null ? cap : Math.min(planValue, cap);
+}
+
+/**
+ * Ambil paket aktif sebuah sekolah.
+ *
+ * Untuk sekolah demo (DEMO01) kuota AI/storage/akun ditimpa dengan
+ * DEMO_LIMITS — fitur tetap boleh dicoba, tapi dibatasi agar sandbox publik
+ * tidak jadi celah biaya/penyalahgunaan.
+ */
 export async function getSchoolPlan(schoolId: string) {
   const [school] = await db
     .select()
@@ -14,7 +26,18 @@ export async function getSchoolPlan(schoolId: string) {
     .from(pricingPlans)
     .where(eq(pricingPlans.key, school.planKey))
     .limit(1);
-  return plan ?? null;
+  if (!plan) return null;
+
+  if (school.code === DEMO_SCHOOL.code) {
+    return {
+      ...plan,
+      aiCredits: clamp(plan.aiCredits, DEMO_LIMITS.aiCredits),
+      storageGb: clamp(plan.storageGb, DEMO_LIMITS.storageGb),
+      quotaStudents: clamp(plan.quotaStudents, DEMO_LIMITS.quotaStudents),
+      quotaTeachers: clamp(plan.quotaTeachers, DEMO_LIMITS.quotaTeachers),
+    };
+  }
+  return plan;
 }
 
 /**

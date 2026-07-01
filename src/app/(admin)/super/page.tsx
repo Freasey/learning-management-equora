@@ -2,6 +2,7 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { ArrowRight, School, Tags, Megaphone, Inbox } from "lucide-react";
 import { db, schools, pricingPlans, contactRequests } from "@/db";
+import { DemoResetCard } from "./demo-reset-card";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,10 @@ export default async function SuperAdminHome() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <DemoResetCard />
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">

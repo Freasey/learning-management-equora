@@ -11,6 +11,7 @@ const navLinks = [
   { href: "/#inklusif", label: "Inklusif" },
   { href: "/harga", label: "Harga" },
   { href: "/#testimoni", label: "Testimoni" },
+  { href: "/coba", label: "Coba Demo" },
   { href: "/tentang", label: "Tentang" },
 ];
 
