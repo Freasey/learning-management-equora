@@ -1,56 +1,81 @@
 import type { Metadata } from "next";
-import { asc, eq } from "drizzle-orm";
-import { CheckCircle2 } from "lucide-react";
-import { db, pricingPlans } from "@/db";
-import { LeadForm } from "@/components/site/lead-form";
+import Link from "next/link";
+import { Sparkles, RotateCw } from "lucide-react";
+import {
+  DEMO_SCHOOL,
+  DEMO_PASSWORD,
+  DEMO_RESET_INTERVAL_MS,
+  ensureDemoFresh,
+} from "@/lib/demo";
+import { DemoCountdown } from "@/components/site/demo-countdown";
+import { DemoLoginButtons } from "./login-buttons";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Coba Gratis — Equora",
-  description: "Jadwalkan demo atau mulai uji coba Equora untuk sekolah Anda.",
+  title: "Coba Demo — Equora",
+  description:
+    "Masuk ke sekolah demo Equora sekali klik. Tanpa daftar, tanpa kartu kredit.",
 };
 
-const benefits = [
-  "Demo langsung sesuai kebutuhan sekolah Anda",
-  "Bantuan migrasi data siswa & guru",
-  "Tanpa kartu kredit, tanpa komitmen",
-  "Pendampingan setup dari tim kami",
-];
-
 export default async function DemoPage() {
-  const plans = await db
-    .select({ key: pricingPlans.key, name: pricingPlans.name })
-    .from(pricingPlans)
-    .where(eq(pricingPlans.isActive, true))
-    .orderBy(asc(pricingPlans.sortOrder));
+  // "Reset malas": segarkan sekolah demo bila usianya sudah lewat 6 jam.
+  const lastReset = await ensureDemoFresh();
+  const nextResetIso = new Date(
+    lastReset.getTime() + DEMO_RESET_INTERVAL_MS,
+  ).toISOString();
 
   return (
-    <section className="mx-auto grid max-w-6xl gap-12 px-5 py-16 md:grid-cols-2 md:py-24">
-      <div>
-        <span className="font-mono text-xs uppercase tracking-widest text-teal-700">
-          Coba Gratis
+    <section className="mx-auto max-w-3xl px-5 py-16 md:py-24">
+      <div className="text-center">
+        <span className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-teal-700">
+          <Sparkles className="h-4 w-4" />
+          Coba Langsung
         </span>
         <h1 className="mt-3 font-display text-4xl font-medium leading-tight text-ink md:text-5xl">
-          Mulai dengan Equora hari ini
+          Coba Equora sekali klik
         </h1>
         <p className="mt-4 text-lg text-muted">
-          Isi formulir ini dan tim kami akan menghubungi Anda untuk menjadwalkan
-          demo serta membantu menyiapkan sekolah Anda.
+          Pilih peran di bawah untuk langsung masuk ke{" "}
+          <strong className="text-ink">{DEMO_SCHOOL.name}</strong> — sekolah demo
+          yang sudah berisi guru, siswa, kelas, dan mata pelajaran. Tanpa daftar,
+          tanpa kartu kredit.
         </p>
-        <ul className="mt-8 space-y-3">
-          {benefits.map((b) => (
-            <li key={b} className="flex gap-3 text-ink">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-              {b}
-            </li>
-          ))}
-        </ul>
       </div>
 
-      <div className="rounded-2xl border border-line bg-paper p-7 shadow-[0_24px_60px_-30px_rgba(14,58,58,0.3)]">
-        <LeadForm type="demo" plans={plans} submitLabel="Jadwalkan Demo" />
+      <div className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-line bg-sand/40 px-4 py-3 text-sm text-muted">
+        <RotateCw className="h-4 w-4 shrink-0 text-teal-700" />
+        <span>
+          Sekolah demo dipakai bersama & disegarkan tiap 6 jam —{" "}
+          <DemoCountdown targetIso={nextResetIso} />. Semua perubahan Anda akan
+          direset.
+        </span>
       </div>
+
+      <div className="mt-8">
+        <DemoLoginButtons />
+      </div>
+
+      <p className="mt-8 text-center text-sm text-muted">
+        Ingin data & tim sekolah Anda sendiri?{" "}
+        <Link
+          href="/kontak"
+          className="font-semibold text-teal-700 hover:underline"
+        >
+          Jadwalkan demo privat
+        </Link>{" "}
+        atau{" "}
+        <Link href="/harga" className="font-semibold text-teal-700 hover:underline">
+          lihat harga
+        </Link>
+        .
+      </p>
+
+      <p className="mt-2 text-center text-xs text-muted/70">
+        Semua akun demo memakai kata sandi{" "}
+        <code className="rounded bg-line/40 px-1">{DEMO_PASSWORD}</code> bila ingin
+        masuk manual.
+      </p>
     </section>
   );
 }

@@ -82,7 +82,7 @@ ${studentRows}
 
 ---
 
-_Cara tercepat mencoba: buka halaman **/coba** lalu klik tombol peran yang diinginkan (login instan)._
+_Cara tercepat mencoba: buka halaman **/demo** lalu klik tombol peran yang diinginkan (login instan)._
 `;
 }
 

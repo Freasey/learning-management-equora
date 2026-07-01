@@ -10,12 +10,12 @@ import {
 } from "@/lib/demo";
 
 /**
- * Login instan sebagai salah satu akun sekolah demo (halaman /coba).
+ * Login instan sebagai salah satu akun sekolah demo (halaman /demo).
  * signIn melempar sinyal redirect (NEXT_REDIRECT) saat sukses — dibiarkan
  * naik agar Next mengarahkan ke /dashboard.
  */
 export async function loginAsDemo(role: DemoRole): Promise<string | undefined> {
-  // Jaga-jaga bila login dipicu tanpa lewat halaman /coba: pastikan akun demo
+  // Jaga-jaga bila login dipicu tanpa lewat halaman /demo: pastikan akun demo
   // sudah ada & segar sebelum autentikasi.
   await ensureDemoFresh();
 

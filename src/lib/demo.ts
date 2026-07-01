@@ -7,7 +7,7 @@
  *
  * Sumber kebenaran tunggal untuk:
  *  - konstanta isi sekolah demo (dipakai skrip seed & endpoint cron),
- *  - kredensial login instan (halaman /coba),
+ *  - kredensial login instan (halaman /demo),
  *  - jadwal reset otomatis (hitung mundur di konsol super).
  */
 import { Pool } from "@neondatabase/serverless";
@@ -84,7 +84,7 @@ export const DEMO_LIMITS = {
 } as const;
 
 /**
- * Kredensial login instan per peran (halaman /coba). schoolCode hanya diisi
+ * Kredensial login instan per peran (halaman /demo). schoolCode hanya diisi
  * untuk siswa — jalur guru/admin/ortu login pakai email.
  */
 export const DEMO_LOGINS = {
@@ -308,7 +308,7 @@ const DEMO_RESET_LOCK_KEY = 4823917;
 /**
  * Pastikan isi sekolah demo masih segar: bila belum ada atau usianya sudah
  * melewati DEMO_RESET_INTERVAL_MS, reset. Dipanggil saat sekolah demo diakses
- * (halaman /coba & aksi login demo) — pengganti cron presisi yang butuh Pro.
+ * (halaman /demo & aksi login demo) — pengganti cron presisi yang butuh Pro.
  *
  * Mengembalikan waktu reset terakhir yang berlaku (untuk hitung mundur).
  */
