@@ -93,7 +93,7 @@ export default async function HargaPage() {
                 </div>
 
                 <Button
-                  href={plan.isCustom ? "/kontak" : "/daftar"}
+                  href={plan.isCustom ? "/kontak" : "/daftar/sekolah"}
                   variant={highlight ? "accent" : "primary"}
                   size="md"
                   className="mt-5 w-full"
