@@ -129,6 +129,15 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
     classes,
     enrollments,
     classSubjects,
+    schedules,
+    materials,
+    schoolAnnouncements,
+    assessments,
+    questions,
+    gradeItems,
+    grades,
+    attempts,
+    answers,
   } = schema;
 
   try {
@@ -169,82 +178,272 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
       status: "active",
     });
 
-    // 4) Guru
-    const teacherIds: string[] = [];
-    for (const t of DEMO_TEACHERS) {
-      const [row] = await db
-        .insert(users)
-        .values({
+    // 4) Guru (bulk) — guru ke-i mengampu mapel ke-i.
+    const teacherRows = await db
+      .insert(users)
+      .values(
+        DEMO_TEACHERS.map((t) => ({
           schoolId,
           role: "teacher",
           name: t.name,
           email: t.email,
           passwordHash,
           status: "active",
-        })
-        .returning({ id: users.id });
-      teacherIds.push(row.id);
-    }
+        })),
+      )
+      .returning({ id: users.id });
+    const teacherIds = teacherRows.map((r) => r.id);
 
-    // 5) Mapel
-    const subjectIds: string[] = [];
-    for (const s of DEMO_SUBJECTS) {
-      const [row] = await db
-        .insert(subjects)
-        .values({ schoolId, name: s.name, code: s.code, source: "catalog" })
-        .returning({ id: subjects.id });
-      subjectIds.push(row.id);
-    }
+    // 5) Mapel (bulk)
+    const subjectRows = await db
+      .insert(subjects)
+      .values(
+        DEMO_SUBJECTS.map((s) => ({
+          schoolId,
+          name: s.name,
+          code: s.code,
+          kkm: 75,
+          source: "catalog",
+        })),
+      )
+      .returning({ id: subjects.id });
+    const subjectIds = subjectRows.map((r) => r.id);
 
-    // 6) Kelas (wali kelas = guru ke-i)
-    const classIds: string[] = [];
-    for (let i = 0; i < DEMO_CLASSES.length; i++) {
-      const c = DEMO_CLASSES[i];
-      const [row] = await db
-        .insert(classes)
-        .values({
+    // 6) Kelas (bulk) — wali kelas = guru ke-i
+    const classRows = await db
+      .insert(classes)
+      .values(
+        DEMO_CLASSES.map((c, i) => ({
           schoolId,
           academicYearId,
           name: c.name,
           level: c.level,
           capacity: 30,
           homeroomTeacherId: teacherIds[i],
-        })
-        .returning({ id: classes.id });
-      classIds.push(row.id);
-    }
+        })),
+      )
+      .returning({ id: classes.id });
+    const classIds = classRows.map((r) => r.id);
 
-    // 7) Pengampu: tiap kelas diajar 5 guru utk 5 mapel.
-    for (const classId of classIds) {
-      for (let i = 0; i < subjectIds.length; i++) {
-        await db.insert(classSubjects).values({
+    // 7) Pengampu (bulk): tiap kelas diajar 5 guru utk 5 mapel.
+    await db.insert(classSubjects).values(
+      classIds.flatMap((classId) =>
+        subjectIds.map((subjectId, i) => ({
           schoolId,
           classId,
-          subjectId: subjectIds[i],
+          subjectId,
           teacherId: teacherIds[i],
-        });
-      }
-    }
+        })),
+      ),
+    );
 
-    // 8) Siswa (NIS 2026001..), 5 per kelas, langsung di-enroll.
-    for (let i = 0; i < DEMO_STUDENT_NAMES.length; i++) {
-      const nis = `2026${String(i + 1).padStart(3, "0")}`;
-      const [row] = await db
-        .insert(users)
-        .values({
+    // 8) Siswa (bulk, NIS 2026001..), 5 per kelas, langsung di-enroll.
+    const studentRows = await db
+      .insert(users)
+      .values(
+        DEMO_STUDENT_NAMES.map((name, i) => ({
           schoolId,
           role: "student",
-          name: DEMO_STUDENT_NAMES[i],
-          username: nis,
+          name,
+          username: `2026${String(i + 1).padStart(3, "0")}`,
           passwordHash,
           status: "active",
-        })
-        .returning({ id: users.id });
-      const classId = classIds[Math.floor(i / 5)];
-      await db
-        .insert(enrollments)
-        .values({ schoolId, academicYearId, classId, studentId: row.id });
-    }
+        })),
+      )
+      .returning({ id: users.id });
+    const studentIds = studentRows.map((r) => r.id);
+    await db.insert(enrollments).values(
+      studentIds.map((studentId, i) => ({
+        schoolId,
+        academicYearId,
+        classId: classIds[Math.floor(i / 5)],
+        studentId,
+      })),
+    );
+    // Siswa per kelas: VII-A = indeks 0..4, VII-B = 5..9.
+    const studentsByClass = [studentIds.slice(0, 5), studentIds.slice(5, 10)];
+
+    // ── 9) Isi konten agar demo langsung "hidup" ───────────────────────────
+    // Metadata konten per mapel (selaras urutan DEMO_SUBJECTS).
+    const CONTENT = [
+      { topic: "Bilangan Bulat", material: "Operasi Bilangan Bulat" },
+      { topic: "Teks Deskripsi", material: "Menulis Teks Deskripsi" },
+      { topic: "Klasifikasi Makhluk Hidup", material: "Ciri-ciri Makhluk Hidup" },
+      { topic: "Greetings & Introductions", material: "Perkenalan dalam Bahasa Inggris" },
+      { topic: "Berpikir Komputasional", material: "Pengantar Algoritma" },
+    ];
+    const OPTS = ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"];
+
+    // Jadwal: VII-A semua mapel (Sen–Jum), VII-B slot Matematika (mapel demo guru).
+    await db.insert(schedules).values([
+      ...subjectIds.map((subjectId, i) => ({
+        schoolId,
+        classId: classIds[0],
+        subjectId,
+        teacherId: teacherIds[i],
+        dayOfWeek: i + 1, // 1=Senin .. 5=Jumat
+        startTime: "07:30",
+        endTime: "09:00",
+        room: "R-7A",
+      })),
+      {
+        schoolId,
+        classId: classIds[1],
+        subjectId: subjectIds[0],
+        teacherId: teacherIds[0],
+        dayOfWeek: 2,
+        startTime: "09:15",
+        endTime: "10:45",
+        room: "R-7B",
+      },
+    ]);
+
+    // Materi: VII-A tiap mapel (+1 ekstra MAT), VII-B materi MAT.
+    await db.insert(materials).values([
+      ...subjectIds.map((subjectId, i) => ({
+        schoolId,
+        teacherId: teacherIds[i],
+        subjectId,
+        classId: classIds[0],
+        title: CONTENT[i].material,
+        topic: CONTENT[i].topic,
+        type: "manual",
+        notes: `Ringkasan materi ${CONTENT[i].topic} untuk kelas VII.`,
+      })),
+      {
+        schoolId,
+        teacherId: teacherIds[0],
+        subjectId: subjectIds[0],
+        classId: classIds[0],
+        title: "Latihan Soal Bilangan Bulat",
+        topic: CONTENT[0].topic,
+        type: "manual",
+        notes: "Kumpulan soal latihan untuk dikerjakan di rumah.",
+      },
+      {
+        schoolId,
+        teacherId: teacherIds[0],
+        subjectId: subjectIds[0],
+        classId: classIds[1],
+        title: CONTENT[0].material,
+        topic: CONTENT[0].topic,
+        type: "manual",
+        notes: `Ringkasan materi ${CONTENT[0].topic} untuk kelas VII.`,
+      },
+    ]);
+
+    // Pengumuman sekolah.
+    await db.insert(schoolAnnouncements).values([
+      {
+        schoolId,
+        title: "Selamat datang di Semester Ganjil 2025/2026",
+        body: "Semangat belajar untuk seluruh siswa dan guru!",
+        audience: "all",
+      },
+      {
+        schoolId,
+        title: "Penilaian Tengah Semester",
+        body: "PTS dilaksanakan mulai pekan depan. Cek jadwal di kelas masing-masing.",
+        audience: "all",
+      },
+    ]);
+
+    // Helper: item nilai manual + skor tiap siswa.
+    const seedManualGrade = async (
+      teacherId: string,
+      classId: string,
+      subjectId: string,
+      title: string,
+      sIds: string[],
+      scores: number[],
+    ) => {
+      const [gi] = await db
+        .insert(gradeItems)
+        .values({ schoolId, academicYearId, teacherId, classId, subjectId, title, maxScore: 100, source: "manual" })
+        .returning({ id: gradeItems.id });
+      await db.insert(grades).values(
+        sIds.map((studentId, i) => ({ schoolId, academicYearId, gradeItemId: gi.id, studentId, score: scores[i] })),
+      );
+    };
+
+    // Helper: kuis PG yang SUDAH dinilai + pengerjaan siswa (masuk ke nilai).
+    const seedGradedQuiz = async (
+      teacherId: string,
+      classId: string,
+      subjectId: string,
+      title: string,
+      topic: string,
+      sIds: string[],
+      correctCounts: number[],
+    ) => {
+      const POINTS = 20;
+      const N = 5;
+      const MAX = POINTS * N;
+      const [a] = await db
+        .insert(assessments)
+        .values({ schoolId, academicYearId, teacherId, subjectId, classId, title, type: "quiz", description: `Kuis pilihan ganda: ${topic}.`, durationMin: 30, countToGrade: true, status: "published" })
+        .returning({ id: assessments.id });
+      const qRows = await db
+        .insert(questions)
+        .values(
+          Array.from({ length: N }, (_, i) => ({ schoolId, assessmentId: a.id, type: "mc", text: `Soal ${i + 1} tentang ${topic}.`, options: OPTS, correctIndex: 0, points: POINTS, sortOrder: i })),
+        )
+        .returning({ id: questions.id });
+      const [gi] = await db
+        .insert(gradeItems)
+        .values({ schoolId, academicYearId, teacherId, classId, subjectId, title, maxScore: MAX, source: "assessment", assessmentId: a.id })
+        .returning({ id: gradeItems.id });
+      const gradeRows: { schoolId: string; academicYearId: string; gradeItemId: string; studentId: string; score: number }[] = [];
+      for (let s = 0; s < sIds.length; s++) {
+        const correct = Math.max(0, Math.min(N, correctCounts[s]));
+        const score = correct * POINTS;
+        const [att] = await db
+          .insert(attempts)
+          .values({ schoolId, academicYearId, assessmentId: a.id, studentId: sIds[s], status: "graded", autoScore: score, totalScore: score, maxScore: MAX })
+          .returning({ id: attempts.id });
+        await db.insert(answers).values(
+          qRows.map((q, i) => ({ schoolId, attemptId: att.id, questionId: q.id, choiceIndex: i < correct ? 0 : 1, isCorrect: i < correct, awardedPoints: i < correct ? POINTS : 0 })),
+        );
+        gradeRows.push({ schoolId, academicYearId, gradeItemId: gi.id, studentId: sIds[s], score });
+      }
+      await db.insert(grades).values(gradeRows);
+    };
+
+    // Helper: kuis PG "siap dicoba" (terbit, belum dikerjakan) → siswa bisa langsung mencoba.
+    const seedOpenQuiz = async (
+      teacherId: string,
+      classId: string,
+      subjectId: string,
+      title: string,
+      topic: string,
+    ) => {
+      const POINTS = 20;
+      const N = 5;
+      const [a] = await db
+        .insert(assessments)
+        .values({ schoolId, academicYearId, teacherId, subjectId, classId, title, type: "quiz", description: `Kuis latihan ${topic} — silakan coba!`, durationMin: 20, countToGrade: true, status: "published" })
+        .returning({ id: assessments.id });
+      await db.insert(questions).values(
+        Array.from({ length: N }, (_, i) => ({ schoolId, assessmentId: a.id, type: "mc", text: `Latihan ${i + 1} tentang ${topic}.`, options: OPTS, correctIndex: i % 4, points: POINTS, sortOrder: i })),
+      );
+    };
+
+    // VII-A (kelas siswa demo): nilai + kuis lintas mapel + kuis siap dicoba.
+    const clsA = classIds[0];
+    const stA = studentsByClass[0];
+    await seedManualGrade(teacherIds[0], clsA, subjectIds[0], "Tugas Harian: Bilangan Bulat", stA, [88, 76, 92, 64, 70]);
+    await seedManualGrade(teacherIds[1], clsA, subjectIds[1], "Tugas Harian: Teks Deskripsi", stA, [80, 85, 78, 90, 72]);
+    await seedManualGrade(teacherIds[2], clsA, subjectIds[2], "Tugas Harian: Makhluk Hidup", stA, [75, 68, 82, 60, 79]);
+    await seedGradedQuiz(teacherIds[0], clsA, subjectIds[0], "Ulangan Harian: Bilangan Bulat", CONTENT[0].topic, stA, [5, 4, 5, 2, 3]);
+    await seedGradedQuiz(teacherIds[1], clsA, subjectIds[1], "Ulangan Harian: Teks Deskripsi", CONTENT[1].topic, stA, [4, 5, 3, 4, 2]);
+    await seedOpenQuiz(teacherIds[0], clsA, subjectIds[0], "Latihan: Bilangan Bulat", CONTENT[0].topic);
+
+    // VII-B (kelas kedua guru Matematika demo).
+    const clsB = classIds[1];
+    const stB = studentsByClass[1];
+    await seedManualGrade(teacherIds[0], clsB, subjectIds[0], "Tugas Harian: Bilangan Bulat", stB, [82, 74, 90, 66, 71]);
+    await seedGradedQuiz(teacherIds[0], clsB, subjectIds[0], "Ulangan Harian: Bilangan Bulat", CONTENT[0].topic, stB, [3, 5, 4, 2, 4]);
+    await seedOpenQuiz(teacherIds[0], clsB, subjectIds[0], "Latihan: Bilangan Bulat", CONTENT[0].topic);
 
     return {
       schoolId,
