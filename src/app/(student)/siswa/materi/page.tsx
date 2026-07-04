@@ -8,8 +8,9 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Materi · Siswa" };
 
 const typeLabel: Record<string, string> = {
-  ai: "PPT",
+  ai: "AI",
   link: "Tautan",
+  file: "Berkas",
   manual: "Catatan",
 };
 

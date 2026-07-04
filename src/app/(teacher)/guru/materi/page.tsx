@@ -1,24 +1,16 @@
 import { redirect } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
-import { Sparkles, FileText, Link2, Upload } from "lucide-react";
 import { auth } from "@/auth";
 import { db, materials, subjects, classes } from "@/db";
 import { getTeacherAssignments } from "@/lib/teaching";
 import { isStorageConfigured } from "@/lib/storage";
+import { isAiConfigured } from "@/lib/ai";
 import { formatDate } from "@/lib/format";
-import { Button } from "@/components/ui/button";
-import { PageHeader, Field, SelectField, FileField, RowAction, Th, EmptyRow } from "@/components/admin/ui";
-import { addMaterial, generateAiMaterial, uploadMaterialFile, deleteMaterial } from "./actions";
+import { PageHeader } from "@/components/admin/ui";
+import { MateriManager, type MaterialRow } from "./materi-form";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Materi · Guru" };
-
-const typeBadge: Record<string, { label: string; cls: string }> = {
-  ai: { label: "AI", cls: "bg-accent/15 text-accent" },
-  link: { label: "Tautan", cls: "bg-teal-700/10 text-teal-700" },
-  file: { label: "Berkas", cls: "bg-coral/15 text-coral" },
-  manual: { label: "Manual", cls: "bg-sand-deep text-ink" },
-};
 
 export default async function MateriPage() {
   const session = await auth();
@@ -27,17 +19,19 @@ export default async function MateriPage() {
   if (!schoolId || !teacherId || session?.user?.role !== "teacher") redirect("/dashboard");
 
   const assignments = await getTeacherAssignments(schoolId, teacherId);
-  const subjOptions = dedupe(assignments.map((a) => ({ id: a.subjectId, name: a.subjectName })));
+  const subjectOptions = dedupe(assignments.map((a) => ({ id: a.subjectId, name: a.subjectName })));
   const classOptions = dedupe(assignments.map((a) => ({ id: a.classId, name: a.className })));
-  const storageOn = isStorageConfigured();
 
-  const rows = await db
+  const raw = await db
     .select({
       id: materials.id,
       title: materials.title,
       topic: materials.topic,
       type: materials.type,
       url: materials.url,
+      notes: materials.notes,
+      subjectId: materials.subjectId,
+      classId: materials.classId,
       subjectName: subjects.name,
       className: classes.name,
       createdAt: materials.createdAt,
@@ -48,7 +42,7 @@ export default async function MateriPage() {
     .where(and(eq(materials.schoolId, schoolId), eq(materials.teacherId, teacherId)))
     .orderBy(desc(materials.createdAt));
 
-  if (subjOptions.length === 0) {
+  if (subjectOptions.length === 0) {
     return (
       <div>
         <PageHeader title="Materi" />
@@ -60,169 +54,28 @@ export default async function MateriPage() {
     );
   }
 
+  const rows: MaterialRow[] = raw.map((m) => ({
+    id: m.id,
+    title: m.title,
+    topic: m.topic,
+    type: m.type,
+    url: m.url,
+    notes: m.notes ?? "",
+    subjectId: m.subjectId,
+    classId: m.classId,
+    subjectName: m.subjectName,
+    className: m.className,
+    createdLabel: formatDate(m.createdAt),
+  }));
+
   return (
-    <div>
-      <PageHeader title="Materi Ajar" description="Generate dengan AI atau tambah manual." />
-
-      <div className="mb-8 grid gap-6 lg:grid-cols-2">
-        {/* Generate AI */}
-        <form action={generateAiMaterial} className="rounded-xl border border-line bg-paper p-5">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent/15 text-accent">
-              <Sparkles className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="font-display text-lg font-medium text-ink">Generate AI</h2>
-              <p className="text-xs text-muted">PPT dari panduan kurikulum (mode demo)</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <Field label="Topik" name="topic" required placeholder="cth. Hukum Newton" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectField label="Mapel" name="subjectId" required>
-                {subjOptions.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </SelectField>
-              <SelectField label="Kelas" name="classId" defaultValue="">
-                <option value="">— Umum —</option>
-                {classOptions.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </SelectField>
-            </div>
-            <Button type="submit" variant="accent" size="md">
-              <Sparkles className="h-4 w-4" /> Generate
-            </Button>
-          </div>
-        </form>
-
-        {/* Tambah manual */}
-        <form action={addMaterial} className="rounded-xl border border-line bg-paper p-5">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-teal-700/10 text-teal-700">
-              <FileText className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="font-display text-lg font-medium text-ink">Tambah manual</h2>
-              <p className="text-xs text-muted">Unggah tautan / catatan materi</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <Field label="Judul" name="title" required placeholder="cth. Ringkasan Bab 1" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectField label="Mapel" name="subjectId" required>
-                {subjOptions.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </SelectField>
-              <SelectField label="Tipe" name="type" defaultValue="link">
-                <option value="link">Tautan</option>
-                <option value="manual">Catatan</option>
-              </SelectField>
-            </div>
-            <Field label="URL (opsional)" name="url" placeholder="https://…" />
-            <Button type="submit" variant="primary" size="md">Tambah</Button>
-          </div>
-        </form>
-      </div>
-
-      {/* Unggah berkas (Vercel Blob) */}
-      {storageOn ? (
-        <form action={uploadMaterialFile} className="mb-8 rounded-xl border border-line bg-paper p-5">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-coral/15 text-coral">
-              <Upload className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="font-display text-lg font-medium text-ink">Unggah berkas</h2>
-              <p className="text-xs text-muted">PDF, PPT, DOCX, atau gambar (maks 25 MB)</p>
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Judul" name="title" required placeholder="cth. Slide Bab 1" />
-            <SelectField label="Mapel" name="subjectId" required>
-              {subjOptions.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </SelectField>
-            <SelectField label="Kelas" name="classId" defaultValue="">
-              <option value="">— Umum —</option>
-              {classOptions.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </SelectField>
-            <FileField
-              label="Berkas"
-              name="file"
-              required
-              accept=".pdf,.ppt,.pptx,.doc,.docx,image/*"
-            />
-          </div>
-          <div className="mt-4">
-            <Button type="submit" variant="accent" size="md">
-              <Upload className="h-4 w-4" /> Unggah
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <div className="mb-8 rounded-xl border border-dashed border-line bg-paper p-5 text-sm text-muted">
-          Unggah berkas materi nonaktif — penyimpanan (Vercel Blob) belum
-          dikonfigurasi. Atur <code className="font-mono text-xs">BLOB_READ_WRITE_TOKEN</code> untuk mengaktifkan.
-        </div>
-      )}
-
-      <div className="overflow-hidden rounded-xl border border-line bg-paper">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-line bg-sand/40">
-              <Th>Judul</Th>
-              <Th>Mapel</Th>
-              <Th>Kelas</Th>
-              <Th>Tipe</Th>
-              <Th>Dibuat</Th>
-              <Th>Aksi</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <EmptyRow colSpan={6} text="Belum ada materi." />
-            ) : (
-              rows.map((m) => {
-                const b = typeBadge[m.type] ?? typeBadge.manual;
-                return (
-                  <tr key={m.id} className="border-b border-line last:border-0">
-                    <td className="px-4 py-3 font-medium text-ink">
-                      {m.url ? (
-                        <a href={m.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-teal-700 hover:underline">
-                          {m.title} <Link2 className="h-3 w-3" />
-                        </a>
-                      ) : (
-                        m.title
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-ink">{m.subjectName ?? "—"}</td>
-                    <td className="px-4 py-3 text-ink">{m.className ?? "Umum"}</td>
-                    <td className="px-4 py-3">
-                      <span className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase ${b.cls}`}>
-                        {b.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted">{formatDate(m.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      <form action={deleteMaterial}>
-                        <input type="hidden" name="id" value={m.id} />
-                        <RowAction danger>Hapus</RowAction>
-                      </form>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <MateriManager
+      rows={rows}
+      subjectOptions={subjectOptions}
+      classOptions={classOptions}
+      storageOn={isStorageConfigured()}
+      aiConfigured={isAiConfigured()}
+    />
   );
 }
 
