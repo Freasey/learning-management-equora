@@ -192,14 +192,26 @@ export async function generateSlides(
   formData: FormData,
 ): Promise<{ text?: string; error?: string }> {
   const { schoolId, teacherId } = await requireTeacher();
+  console.log("[slides] mulai", { schoolId, teacherId });
   const subjectId = String(formData.get("subjectId") ?? "");
-  if (!z.string().uuid().safeParse(subjectId).success) return { error: "Pilih mapel dulu." };
+  if (!z.string().uuid().safeParse(subjectId).success) {
+    console.warn("[slides] subjectId invalid:", subjectId);
+    return { error: "Pilih mapel dulu." };
+  }
 
   const topic = String(formData.get("topic") ?? "").trim();
   const sourceText = String(formData.get("sourceText") ?? "").trim();
   const file = formData.get("sourceFile");
   const hasFile = file instanceof File && file.size > 0;
+  console.log("[slides] input", {
+    subjectId,
+    topic,
+    sourceTextChars: sourceText.length,
+    hasFile,
+    file: hasFile ? { name: file.name, type: file.type, size: file.size } : null,
+  });
   if (!sourceText && !hasFile) {
+    console.warn("[slides] tak ada sumber (teks & berkas kosong)");
     return { error: "Tempel isi modul atau unggah berkas modul dulu." };
   }
 
@@ -208,17 +220,21 @@ export async function generateSlides(
   const style = styleLabel[String(formData.get("style") ?? "ringkas")] ?? styleLabel.ringkas;
   const withExamples = formData.get("includeExamples") === "1";
   const withDiscussion = formData.get("includeDiscussion") === "1";
+  console.log("[slides] knobs", { slideCount, level, style, withExamples, withDiscussion });
 
   try {
     return await withTenant(schoolId, async () => {
       await assertAiQuota(schoolId);
+      console.log("[slides] kuota AI OK");
       const [subj] = await db
         .select({ name: subjects.name })
         .from(subjects)
         .where(and(eq(subjects.id, subjectId), eq(subjects.schoolId, schoolId)))
         .limit(1);
+      console.log("[slides] mapel:", subj?.name ?? "(tak ditemukan)");
 
       if (!isAiConfigured()) {
+        console.log("[slides] AI tak dikonfigurasi → slide demo");
         return { text: demoSlides(topic || subj?.name || "Materi", slideCount) };
       }
 
@@ -244,16 +260,31 @@ export async function generateSlides(
       if (sourceText) parts.push({ text: `BAHAN SUMBER (teks):\n${sourceText}` });
       if (hasFile) {
         const part = await fileToPart(file);
-        if ("error" in part) return { error: part.error };
+        if ("error" in part) {
+          console.warn("[slides] fileToPart gagal:", part.error);
+          return { error: part.error };
+        }
+        console.log(
+          "[slides] file part:",
+          "text" in part
+            ? { kind: "text", chars: part.text.length }
+            : { kind: "inlineData", mimeType: part.inlineData.mimeType },
+        );
         parts.push(part);
       }
 
+      console.log("[slides] panggil Gemini dengan", parts.length, "bagian");
       const out = await generateFromParts(parts);
-      if (!out) return { error: "AI tidak mengembalikan hasil. Coba lagi." };
+      if (!out) {
+        console.warn("[slides] Gemini kembalikan kosong/null");
+        return { error: "AI tidak mengembalikan hasil. Coba lagi." };
+      }
       await recordAiUsage(schoolId, teacherId, "material.slides");
+      console.log("[slides] SUKSES — panjang hasil:", out.length, "char");
       return { text: out };
     });
   } catch (e) {
+    console.error("[slides] EXCEPTION:", e);
     return { error: e instanceof Error ? e.message : "Gagal membuat slide." };
   }
 }
