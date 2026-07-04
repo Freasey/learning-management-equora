@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import {
   AlertCircle,
+  Eye,
   FileText,
   Link2,
   Pencil,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, SelectField, inputClass } from "@/components/admin/ui";
-import { saveMaterial, generateAiDraft, deleteMaterial, type MaterialState } from "./actions";
+import { saveMaterial, generateSlides, deleteMaterial, type MaterialState } from "./actions";
 
 export type MaterialRow = {
   id: string;
@@ -192,6 +193,7 @@ function MaterialPanel({
   onClose: () => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const sourceFileRef = useRef<HTMLInputElement>(null);
   const [state, formAction, pending] = useActionState<MaterialState, FormData>(
     saveMaterial,
     undefined,
@@ -201,6 +203,15 @@ function MaterialPanel({
   const [aiAssisted, setAiAssisted] = useState(row?.type === "ai");
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiPending, startAi] = useTransition();
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Bahan untuk asisten AI (tak ikut tersimpan — dipakai hanya untuk generate).
+  const [sourceText, setSourceText] = useState("");
+  const [slideCount, setSlideCount] = useState("10");
+  const [level, setLevel] = useState("SMP");
+  const [style, setStyle] = useState("ringkas");
+  const [withExamples, setWithExamples] = useState(true);
+  const [withDiscussion, setWithDiscussion] = useState(false);
 
   // Tutup panel setelah simpan berhasil.
   useEffect(() => {
@@ -209,20 +220,35 @@ function MaterialPanel({
 
   function runAi() {
     if (!formRef.current) return;
-    const fd = new FormData(formRef.current);
-    const subjectId = String(fd.get("subjectId") ?? "");
-    const topic = String(fd.get("topic") ?? "").trim();
-    if (!subjectId || topic.length < 2) {
-      setAiError("Pilih mapel dan isi topik minimal 2 karakter dulu.");
+    const main = new FormData(formRef.current);
+    const subjectId = String(main.get("subjectId") ?? "");
+    const file = sourceFileRef.current?.files?.[0];
+    if (!subjectId) {
+      setAiError("Pilih mapel dulu.");
       return;
     }
+    if (!sourceText.trim() && !file) {
+      setAiError("Tempel isi modul atau unggah berkas modul dulu.");
+      return;
+    }
+    const fd = new FormData();
+    fd.set("subjectId", subjectId);
+    fd.set("topic", String(main.get("topic") ?? ""));
+    fd.set("sourceText", sourceText);
+    if (file) fd.set("sourceFile", file);
+    fd.set("slideCount", slideCount);
+    fd.set("level", level);
+    fd.set("style", style);
+    fd.set("includeExamples", withExamples ? "1" : "");
+    fd.set("includeDiscussion", withDiscussion ? "1" : "");
     setAiError(null);
     startAi(async () => {
-      const res = await generateAiDraft(subjectId, topic);
+      const res = await generateSlides(fd);
       if (res.error) setAiError(res.error);
       else if (res.text) {
         setContent(res.text);
         setAiAssisted(true);
+        setShowPreview(true);
       }
     });
   }
@@ -300,36 +326,108 @@ function MaterialPanel({
       {/* Bidang sesuai sumber */}
       <div className="mt-4">
         {source === "tulis" && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-ink">Isi materi</span>
-              <button
-                type="button"
-                onClick={runAi}
-                disabled={aiPending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-accent/15 px-3 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/25 disabled:opacity-50"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                {aiPending ? "Membuat draf…" : "Bantu dengan AI"}
-              </button>
+          <div className="space-y-4">
+            {/* Asisten AI: rangkum modul jadi slide */}
+            <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent/15 text-accent">
+                  <Sparkles className="h-4 w-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold text-ink">Buat slide dari modul</h3>
+                  <p className="text-xs text-muted">
+                    Tempel isi modul atau unggah berkasnya — AI merangkum jadi presentasi.
+                  </p>
+                </div>
+              </div>
+
+              <textarea
+                rows={4}
+                value={sourceText}
+                onChange={(e) => setSourceText(e.target.value)}
+                placeholder="Tempel isi modul di sini (bab, catatan, ringkasan)…"
+                className={inputClass}
+              />
+
+              <label className="mt-3 block">
+                <span className="mb-1.5 block text-xs font-semibold text-ink">
+                  atau unggah berkas modul (opsional)
+                </span>
+                <input
+                  ref={sourceFileRef}
+                  type="file"
+                  accept=".pdf,.docx,.txt,.md,image/*"
+                  className="block w-full text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-accent/15 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-accent hover:file:bg-accent/25"
+                />
+                <span className="mt-1 block text-xs text-muted">
+                  PDF, DOCX, teks, atau foto halaman (maks 15 MB).
+                </span>
+              </label>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <MiniSelect label="Jumlah slide" value={slideCount} onChange={setSlideCount}
+                  options={[["6", "± 6"], ["10", "± 10"], ["15", "± 15"], ["20", "± 20"]]} />
+                <MiniSelect label="Jenjang" value={level} onChange={setLevel}
+                  options={[["SD", "SD"], ["SMP", "SMP"], ["SMA", "SMA"], ["Umum", "Umum"]]} />
+                <MiniSelect label="Gaya" value={style} onChange={setStyle}
+                  options={[["ringkas", "Ringkas"], ["naratif", "Naratif"], ["interaktif", "Interaktif"]]} />
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-4">
+                <Check label="Sertakan contoh soal" checked={withExamples} onChange={setWithExamples} />
+                <Check label="Sertakan poin diskusi" checked={withDiscussion} onChange={setWithDiscussion} />
+              </div>
+
+              <div className="mt-3 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={runAi}
+                  disabled={aiPending}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-paper transition hover:brightness-95 disabled:opacity-50"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {aiPending ? "Menyusun slide…" : "Buat slide"}
+                </button>
+                {!aiConfigured && (
+                  <span className="text-xs text-muted">
+                    Mode demo — atur <code className="font-mono text-[11px]">GEMINI_API_KEY</code> untuk hasil nyata.
+                  </span>
+                )}
+              </div>
+              <div className="mt-2">
+                <AiErrorNote message={aiError} />
+              </div>
             </div>
-            <textarea
-              name="content"
-              rows={8}
-              value={content}
-              onChange={(e) => {
-                setContent(e.target.value);
-                setAiAssisted(false); // sunting manual → tak lagi murni AI
-              }}
-              placeholder="Ketik materi di sini, atau klik Bantu dengan AI untuk membuat draf."
-              className={inputClass}
-            />
-            {!aiConfigured && (
-              <p className="text-xs text-muted">
-                AI dalam mode demo — atur <code className="font-mono text-[11px]">GEMINI_API_KEY</code> untuk hasil nyata.
-              </p>
-            )}
-            <AiErrorNote message={aiError} />
+
+            {/* Hasil: slide markdown, bisa disunting & dipratinjau */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-ink">Isi materi (slide)</span>
+                {content.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPreview((v) => !v)}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:underline"
+                  >
+                    <Eye className="h-3.5 w-3.5" /> {showPreview ? "Sunting" : "Pratinjau"}
+                  </button>
+                )}
+              </div>
+              {showPreview && content.trim() ? (
+                <SlidePreview markdown={content} />
+              ) : (
+                <textarea
+                  name="content"
+                  rows={10}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Slide muncul di sini setelah dibuat AI — atau ketik sendiri. Pisahkan slide dengan baris ---, judul diawali '# '."
+                  className={`${inputClass} font-mono text-xs`}
+                />
+              )}
+              {/* Pastikan isi tetap terkirim walau sedang mode pratinjau */}
+              {showPreview && <input type="hidden" name="content" value={content} />}
+            </div>
           </div>
         )}
 
@@ -408,6 +506,116 @@ function AiErrorNote({ message }: { message: string | null }) {
       <AlertCircle className="h-3.5 w-3.5 shrink-0" />
       {message}
     </p>
+  );
+}
+
+function MiniSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: [string, string][];
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-semibold text-ink">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${inputClass} py-1.5`}
+      >
+        {options.map(([v, l]) => (
+          <option key={v} value={v}>{l}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function Check({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="inline-flex items-center gap-2 text-xs font-medium text-ink">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 rounded border-line text-accent focus:ring-accent/30"
+      />
+      {label}
+    </label>
+  );
+}
+
+type Slide = { title: string; bullets: string[]; body: string[] };
+
+/** Pisah markdown slide (dipisah '---', judul '# ', butir '- '). */
+function parseSlides(markdown: string): Slide[] {
+  return markdown
+    .split(/^\s*---\s*$/m)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((chunk) => {
+      const lines = chunk.split("\n").map((l) => l.trim()).filter(Boolean);
+      let title = "";
+      const bullets: string[] = [];
+      const body: string[] = [];
+      for (const line of lines) {
+        if (!title && line.startsWith("#")) {
+          title = line.replace(/^#+\s*/, "");
+        } else if (line.startsWith("- ") || line.startsWith("* ")) {
+          bullets.push(line.slice(2));
+        } else if (!title) {
+          title = line;
+        } else {
+          body.push(line);
+        }
+      }
+      return { title: title || "(tanpa judul)", bullets, body };
+    });
+}
+
+function SlidePreview({ markdown }: { markdown: string }) {
+  const slides = parseSlides(markdown);
+  if (slides.length === 0) {
+    return <p className="text-xs text-muted">Belum ada slide untuk dipratinjau.</p>;
+  }
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {slides.map((s, i) => (
+        <div
+          key={i}
+          className="aspect-video overflow-auto rounded-lg border border-line bg-white p-4 shadow-sm"
+        >
+          <div className="mb-1 font-mono text-[10px] text-muted">Slide {i + 1}</div>
+          <h4 className="font-display text-sm font-semibold text-ink">{s.title}</h4>
+          {s.body.length > 0 && (
+            <p className="mt-1 text-xs text-ink/70">{s.body.join(" ")}</p>
+          )}
+          {s.bullets.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {s.bullets.map((b, j) => (
+                <li key={j} className="flex gap-1.5 text-xs text-ink/80">
+                  <span className="text-accent">•</span>
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 

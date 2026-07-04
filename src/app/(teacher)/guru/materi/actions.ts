@@ -5,7 +5,14 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, withTenant, materials, subjects } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
-import { assertAiQuota, generateText, isAiConfigured, recordAiUsage } from "@/lib/ai";
+import mammoth from "mammoth";
+import {
+  assertAiQuota,
+  generateFromParts,
+  isAiConfigured,
+  recordAiUsage,
+  type GeminiPart,
+} from "@/lib/ai";
 import { uploadFile, deleteFile, isStorageConfigured } from "@/lib/storage";
 
 export type MaterialState = { error?: string; ok?: boolean } | undefined;
@@ -135,21 +142,72 @@ export async function saveMaterial(
 }
 
 /**
- * Hasilkan draf materi via AI tanpa menyimpan — teks dikembalikan agar guru bisa
- * menyunting dulu sebelum menekan Simpan. Kuota AI ditegakkan & pemakaian dicatat.
+ * Rangkum bahan modul guru (teks tempel dan/atau berkas) menjadi materi
+ * presentasi berformat slide-markdown, TANPA menyimpan — hasil dikembalikan agar
+ * guru bisa menyunting per slide sebelum menekan Simpan. Kuota AI ditegakkan &
+ * pemakaian dicatat. Gemini membaca PDF/gambar native; DOCX diekstrak via mammoth.
  */
-const draftSchema = z.object({
-  subjectId: z.string().uuid(),
-  topic: z.string().trim().min(2),
-});
+const MAX_SOURCE_BYTES = 15_000_000;
 
-export async function generateAiDraft(
-  subjectId: string,
-  topic: string,
+const styleLabel: Record<string, string> = {
+  ringkas: "ringkas dan padat",
+  naratif: "naratif dan mengalir",
+  interaktif: "interaktif dengan pertanyaan pemantik",
+};
+
+/** Ubah berkas modul menjadi bagian konten Gemini (inline atau teks). */
+async function fileToPart(file: File): Promise<GeminiPart | { error: string }> {
+  if (file.size > MAX_SOURCE_BYTES) {
+    return { error: "Berkas terlalu besar (maks 15 MB)." };
+  }
+  const name = file.name.toLowerCase();
+  const mime = file.type || "";
+  const buf = Buffer.from(await file.arrayBuffer());
+
+  if (mime === "application/pdf" || name.endsWith(".pdf")) {
+    return { inlineData: { mimeType: "application/pdf", data: buf.toString("base64") } };
+  }
+  if (mime.startsWith("image/")) {
+    return { inlineData: { mimeType: mime, data: buf.toString("base64") } };
+  }
+  if (name.endsWith(".docx")) {
+    try {
+      const { value } = await mammoth.extractRawText({ buffer: buf });
+      const text = value.trim();
+      if (!text) return { error: "Berkas DOCX kosong / tak terbaca." };
+      return { text: `BAHAN SUMBER (dari berkas ${file.name}):\n${text}` };
+    } catch {
+      return { error: "Gagal membaca berkas DOCX." };
+    }
+  }
+  if (mime.startsWith("text/") || name.endsWith(".txt") || name.endsWith(".md")) {
+    const text = buf.toString("utf8").trim();
+    if (!text) return { error: "Berkas teks kosong." };
+    return { text: `BAHAN SUMBER (dari berkas ${file.name}):\n${text}` };
+  }
+  return { error: "Format tak didukung. Pakai PDF, DOCX, gambar, atau teks." };
+}
+
+export async function generateSlides(
+  formData: FormData,
 ): Promise<{ text?: string; error?: string }> {
   const { schoolId, teacherId } = await requireTeacher();
-  const parsed = draftSchema.safeParse({ subjectId, topic });
-  if (!parsed.success) return { error: "Pilih mapel dan isi topik dulu." };
+  const subjectId = String(formData.get("subjectId") ?? "");
+  if (!z.string().uuid().safeParse(subjectId).success) return { error: "Pilih mapel dulu." };
+
+  const topic = String(formData.get("topic") ?? "").trim();
+  const sourceText = String(formData.get("sourceText") ?? "").trim();
+  const file = formData.get("sourceFile");
+  const hasFile = file instanceof File && file.size > 0;
+  if (!sourceText && !hasFile) {
+    return { error: "Tempel isi modul atau unggah berkas modul dulu." };
+  }
+
+  const slideCount = Math.min(30, Math.max(3, Number(formData.get("slideCount")) || 10));
+  const level = String(formData.get("level") ?? "SMP").trim() || "SMP";
+  const style = styleLabel[String(formData.get("style") ?? "ringkas")] ?? styleLabel.ringkas;
+  const withExamples = formData.get("includeExamples") === "1";
+  const withDiscussion = formData.get("includeDiscussion") === "1";
 
   try {
     return await withTenant(schoolId, async () => {
@@ -157,25 +215,56 @@ export async function generateAiDraft(
       const [subj] = await db
         .select({ name: subjects.name })
         .from(subjects)
-        .where(and(eq(subjects.id, parsed.data.subjectId), eq(subjects.schoolId, schoolId)))
+        .where(and(eq(subjects.id, subjectId), eq(subjects.schoolId, schoolId)))
         .limit(1);
 
       if (!isAiConfigured()) {
-        return {
-          text: `Draf materi "${parsed.data.topic}" (mode demo — kunci AI belum diatur).\n\nTujuan pembelajaran:\n- …\n\nPoin utama:\n- …\n\nContoh:\n- …\n\nRingkasan:\n- …`,
-        };
+        return { text: demoSlides(topic || subj?.name || "Materi", slideCount) };
       }
-      const prompt = `Buat ringkasan materi ajar untuk mata pelajaran "${
-        subj?.name ?? "umum"
-      }" dengan topik "${parsed.data.topic}". Tulis dalam Bahasa Indonesia, terstruktur: tujuan pembelajaran, poin-poin utama, contoh sederhana, dan ringkasan. Format ringkas dengan poin.`;
-      const out = await generateText(prompt);
+
+      const instruction = [
+        `Kamu asisten guru. Dari BAHAN SUMBER di bawah, susun materi presentasi (slide) yang menarik dalam Bahasa Indonesia.`,
+        `Mata pelajaran: ${subj?.name ?? "umum"}${topic ? `. Fokus topik: ${topic}` : ""}.`,
+        `Sasaran jenjang: ${level}. Sesuaikan kedalaman & bahasa untuk jenjang itu.`,
+        `Buat sekitar ${slideCount} slide, gaya ${style}.`,
+        withExamples ? "Sertakan 1–2 slide contoh soal beserta pembahasan singkat." : "",
+        withDiscussion ? "Sertakan 1 slide poin diskusi/pertanyaan pemantik." : "",
+        "",
+        "FORMAT WAJIB (jangan menyimpang):",
+        "- Pisahkan tiap slide dengan baris berisi tepat: ---",
+        "- Baris pertama tiap slide adalah judul, diawali '# '.",
+        "- Butir isi memakai '- ' (maks 6 butir per slide, tiap butir ringkas).",
+        "- Slide pertama adalah judul presentasi + subjudul singkat.",
+        "- Jangan menulis apa pun di luar slide (tanpa pengantar/penutup).",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const parts: GeminiPart[] = [{ text: instruction }];
+      if (sourceText) parts.push({ text: `BAHAN SUMBER (teks):\n${sourceText}` });
+      if (hasFile) {
+        const part = await fileToPart(file);
+        if ("error" in part) return { error: part.error };
+        parts.push(part);
+      }
+
+      const out = await generateFromParts(parts);
       if (!out) return { error: "AI tidak mengembalikan hasil. Coba lagi." };
-      await recordAiUsage(schoolId, teacherId, "material.generate");
+      await recordAiUsage(schoolId, teacherId, "material.slides");
       return { text: out };
     });
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Gagal membuat draf AI." };
+    return { error: e instanceof Error ? e.message : "Gagal membuat slide." };
   }
+}
+
+/** Kerangka slide untuk mode demo (tanpa kunci AI). */
+function demoSlides(title: string, count: number): string {
+  const slides = [`# ${title}\n- Materi presentasi (mode demo — kunci AI belum diatur)`];
+  for (let i = 1; i < Math.min(count, 5); i++) {
+    slides.push(`# Bagian ${i}\n- Poin utama …\n- Penjelasan singkat …\n- Contoh …`);
+  }
+  return slides.join("\n\n---\n\n");
 }
 
 export async function deleteMaterial(formData: FormData) {

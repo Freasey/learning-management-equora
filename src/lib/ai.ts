@@ -9,11 +9,17 @@ export function isAiConfigured(): boolean {
   return Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 }
 
+/** Bagian konten untuk Gemini: teks biasa atau berkas inline (base64). */
+export type GeminiPart =
+  | { text: string }
+  | { inlineData: { mimeType: string; data: string } };
+
 /**
- * Panggil Gemini (Google Generative Language REST API). Mengembalikan teks,
- * atau null bila belum dikonfigurasi / gagal (pemanggil menyiapkan fallback).
+ * Panggil Gemini dengan gabungan bagian teks + berkas inline (PDF/gambar).
+ * Gemini membaca PDF & gambar secara native — tak perlu ekstraksi teks lokal.
+ * Mengembalikan teks hasil, atau null bila belum dikonfigurasi / gagal.
  */
-export async function generateText(prompt: string): Promise<string | null> {
+export async function generateFromParts(parts: GeminiPart[]): Promise<string | null> {
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!key) return null;
   try {
@@ -22,7 +28,7 @@ export async function generateText(prompt: string): Promise<string | null> {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        body: JSON.stringify({ contents: [{ parts }] }),
       },
     );
     if (!res.ok) {
@@ -32,13 +38,21 @@ export async function generateText(prompt: string): Promise<string | null> {
     const data = (await res.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
     };
-    const parts = data.candidates?.[0]?.content?.parts ?? [];
-    const text = parts.map((p) => p.text ?? "").join("").trim();
+    const outParts = data.candidates?.[0]?.content?.parts ?? [];
+    const text = outParts.map((p) => p.text ?? "").join("").trim();
     return text || null;
   } catch (err) {
     console.error("Gemini gagal:", err);
     return null;
   }
+}
+
+/**
+ * Panggil Gemini dengan satu prompt teks. Mengembalikan teks, atau null bila
+ * belum dikonfigurasi / gagal (pemanggil menyiapkan fallback).
+ */
+export function generateText(prompt: string): Promise<string | null> {
+  return generateFromParts([{ text: prompt }]);
 }
 
 /** Catat satu pemakaian AI (untuk akuntansi kuota). */
