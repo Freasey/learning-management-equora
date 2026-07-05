@@ -51,9 +51,9 @@ export default async function NilaiSiswaPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b-2 border-slate-100 text-left">
-                <th className="px-5 py-3 font-bold text-slate-500">Penilaian</th>
-                <th className="px-5 py-3 font-bold text-slate-500">Mapel</th>
-                <th className="px-5 py-3 font-bold text-slate-500">Nilai</th>
+                <th scope="col" className="px-5 py-3 font-bold text-slate-500">Penilaian</th>
+                <th scope="col" className="px-5 py-3 font-bold text-slate-500">Mapel</th>
+                <th scope="col" className="px-5 py-3 font-bold text-slate-500">Nilai</th>
               </tr>
             </thead>
             <tbody>

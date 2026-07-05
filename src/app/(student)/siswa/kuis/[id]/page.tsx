@@ -98,7 +98,10 @@ async function AttemptForm({ assessmentId }: { assessmentId: string }) {
           )}
 
           {q.type === "mc" && q.options ? (
-            <div className="mt-3 space-y-2">
+            <fieldset className="mt-3 space-y-2">
+              <legend className="sr-only">
+                Pilihan jawaban soal {i + 1}: {q.text}
+              </legend>
               {q.options.map((opt, idx) => (
                 <label
                   key={idx}
@@ -108,7 +111,7 @@ async function AttemptForm({ assessmentId }: { assessmentId: string }) {
                   <span className="font-semibold">{String.fromCharCode(65 + idx)}. {opt}</span>
                 </label>
               ))}
-            </div>
+            </fieldset>
           ) : (
             <div className="mt-3 space-y-2">
               <textarea
@@ -231,6 +234,7 @@ async function Result({
                   >
                     {String.fromCharCode(65 + idx)}. {opt}
                     {correct && " ✓"}
+                    {correct && <span className="sr-only"> jawaban benar</span>}
                     {chosen && !correct && " (jawabanmu)"}
                   </li>
                 );

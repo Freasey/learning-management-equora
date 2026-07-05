@@ -63,6 +63,7 @@ export default async function PengaturanSiswaPage() {
                   type="file"
                   accept="image/*"
                   required
+                  aria-label="Pilih file foto profil"
                   className="block w-40 text-xs text-slate-600 file:mr-2 file:rounded-full file:border-0 file:bg-mint/20 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-mint"
                 />
                 <button

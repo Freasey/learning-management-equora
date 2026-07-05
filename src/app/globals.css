@@ -46,6 +46,25 @@ body {
   line-height: 1.55;
 }
 
+/* Aksesibilitas: cincin fokus yang jelas saat navigasi keyboard (Tab).
+   Hanya muncul untuk fokus keyboard (:focus-visible), tidak saat klik mouse. */
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--color-teal-500);
+    outline-offset: 2px;
+  }
+
+  /* Area siswa memakai aksen sky agar serasi dengan palet Bright Campus. */
+  .font-kid :focus-visible {
+    outline-color: var(--color-sky);
+  }
+
+  /* Target skip link (tabIndex=-1) tak perlu cincin — bukan kontrol interaktif. */
+  main:focus-visible {
+    outline: none;
+  }
+}
+
 /* Tailwind v4 tak lagi memberi cursor pointer otomatis pada tombol. */
 @layer base {
   button:not(:disabled),
