@@ -47,21 +47,29 @@ const saveSchema = z.object({
   aiAssisted: z.string().optional(),
 });
 
+/**
+ * Kolom yang tidak dirender form (mis. `id` saat tambah baru, `url` di mode
+ * tulis) tiba sebagai null — samakan jadi "" agar tidak ditolak validasi.
+ */
+function fieldStr(v: FormDataEntryValue | null): string {
+  return typeof v === "string" ? v : "";
+}
+
 export async function saveMaterial(
   _state: MaterialState,
   formData: FormData,
 ): Promise<MaterialState> {
   const { schoolId, teacherId } = await requireTeacher();
   const parsed = saveSchema.safeParse({
-    id: formData.get("id"),
-    source: formData.get("source"),
-    title: formData.get("title"),
-    subjectId: formData.get("subjectId"),
-    classId: formData.get("classId"),
-    topic: formData.get("topic"),
-    content: formData.get("content"),
-    url: formData.get("url"),
-    aiAssisted: formData.get("aiAssisted"),
+    id: fieldStr(formData.get("id")),
+    source: fieldStr(formData.get("source")),
+    title: fieldStr(formData.get("title")),
+    subjectId: fieldStr(formData.get("subjectId")),
+    classId: fieldStr(formData.get("classId")),
+    topic: fieldStr(formData.get("topic")),
+    content: fieldStr(formData.get("content")),
+    url: fieldStr(formData.get("url")),
+    aiAssisted: fieldStr(formData.get("aiAssisted")),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
