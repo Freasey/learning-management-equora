@@ -81,6 +81,8 @@ export const users = pgTable(
     avatarUrl: text("avatar_url"), // foto profil (Vercel Blob)
     // kebutuhan khusus siswa: array kunci (netra | rungu | wicara | buta-warna).
     disabilities: jsonb("disabilities").$type<string[]>().notNull().default([]),
+    // mode warna buta warna: merah-hijau | biru-kuning | mono; null = warna biasa.
+    colorVision: text("color_vision"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

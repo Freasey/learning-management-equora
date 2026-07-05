@@ -6,7 +6,11 @@ import { db, users } from "@/db";
 import { isUserActive } from "@/lib/auth-guard";
 import { unreadCount } from "@/lib/notify";
 import { kidFontVars } from "@/lib/kid-fonts";
-import { sanitizeDisabilities } from "@/lib/accessibility";
+import {
+  getColorVisionMode,
+  sanitizeColorVision,
+  sanitizeDisabilities,
+} from "@/lib/accessibility";
 import { LogoBook, IconLogout, IconHelp } from "@/components/kid/icons";
 import { StudentBackBar } from "@/components/kid/back-bar";
 import { TtsReader } from "@/components/kid/tts-reader";
@@ -23,16 +27,25 @@ export default async function StudentLayout({
   const [unread, [u]] = await Promise.all([
     unreadCount(userId),
     db
-      .select({ disabilities: users.disabilities })
+      .select({ disabilities: users.disabilities, colorVision: users.colorVision })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1),
   ]);
+  const disabilities = sanitizeDisabilities(u?.disabilities);
   // Pembaca suara otomatis aktif untuk siswa berkebutuhan "netra".
-  const ttsOn = sanitizeDisabilities(u?.disabilities).includes("netra");
+  const ttsOn = disabilities.includes("netra");
+  // Mode Warna: timpa token warna kid via CSS variable — hanya berlaku
+  // selama kebutuhan "buta-warna" masih dipilih.
+  const colorMode = disabilities.includes("buta-warna")
+    ? getColorVisionMode(sanitizeColorVision(u?.colorVision) ?? "")
+    : undefined;
 
   return (
-    <div className={`${kidFontVars} font-kid min-h-screen bg-cream`}>
+    <div
+      className={`${kidFontVars} font-kid min-h-screen bg-cream`}
+      style={colorMode ? (colorMode.palette as React.CSSProperties) : undefined}
+    >
       <a
         href="#konten-utama"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-slate-800 focus:px-4 focus:py-2.5 focus:font-bold focus:text-white"

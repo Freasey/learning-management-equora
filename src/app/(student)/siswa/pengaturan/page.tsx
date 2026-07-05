@@ -5,13 +5,34 @@ import { UserRound } from "lucide-react";
 import { auth } from "@/auth";
 import { db, users } from "@/db";
 import { isStorageConfigured } from "@/lib/storage";
-import { DISABILITY_GUIDES, sanitizeDisabilities } from "@/lib/accessibility";
+import {
+  COLOR_VISION_MODES,
+  DISABILITY_GUIDES,
+  sanitizeColorVision,
+  sanitizeDisabilities,
+} from "@/lib/accessibility";
 import { DisabilityIcon, TONE_CLASS } from "@/components/kid/disability-icon";
-import { toggleDisability } from "./actions";
+import { toggleDisability, setColorVision } from "./actions";
 import { updateAvatar, removeAvatar } from "../../../(account)/account-actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pengaturan · Siswa" };
+
+/** Pilihan Mode Warna: "normal" (palet standar) + mode dari accessibility.ts. */
+const COLOR_OPTIONS = [
+  {
+    key: "normal",
+    label: "Warna biasa",
+    desc: "Palet standar aplikasi.",
+    preview: ["#27ca9a", "#ff6b5e", "#3da9fc", "#ffc145"],
+  },
+  ...COLOR_VISION_MODES.map((m) => ({
+    key: m.key,
+    label: m.label,
+    desc: m.desc,
+    preview: m.preview,
+  })),
+];
 
 export default async function PengaturanSiswaPage() {
   const session = await auth();
@@ -22,11 +43,13 @@ export default async function PengaturanSiswaPage() {
     .select({
       avatarUrl: users.avatarUrl,
       disabilities: users.disabilities,
+      colorVision: users.colorVision,
     })
     .from(users)
     .where(eq(users.id, studentId))
     .limit(1);
   const mine = new Set(sanitizeDisabilities(u?.disabilities));
+  const colorMode = sanitizeColorVision(u?.colorVision);
   const storageOn = isStorageConfigured();
 
   return (
@@ -131,6 +154,75 @@ export default async function PengaturanSiswaPage() {
                       </button>
                     </form>
                   </div>
+
+                  {/* Mode Warna: hanya untuk kebutuhan buta-warna yang aktif. */}
+                  {g.key === "buta-warna" && on && (
+                    <div className="mt-3.5 border-t-2 border-slate-200/70 pt-3.5">
+                      <div className="text-sm font-extrabold text-slate-700">
+                        Mode Warna
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Pilih warna yang sulit kamu bedakan — warna aplikasi
+                        langsung menyesuaikan untukmu.
+                      </p>
+                      <div
+                        className="mt-3 space-y-2"
+                        role="radiogroup"
+                        aria-label="Mode Warna"
+                      >
+                        {COLOR_OPTIONS.map((opt) => {
+                          const active =
+                            opt.key === "normal"
+                              ? colorMode === null
+                              : colorMode === opt.key;
+                          return (
+                            <form key={opt.key} action={setColorVision}>
+                              <input type="hidden" name="mode" value={opt.key} />
+                              <button
+                                type="submit"
+                                role="radio"
+                                aria-checked={active}
+                                className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition ${
+                                  active
+                                    ? "border-sky bg-sky/5"
+                                    : "border-slate-200/70 hover:border-slate-300"
+                                }`}
+                              >
+                                <span
+                                  aria-hidden
+                                  className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 ${
+                                    active ? "border-sky" : "border-slate-300"
+                                  }`}
+                                >
+                                  {active && (
+                                    <span className="h-2.5 w-2.5 rounded-full bg-sky" />
+                                  )}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block text-sm font-bold text-slate-800">
+                                    {opt.label}
+                                  </span>
+                                  <span className="block text-xs text-slate-400">
+                                    {opt.desc}
+                                  </span>
+                                </span>
+                                {/* Contoh warna: hex tetap, tidak ikut berubah palet. */}
+                                <span aria-hidden className="flex shrink-0 gap-1">
+                                  {opt.preview.map((c) => (
+                                    <span
+                                      key={c}
+                                      className="h-4 w-4 rounded-full border border-black/10"
+                                      style={{ backgroundColor: c }}
+                                    />
+                                  ))}
+                                </span>
+                              </button>
+                            </form>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
