@@ -41,13 +41,6 @@ export default async function AksesibilitasDetailPage({
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link
-        href="/siswa/aksesibilitas"
-        className="mb-5 inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-slate-700"
-      >
-        ← Kembali
-      </Link>
-
       <div className="flex items-center gap-4">
         <span
           className={`grid h-16 w-16 shrink-0 place-items-center rounded-3xl ${TONE_CLASS[guide.tone]}`}
