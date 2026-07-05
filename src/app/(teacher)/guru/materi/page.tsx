@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db, materials, subjects, classes } from "@/db";
+import { db, materials, subjects, classes, schools } from "@/db";
 import { getTeacherAssignments } from "@/lib/teaching";
 import { isStorageConfigured } from "@/lib/storage";
 import { isAiConfigured } from "@/lib/ai";
@@ -17,6 +17,13 @@ export default async function MateriPage() {
   const schoolId = session?.user?.schoolId;
   const teacherId = session?.user?.id;
   if (!schoolId || !teacherId || session?.user?.role !== "teacher") redirect("/dashboard");
+
+  // Jenjang sekolah dipakai sebagai default "jenjang" di jalur cepat AI.
+  const [school] = await db
+    .select({ level: schools.level })
+    .from(schools)
+    .where(eq(schools.id, schoolId))
+    .limit(1);
 
   const assignments = await getTeacherAssignments(schoolId, teacherId);
   const subjectOptions = dedupe(assignments.map((a) => ({ id: a.subjectId, name: a.subjectName })));
@@ -75,6 +82,7 @@ export default async function MateriPage() {
       classOptions={classOptions}
       storageOn={isStorageConfigured()}
       aiConfigured={isAiConfigured()}
+      schoolLevel={school?.level ?? null}
     />
   );
 }

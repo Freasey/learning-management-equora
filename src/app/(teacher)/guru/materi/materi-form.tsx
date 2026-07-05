@@ -20,6 +20,7 @@ import { parseSlides, slideTypeLabel, type DesignSpec } from "@/lib/slides";
 import {
   saveMaterial,
   generateSlides,
+  generateAll,
   generateDesigns,
   exportPptx,
   deleteMaterial,
@@ -62,12 +63,14 @@ export function MateriManager({
   classOptions,
   storageOn,
   aiConfigured,
+  schoolLevel,
 }: {
   rows: MaterialRow[];
   subjectOptions: Option[];
   classOptions: Option[];
   storageOn: boolean;
   aiConfigured: boolean;
+  schoolLevel: string | null;
 }) {
   // null = panel tertutup; "new" = tambah; row = ubah.
   const [target, setTarget] = useState<MaterialRow | "new" | null>(null);
@@ -96,6 +99,7 @@ export function MateriManager({
           classOptions={classOptions}
           storageOn={storageOn}
           aiConfigured={aiConfigured}
+          schoolLevel={schoolLevel}
           onClose={() => setTarget(null)}
         />
       )}
@@ -193,6 +197,7 @@ function MaterialPanel({
   classOptions,
   storageOn,
   aiConfigured,
+  schoolLevel,
   onClose,
 }: {
   row: MaterialRow | null;
@@ -200,6 +205,7 @@ function MaterialPanel({
   classOptions: Option[];
   storageOn: boolean;
   aiConfigured: boolean;
+  schoolLevel: string | null;
   onClose: () => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -216,12 +222,17 @@ function MaterialPanel({
   const [showPreview, setShowPreview] = useState(false);
 
   // Bahan untuk asisten AI (tak ikut tersimpan — dipakai hanya untuk generate).
+  // Jenjang default diambil dari profil sekolah (SMK memakai kedalaman SMA).
+  const defaultLevel =
+    schoolLevel === "SMK" ? "SMA" : schoolLevel && ["SD", "SMP", "SMA"].includes(schoolLevel) ? schoolLevel : "SMP";
   const [sourceText, setSourceText] = useState("");
   const [slideCount, setSlideCount] = useState("10");
-  const [level, setLevel] = useState("SMP");
+  const [level, setLevel] = useState(defaultLevel);
   const [style, setStyle] = useState("ringkas");
   const [withExamples, setWithExamples] = useState(true);
   const [withDiscussion, setWithDiscussion] = useState(false);
+  // Info non-error setelah generate (mis. "disusun dari pengetahuan umum AI").
+  const [aiNote, setAiNote] = useState<string | null>(null);
 
   // Desain PPT: cetak biru dari AI + pilihan guru (tak ikut tersimpan ke DB).
   const [designDesc, setDesignDesc] = useState("");
@@ -238,22 +249,29 @@ function MaterialPanel({
     if (state?.ok) onClose();
   }, [state, onClose]);
 
-  function runAi() {
-    if (!formRef.current) return;
+  /** Rakit FormData generate dari isi form utama + kenop AI; null bila belum valid. */
+  function buildAiFormData(): FormData | null {
+    if (!formRef.current) return null;
     const main = new FormData(formRef.current);
     const subjectId = String(main.get("subjectId") ?? "");
+    const topic = String(main.get("topic") ?? "").trim();
     const file = sourceFileRef.current?.files?.[0];
     if (!subjectId) {
       setAiError("Pilih mapel dulu.");
-      return;
+      return null;
     }
-    if (!sourceText.trim() && !file) {
-      setAiError("Tempel isi modul atau unggah berkas modul dulu.");
-      return;
+    if (!topic && !sourceText.trim() && !file) {
+      setAiError("Isi Topik di atas — atau beri bahan modul (teks/berkas) di pengaturan lanjutan.");
+      return null;
+    }
+    // Judul otomatis dari topik bila guru belum mengisinya.
+    const titleEl = formRef.current.elements.namedItem("title");
+    if (titleEl instanceof HTMLInputElement && !titleEl.value.trim() && topic) {
+      titleEl.value = topic;
     }
     const fd = new FormData();
     fd.set("subjectId", subjectId);
-    fd.set("topic", String(main.get("topic") ?? ""));
+    fd.set("topic", topic);
     fd.set("sourceText", sourceText);
     if (file) fd.set("sourceFile", file);
     fd.set("slideCount", slideCount);
@@ -261,7 +279,49 @@ function MaterialPanel({
     fd.set("style", style);
     fd.set("includeExamples", withExamples ? "1" : "");
     fd.set("includeDiscussion", withDiscussion ? "1" : "");
+    fd.set("description", designDesc);
     setAiError(null);
+    setAiNote(null);
+    return fd;
+  }
+
+  function noteFromKnowledge(fromKnowledge?: boolean) {
+    if (fromKnowledge) {
+      setAiNote(
+        "Disusun AI dari pengetahuan umum (tanpa bahan modul) — periksa sekilas kebenaran isinya sebelum dipakai.",
+      );
+    }
+  }
+
+  /** Jalur kilat: slide + 3 desain sekaligus, desain pertama langsung dipasang. */
+  function runAll() {
+    const fd = buildAiFormData();
+    if (!fd) return;
+    setDesignError(null);
+    startAi(async () => {
+      const res = await generateAll(fd);
+      if (res.error) {
+        setAiError(res.error);
+        return;
+      }
+      if (res.text) {
+        setContent(res.text);
+        setAiAssisted(true);
+        setShowPreview(true);
+        noteFromKnowledge(res.fromKnowledge);
+      }
+      if (res.designs) {
+        setDesigns(res.designs);
+        setDesignIdx(0);
+      }
+      if (res.designNote) setDesignError(res.designNote);
+    });
+  }
+
+  /** Jalur lanjutan: hanya menyusun slide (desain diatur terpisah di bawah). */
+  function runAi() {
+    const fd = buildAiFormData();
+    if (!fd) return;
     startAi(async () => {
       const res = await generateSlides(fd);
       if (res.error) setAiError(res.error);
@@ -269,6 +329,7 @@ function MaterialPanel({
         setContent(res.text);
         setAiAssisted(true);
         setShowPreview(true);
+        noteFromKnowledge(res.fromKnowledge);
       }
     });
   }
@@ -391,66 +452,30 @@ function MaterialPanel({
       <div className="mt-4">
         {source === "tulis" && (
           <div className="space-y-4">
-            {/* Asisten AI: rangkum modul jadi slide */}
+            {/* Asisten AI — jalur kilat: satu klik, slide + desain langsung jadi */}
             <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent/15 text-accent">
                   <Sparkles className="h-4 w-4" />
                 </span>
                 <div>
-                  <h3 className="text-sm font-semibold text-ink">Buat slide dari modul</h3>
+                  <h3 className="text-sm font-semibold text-ink">Buat materi kilat</h3>
                   <p className="text-xs text-muted">
-                    Tempel isi modul atau unggah berkasnya — AI merangkum jadi presentasi.
+                    Cukup pilih Mapel & isi Topik di atas, lalu satu klik — slide + 3 desain langsung
+                    jadi. Tanpa bahan modul, AI menyusun dari pengetahuannya.
                   </p>
                 </div>
               </div>
 
-              <textarea
-                rows={4}
-                value={sourceText}
-                onChange={(e) => setSourceText(e.target.value)}
-                placeholder="Tempel isi modul di sini (bab, catatan, ringkasan)…"
-                className={inputClass}
-              />
-
-              <label className="mt-3 block">
-                <span className="mb-1.5 block text-xs font-semibold text-ink">
-                  atau unggah berkas modul (opsional)
-                </span>
-                <input
-                  ref={sourceFileRef}
-                  type="file"
-                  accept=".pdf,.docx,.txt,.md,image/*"
-                  className="block w-full text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-accent/15 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-accent hover:file:bg-accent/25"
-                />
-                <span className="mt-1 block text-xs text-muted">
-                  PDF, DOCX, teks, atau foto halaman (maks 15 MB).
-                </span>
-              </label>
-
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <MiniSelect label="Jumlah slide" value={slideCount} onChange={setSlideCount}
-                  options={[["6", "± 6"], ["10", "± 10"], ["15", "± 15"], ["20", "± 20"]]} />
-                <MiniSelect label="Jenjang" value={level} onChange={setLevel}
-                  options={[["SD", "SD"], ["SMP", "SMP"], ["SMA", "SMA"], ["Umum", "Umum"]]} />
-                <MiniSelect label="Gaya" value={style} onChange={setStyle}
-                  options={[["ringkas", "Ringkas"], ["naratif", "Naratif"], ["interaktif", "Interaktif"]]} />
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center gap-4">
-                <Check label="Sertakan contoh soal" checked={withExamples} onChange={setWithExamples} />
-                <Check label="Sertakan poin diskusi" checked={withDiscussion} onChange={setWithDiscussion} />
-              </div>
-
-              <div className="mt-3 flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={runAi}
+                  onClick={runAll}
                   disabled={aiPending}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-paper transition hover:brightness-95 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-paper transition hover:brightness-95 disabled:opacity-50"
                 >
                   <Sparkles className="h-4 w-4" />
-                  {aiPending ? "Menyusun slide…" : "Buat slide"}
+                  {aiPending ? "Menyiapkan materi & desain…" : "Buatkan semuanya"}
                 </button>
                 {!aiConfigured && (
                   <span className="text-xs text-muted">
@@ -458,9 +483,67 @@ function MaterialPanel({
                   </span>
                 )}
               </div>
-              <div className="mt-2">
+              <div className="mt-2 space-y-1">
                 <AiErrorNote message={aiError} />
+                {aiNote && <p className="text-xs text-amber-700">{aiNote}</p>}
               </div>
+
+              {/* Pengaturan lanjutan: bahan modul + kenop detail (opsional) */}
+              <details className="mt-3 rounded-md border border-line/70 bg-paper/70">
+                <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold text-muted hover:text-ink">
+                  Pengaturan lanjutan & bahan modul (opsional)
+                </summary>
+                <div className="border-t border-line/70 p-3">
+                  <textarea
+                    rows={4}
+                    value={sourceText}
+                    onChange={(e) => setSourceText(e.target.value)}
+                    placeholder="Tempel isi modul di sini (bab, catatan, ringkasan) — AI akan berpegang pada bahan ini…"
+                    className={inputClass}
+                  />
+
+                  <label className="mt-3 block">
+                    <span className="mb-1.5 block text-xs font-semibold text-ink">
+                      atau unggah berkas modul
+                    </span>
+                    <input
+                      ref={sourceFileRef}
+                      type="file"
+                      accept=".pdf,.docx,.txt,.md,image/*"
+                      className="block w-full text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-accent/15 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-accent hover:file:bg-accent/25"
+                    />
+                    <span className="mt-1 block text-xs text-muted">
+                      PDF, DOCX, teks, atau foto halaman (maks 15 MB).
+                    </span>
+                  </label>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                    <MiniSelect label="Jumlah slide" value={slideCount} onChange={setSlideCount}
+                      options={[["6", "± 6"], ["10", "± 10"], ["15", "± 15"], ["20", "± 20"]]} />
+                    <MiniSelect label="Jenjang" value={level} onChange={setLevel}
+                      options={[["SD", "SD"], ["SMP", "SMP"], ["SMA", "SMA"], ["Umum", "Umum"]]} />
+                    <MiniSelect label="Gaya" value={style} onChange={setStyle}
+                      options={[["ringkas", "Ringkas"], ["naratif", "Naratif"], ["interaktif", "Interaktif"]]} />
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    <Check label="Sertakan contoh soal" checked={withExamples} onChange={setWithExamples} />
+                    <Check label="Sertakan poin diskusi" checked={withDiscussion} onChange={setWithDiscussion} />
+                  </div>
+
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={runAi}
+                      disabled={aiPending}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-accent px-4 py-2 text-sm font-semibold text-accent transition hover:bg-accent/10 disabled:opacity-50"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {aiPending ? "Menyusun slide…" : "Buat slide saja"}
+                    </button>
+                  </div>
+                </div>
+              </details>
             </div>
 
             {/* Hasil: slide markdown, bisa disunting & dipratinjau */}

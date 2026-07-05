@@ -209,7 +209,7 @@ async function fileToPart(file: File): Promise<GeminiPart | { error: string }> {
 
 export async function generateSlides(
   formData: FormData,
-): Promise<{ text?: string; error?: string }> {
+): Promise<{ text?: string; fromKnowledge?: boolean; error?: string }> {
   const { schoolId, teacherId } = await requireTeacher();
   console.log("[slides] mulai", { schoolId, teacherId });
   const subjectId = String(formData.get("subjectId") ?? "");
@@ -229,9 +229,12 @@ export async function generateSlides(
     hasFile,
     file: hasFile ? { name: file.name, type: file.type, size: file.size } : null,
   });
-  if (!sourceText && !hasFile) {
-    console.warn("[slides] tak ada sumber (teks & berkas kosong)");
-    return { error: "Tempel isi modul atau unggah berkas modul dulu." };
+  // Bahan modul kini OPSIONAL: tanpa bahan, AI menyusun materi dari
+  // pengetahuannya sendiri — asalkan ada topik sebagai pijakan.
+  const fromKnowledge = !sourceText && !hasFile;
+  if (fromKnowledge && !topic) {
+    console.warn("[slides] tanpa sumber & tanpa topik");
+    return { error: "Isi Topik dulu — atau beri bahan modul (teks/berkas)." };
   }
 
   const slideCount = Math.min(30, Math.max(3, Number(formData.get("slideCount")) || 10));
@@ -254,11 +257,13 @@ export async function generateSlides(
 
       if (!isAiConfigured()) {
         console.log("[slides] AI tak dikonfigurasi → slide demo");
-        return { text: demoSlides(topic || subj?.name || "Materi", slideCount) };
+        return { text: demoSlides(topic || subj?.name || "Materi", slideCount), fromKnowledge };
       }
 
       const instruction = [
-        `Kamu asisten guru. Dari BAHAN SUMBER di bawah, susun materi presentasi (slide) yang menarik dalam Bahasa Indonesia.`,
+        fromKnowledge
+          ? `Kamu asisten guru. TIDAK ada bahan sumber — susun materi presentasi (slide) yang menarik dalam Bahasa Indonesia dari pengetahuanmu sendiri tentang topik ini. Berpegang pada materi standar kurikulum sekolah di Indonesia untuk jenjang yang diminta, dan JANGAN menyertakan fakta, angka, atau nama yang tidak kamu yakini kebenarannya.`
+          : `Kamu asisten guru. Dari BAHAN SUMBER di bawah, susun materi presentasi (slide) yang menarik dalam Bahasa Indonesia.`,
         `Mata pelajaran: ${subj?.name ?? "umum"}${topic ? `. Fokus topik: ${topic}` : ""}.`,
         `Sasaran jenjang: ${level}. Sesuaikan kedalaman & bahasa untuk jenjang itu.`,
         `Buat sekitar ${slideCount} slide, gaya ${style}.`,
@@ -303,7 +308,7 @@ export async function generateSlides(
       }
       await recordAiUsage(schoolId, teacherId, "material.slides");
       console.log("[slides] SUKSES — panjang hasil:", out.length, "char");
-      return { text: out };
+      return { text: out, fromKnowledge };
     });
   } catch (e) {
     console.error("[slides] EXCEPTION:", e);
@@ -323,6 +328,39 @@ function demoSlides(title: string, count: number): string {
   }
   slides.push(`# Terima Kasih\n[tipe: penutup]\n- Rangkuman singkat …`);
   return slides.join("\n\n---\n\n");
+}
+
+/**
+ * Jalur kilat "Buatkan semuanya": slide + 3 cetak biru desain digarap
+ * BERSAMAAN di server (satu kali tunggu, bukan dua). Slide gagal = gagal
+ * total; desain gagal = tetap kembalikan slide + desain bawaan agar guru
+ * tidak kehilangan hasil.
+ */
+export async function generateAll(formData: FormData): Promise<{
+  text?: string;
+  fromKnowledge?: boolean;
+  designs?: DesignSpec[];
+  designNote?: string;
+  error?: string;
+}> {
+  const [slides, designs] = await Promise.all([
+    generateSlides(formData),
+    generateDesigns(formData),
+  ]);
+  if (slides.error || !slides.text) {
+    return { error: slides.error ?? "Gagal membuat slide. Coba lagi." };
+  }
+  if (designs.error || !designs.designs?.length) {
+    return {
+      text: slides.text,
+      fromKnowledge: slides.fromKnowledge,
+      designs: FALLBACK_DESIGNS,
+      designNote: designs.error
+        ? `Desain AI gagal (${designs.error}) — dipakai desain bawaan; coba "Rancang ulang".`
+        : undefined,
+    };
+  }
+  return { text: slides.text, fromKnowledge: slides.fromKnowledge, designs: designs.designs };
 }
 
 /* ===================== Desain PPT (cetak biru AI) ===================== */
