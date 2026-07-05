@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { db, users } from "@/db";
+import { sanitizeDisabilities } from "@/lib/accessibility";
 import { MeetRoom } from "@/components/meet/meet-room";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +10,16 @@ export const metadata = { title: "Kelas Online · Siswa" };
 
 export default async function MeetSiswaPage() {
   const session = await auth();
-  if (session?.user?.role !== "student") redirect("/dashboard");
+  const studentId = session?.user?.id;
+  if (!studentId || session?.user?.role !== "student") redirect("/dashboard");
+
+  const [u] = await db
+    .select({ disabilities: users.disabilities })
+    .from(users)
+    .where(eq(users.id, studentId))
+    .limit(1);
+  // Siswa tunarungu langsung mendapat teks berjalan tanpa harus menyalakan CC.
+  const captionsDefault = sanitizeDisabilities(u?.disabilities).includes("rungu");
 
   return (
     <div>
@@ -17,7 +29,11 @@ export default async function MeetSiswaPage() {
       <p className="mb-6 text-slate-500">
         Masukkan kode ruang dari gurumu untuk ikut kelas tatap muka daring.
       </p>
-      <MeetRoom defaultRoom="kelas" hint="Masukkan kode ruang yang dibagikan gurumu." />
+      <MeetRoom
+        defaultRoom="kelas"
+        hint="Masukkan kode ruang yang dibagikan gurumu."
+        captionsDefault={captionsDefault}
+      />
     </div>
   );
 }

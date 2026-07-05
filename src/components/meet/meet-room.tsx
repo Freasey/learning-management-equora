@@ -4,6 +4,7 @@ import "@livekit/components-styles";
 import { LiveKitRoom, VideoConference } from "@livekit/components-react";
 import { useState } from "react";
 import { Video } from "lucide-react";
+import { MeetCaptions } from "./meet-captions";
 
 /**
  * Ruang Meet (LiveKit Cloud) yang menempel pada sesi login.
@@ -15,9 +16,12 @@ import { Video } from "lucide-react";
 export function MeetRoom({
   defaultRoom = "kelas",
   hint,
+  captionsDefault = false,
 }: {
   defaultRoom?: string;
   hint?: string;
+  /** Nyalakan teks berjalan (CC) sejak awal — untuk siswa tunarungu. */
+  captionsDefault?: boolean;
 }) {
   const [room, setRoom] = useState(defaultRoom);
   const [token, setToken] = useState("");
@@ -76,9 +80,10 @@ export function MeetRoom({
             setToken("");
           }}
           data-lk-theme="default"
-          style={{ height: "78dvh" }}
+          style={{ height: "78dvh", position: "relative" }}
         >
           <VideoConference />
+          <MeetCaptions defaultOn={captionsDefault} />
         </LiveKitRoom>
       </div>
     );

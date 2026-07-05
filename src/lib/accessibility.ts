@@ -78,8 +78,8 @@ export const DISABILITY_GUIDES: DisabilityGuide[] = [
     features: [
       {
         title: "Teks berjalan saat Meet",
-        desc: "Ucapan guru muncul sebagai teks (caption) di layar saat kelas online.",
-        status: "segera",
+        desc: "Ucapan guru dan teman muncul sebagai teks (caption) di layar saat kelas online — otomatis menyala saat kamu memilih kebutuhan ini.",
+        status: "aktif",
       },
       {
         title: "Penerjemah bahasa isyarat (BISINDO)",
