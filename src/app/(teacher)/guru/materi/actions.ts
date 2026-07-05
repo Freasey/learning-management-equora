@@ -261,8 +261,8 @@ export async function generateSlides(
         "- Pisahkan tiap slide dengan baris berisi tepat: ---",
         "- Baris pertama tiap slide adalah judul, diawali '# '.",
         `- Baris kedua adalah tipe slide: [tipe: X] dengan X salah satu dari: ${SLIDE_TYPES.join(", ")}.`,
-        "- Butir isi memakai '- ' (maks 6 butir per slide, tiap butir ringkas).",
-        "- Baris terakhir tiap slide: '> Catatan: …' berisi naskah bicara singkat (2–3 kalimat) untuk membantu guru menjelaskan slide itu.",
+        "- Isi slide adalah CAMPURAN: paragraf singkat (1–2 kalimat, ditulis sebagai baris biasa) dan butir '- '. Pakai butir HANYA bila isinya memang daftar (maks 5 butir); jangan jadikan semua isi butir-butir.",
+        "- Kode program, rumus, atau langkah perhitungan matematis WAJIB ditulis dalam blok tersendiri yang dibuka dan ditutup baris berisi tepat: ``` (tiga backtick). Jangan campur kode/rumus ke paragraf atau butir — blok ini tampil sebagai panel khusus terpisah di slide. Maksimal satu blok per slide, isi blok maksimal 8 baris.",
         "- Slide pertama [tipe: pembuka] = judul presentasi + 1 subjudul singkat. Slide terakhir [tipe: penutup] = pesan penutup + rangkuman 2–3 butir.",
         "- Variasikan tipe agar presentasi berirama: pakai [tipe: bab] untuk pergantian bagian besar, [tipe: dua-kolom] untuk perbandingan, [tipe: kutipan] untuk definisi/kutipan penting, [tipe: angka] untuk fakta berangka (butir pertama HANYA angka/fakta super singkat, butir berikutnya keterangan), [tipe: contoh] untuk contoh soal, [tipe: diskusi] untuk pertanyaan pemantik, dan [tipe: poin] untuk isi biasa.",
         "- Jangan menulis apa pun di luar slide (tanpa pengantar/penutup).",
@@ -306,16 +306,14 @@ export async function generateSlides(
 /** Kerangka slide untuk mode demo (tanpa kunci AI). */
 function demoSlides(title: string, count: number): string {
   const slides = [
-    `# ${title}\n[tipe: pembuka]\n- Materi presentasi (mode demo — kunci AI belum diatur)\n> Catatan: Buka kelas dengan salam, lalu perkenalkan topik hari ini.`,
+    `# ${title}\n[tipe: pembuka]\n- Materi presentasi (mode demo — kunci AI belum diatur)`,
   ];
   for (let i = 1; i < Math.min(count, 5); i++) {
     slides.push(
-      `# Bagian ${i}\n[tipe: poin]\n- Poin utama …\n- Penjelasan singkat …\n- Contoh …\n> Catatan: Jelaskan tiap poin dengan contoh sehari-hari.`,
+      `# Bagian ${i}\n[tipe: poin]\nParagraf pengantar singkat tentang bagian ini.\n- Poin utama …\n- Contoh …`,
     );
   }
-  slides.push(
-    `# Terima Kasih\n[tipe: penutup]\n- Rangkuman singkat …\n> Catatan: Tutup dengan mengulang poin terpenting.`,
-  );
+  slides.push(`# Terima Kasih\n[tipe: penutup]\n- Rangkuman singkat …`);
   return slides.join("\n\n---\n\n");
 }
 

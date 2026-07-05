@@ -7,9 +7,12 @@
  * Format teks slide (satu slide per blok, dipisah baris `---`):
  *   # Judul slide
  *   [tipe: poin]          ← opsional; salah satu SLIDE_TYPES (default: poin)
- *   - butir isi
  *   Paragraf bebas.
- *   > Catatan: naskah bicara guru (masuk ke speaker notes PowerPoint)
+ *   - butir isi (hanya bila memang daftar)
+ *   ```
+ *   kode program / rumus matematis — tampil sebagai panel terpisah di slide
+ *   ```
+ *   (Baris berawalan '>' dari format lama tetap dikenali tapi diabaikan.)
  */
 
 export const SLIDE_TYPES = [
@@ -31,7 +34,8 @@ export type ParsedSlide = {
   title: string;
   bullets: string[];
   body: string[];
-  notes: string;
+  /** Baris kode program / rumus matematis (dari blok ```), dirender sebagai panel terpisah. */
+  code: string[];
 };
 
 /** Label tipe slide untuk ditampilkan di pratinjau. */
@@ -54,13 +58,25 @@ export function parseSlides(markdown: string): ParsedSlide[] {
     .map((chunk) => chunk.trim())
     .filter(Boolean)
     .map((chunk, i, all) => {
-      const lines = chunk.split("\n").map((l) => l.trim()).filter(Boolean);
       let title = "";
       let type: SlideType | null = null;
+      let inCode = false;
       const bullets: string[] = [];
       const body: string[] = [];
-      const notes: string[] = [];
-      for (const line of lines) {
+      const code: string[] = [];
+      for (const raw of chunk.split("\n")) {
+        const line = raw.trim();
+        // Blok kode/rumus: diapit baris ``` — indentasi asli dipertahankan.
+        if (line.startsWith("```")) {
+          inCode = !inCode;
+          continue;
+        }
+        if (inCode) {
+          const kept = raw.replace(/\s+$/, "");
+          if (kept) code.push(kept);
+          continue;
+        }
+        if (!line) continue;
         const typeMatch = line.match(/^\[\s*tipe\s*:\s*([a-z-]+)\s*\]$/i);
         if (typeMatch) {
           const t = typeMatch[1].toLowerCase();
@@ -68,7 +84,8 @@ export function parseSlides(markdown: string): ParsedSlide[] {
           continue;
         }
         if (line.startsWith(">")) {
-          notes.push(line.replace(/^>\s*(catatan\s*:\s*)?/i, ""));
+          // Format lama ("> Catatan: …") — diabaikan agar tak bocor jadi isi slide.
+          continue;
         } else if (!title && line.startsWith("#")) {
           title = line.replace(/^#+\s*/, "");
         } else if (line.startsWith("- ") || line.startsWith("* ")) {
@@ -87,7 +104,7 @@ export function parseSlides(markdown: string): ParsedSlide[] {
         title: title || "(tanpa judul)",
         bullets,
         body,
-        notes: notes.join(" "),
+        code,
       };
     });
 }

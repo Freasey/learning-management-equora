@@ -177,7 +177,13 @@ function addFooter(ctx: Ctx, slide: PptxGenJS.Slide, i: number, total: number, b
 function addSlide(ctx: Ctx, s: ParsedSlide, i: number, total: number, chapter: number) {
   const { pptx } = ctx;
   const slide = pptx.addSlide();
-  switch (s.type) {
+  // Hanya layout poin & contoh yang punya tempat panel kode/rumus — tipe lain
+  // yang membawa blok kode dialihkan ke layout poin agar isinya tidak hilang.
+  const type =
+    s.code.length > 0 && !["poin", "contoh", "pembuka", "bab", "penutup"].includes(s.type)
+      ? "poin"
+      : s.type;
+  switch (type) {
     case "pembuka":
       layoutCover(ctx, slide, s, i);
       break;
@@ -205,7 +211,6 @@ function addSlide(ctx: Ctx, s: ParsedSlide, i: number, total: number, chapter: n
     default:
       layoutPoints(ctx, slide, s, i, total);
   }
-  if (s.notes) slide.addNotes(s.notes);
 }
 
 /** Slide pembuka — tiga gaya sampul sesuai cetak biru. */
@@ -345,7 +350,42 @@ function addHeader(ctx: Ctx, slide: PptxGenJS.Slide, title: string) {
   });
 }
 
-/** Slide poin biasa: judul + paragraf + butir. */
+/**
+ * Panel khusus kode program / rumus matematis: kartu tersendiri berhuruf
+ * monospace, terpisah dari teks penjelasan.
+ */
+function addCodePanel(
+  ctx: Ctx,
+  slide: PptxGenJS.Slide,
+  code: string[],
+  box: { x: number; y: number; w: number; h: number },
+  fill?: string,
+) {
+  const { pptx, d } = ctx;
+  const panelFill = fill ?? d.colors.surface;
+  slide.addShape(pptx.ShapeType.roundRect, {
+    ...box, rectRadius: 0.08,
+    fill: { color: panelFill }, line: { color: d.colors.accent2, width: 1 },
+  });
+  slide.addText("KODE / RUMUS", {
+    x: box.x + 0.25, y: box.y + 0.12, w: box.w - 0.5, h: 0.3,
+    fontFace: d.bodyFont, fontSize: 9, bold: true, charSpacing: 2,
+    color: on(panelFill, d.colors.accent, 3), align: "left", valign: "middle",
+  });
+  slide.addText(
+    code.map((line) => ({
+      text: line,
+      options: { breakLine: true } as PptxGenJS.TextPropsOptions,
+    })),
+    {
+      x: box.x + 0.25, y: box.y + 0.5, w: box.w - 0.5, h: box.h - 0.65,
+      fontFace: "Consolas", fontSize: 13, color: on(panelFill, d.colors.text),
+      align: "left", valign: "top", fit: "shrink", lineSpacingMultiple: 1.15,
+    },
+  );
+}
+
+/** Slide poin biasa: judul + paragraf + butir; blok kode/rumus dapat kolom sendiri. */
 function layoutPoints(ctx: Ctx, slide: PptxGenJS.Slide, s: ParsedSlide, i: number, total: number) {
   const { d } = ctx;
   slide.background = { color: d.colors.background };
@@ -362,7 +402,21 @@ function layoutPoints(ctx: Ctx, slide: PptxGenJS.Slide, s: ParsedSlide, i: numbe
       options: { fontSize: 16, breakLine: true, paraSpaceAfter: 10, ...bulletOf(d) },
     });
   }
-  if (rows.length) {
+
+  const hasCode = s.code.length > 0;
+  if (rows.length && hasCode) {
+    // Dua kolom: penjelasan kiri, panel kode/rumus kanan — tidak bercampur.
+    slide.addText(rows, {
+      x: MARGIN + 0.1, y: 2.0, w: 5.9, h: 4.7,
+      fontFace: d.bodyFont, color: d.colors.text, valign: "top", fit: "shrink",
+      lineSpacingMultiple: 1.12,
+    });
+    addCodePanel(ctx, slide, s.code, { x: 7.0, y: 2.05, w: PAGE_W - 7.0 - MARGIN, h: 4.4 });
+  } else if (hasCode) {
+    addCodePanel(ctx, slide, s.code, {
+      x: MARGIN + 1.2, y: 2.15, w: PAGE_W - MARGIN * 2 - 2.4, h: 4.2,
+    });
+  } else if (rows.length) {
     slide.addText(rows, {
       x: MARGIN + 0.1, y: 2.0, w: PAGE_W - MARGIN * 2 - 0.2, h: 4.7,
       fontFace: d.bodyFont, color: d.colors.text, valign: "top", fit: "shrink",
@@ -491,11 +545,26 @@ function layoutExample(ctx: Ctx, slide: PptxGenJS.Slide, s: ParsedSlide, i: numb
       options: { fontSize: 15, breakLine: true, paraSpaceAfter: 9, ...bulletOf(d) } as PptxGenJS.TextPropsOptions,
     })),
   ];
-  slide.addText(rows, {
-    x: MARGIN + 0.4, y: 2.5, w: PAGE_W - MARGIN * 2 - 0.8, h: 3.8,
-    fontFace: d.bodyFont, color: on(d.colors.surface, d.colors.text),
-    valign: "top", fit: "shrink", lineSpacingMultiple: 1.12,
-  });
+  const hasCode = s.code.length > 0;
+  // Ada kode/rumus → soal di kiri, panel kode di kanan (warna latar slide agar
+  // kontras dengan kartu); tanpa kode → teks memakai seluruh lebar kartu.
+  const textW = hasCode ? 5.6 : PAGE_W - MARGIN * 2 - 0.8;
+  if (rows.length) {
+    slide.addText(rows, {
+      x: MARGIN + 0.4, y: 2.5, w: textW, h: 3.8,
+      fontFace: d.bodyFont, color: on(d.colors.surface, d.colors.text),
+      valign: "top", fit: "shrink", lineSpacingMultiple: 1.12,
+    });
+  }
+  if (hasCode) {
+    addCodePanel(
+      ctx,
+      slide,
+      s.code,
+      { x: MARGIN + textW + 0.7, y: 2.45, w: PAGE_W - MARGIN * 2 - textW - 1.1, h: 3.85 },
+      d.colors.background,
+    );
+  }
   addFooter(ctx, slide, i, total, d.colors.background);
 }
 

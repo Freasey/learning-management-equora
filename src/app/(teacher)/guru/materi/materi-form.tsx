@@ -485,7 +485,7 @@ function MaterialPanel({
                   rows={10}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Slide muncul di sini setelah dibuat AI — atau ketik sendiri. Pisahkan slide dengan baris ---, judul diawali '# '."
+                  placeholder="Slide muncul di sini setelah dibuat AI — atau ketik sendiri. Pisahkan slide dengan baris ---, judul diawali '# ', kode/rumus diapit baris ```."
                   className={`${inputClass} font-mono text-xs`}
                 />
               )}
@@ -831,13 +831,17 @@ function SlidePreview({ markdown, design }: { markdown: string; design?: DesignS
               ))}
             </ul>
           )}
-          {s.notes && (
-            <p
-              className={`mt-2 border-t border-dashed pt-1.5 text-[10px] italic ${c ? "" : "text-muted"}`}
-              style={c ? { color: `#${c.text}`, borderColor: `#${c.accent}55`, opacity: 0.75 } : undefined}
+          {s.code.length > 0 && (
+            <pre
+              className="mt-2 overflow-x-auto rounded-md border p-2 font-mono text-[9px] leading-relaxed"
+              style={
+                c
+                  ? { background: `#${c.surface}`, borderColor: `#${c.accent2}`, color: `#${c.text}` }
+                  : { background: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.12)" }
+              }
             >
-              Catatan guru: {s.notes}
-            </p>
+              {s.code.join("\n")}
+            </pre>
           )}
         </div>
       ))}
