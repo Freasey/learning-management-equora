@@ -92,23 +92,13 @@ export const DISABILITY_GUIDES: DisabilityGuide[] = [
     features: [
       {
         title: "Ketik lalu disuarakan",
-        desc: "Tulis kalimatmu, aplikasi yang membacakannya ke kelas.",
-        status: "segera",
-      },
-      {
-        title: "Chat teks setara bicara",
-        desc: "Pesan tulisanmu ditandai untuk guru supaya tidak terlewat.",
+        desc: "Tulis kalimatmu di Kelas Online lewat tombol Bicara — semua peserta mendengarnya dibacakan dengan suara, seperti kamu ikut berbicara.",
         status: "aktif",
       },
       {
-        title: "Angkat tangan & reaksi cepat",
-        desc: "Ikut aktif di kelas tanpa perlu bersuara.",
+        title: "Frasa cepat",
+        desc: "Tombol kalimat siap pakai (misalnya “Bisa diulang, Bu/Pak?”) supaya kamu bisa merespons secepat teman-temanmu.",
         status: "aktif",
-      },
-      {
-        title: "Ujian lisan lewat teks",
-        desc: "Bagian yang biasanya diucapkan bisa dijawab dengan tulisan.",
-        status: "segera",
       },
     ],
   },

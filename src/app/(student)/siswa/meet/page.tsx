@@ -18,8 +18,11 @@ export default async function MeetSiswaPage() {
     .from(users)
     .where(eq(users.id, studentId))
     .limit(1);
+  const disabilities = sanitizeDisabilities(u?.disabilities);
   // Siswa tunarungu langsung mendapat teks berjalan tanpa harus menyalakan CC.
-  const captionsDefault = sanitizeDisabilities(u?.disabilities).includes("rungu");
+  const captionsDefault = disabilities.includes("rungu");
+  // Siswa tunawicara langsung mendapat panel Bicara Lewat Teks yang terbuka.
+  const speakDefault = disabilities.includes("wicara");
 
   return (
     <div>
@@ -33,6 +36,7 @@ export default async function MeetSiswaPage() {
         defaultRoom="kelas"
         hint="Masukkan kode ruang yang dibagikan gurumu."
         captionsDefault={captionsDefault}
+        speakDefault={speakDefault}
       />
     </div>
   );

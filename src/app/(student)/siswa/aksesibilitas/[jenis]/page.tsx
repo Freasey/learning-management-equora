@@ -84,6 +84,7 @@ export default async function AksesibilitasDetailPage({
         ))}
       </div>
 
+      {guide.features.some((f) => f.status === "segera") && (
       <div className="mt-6 flex items-start gap-3 rounded-3xl border-2 border-sunny/40 bg-sunny/10 p-5">
         <IconAlert className="mt-0.5 h-5 w-5 shrink-0 text-sunny" />
         <p className="text-sm text-slate-600">
@@ -92,6 +93,7 @@ export default async function AksesibilitasDetailPage({
           otomatis aktif saat sudah siap.
         </p>
       </div>
+      )}
 
       <div className="mt-6">
         {selected ? (
