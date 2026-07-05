@@ -3,9 +3,11 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import {
   AlertCircle,
+  Download,
   Eye,
   FileText,
   Link2,
+  Palette,
   Pencil,
   Plus,
   Sparkles,
@@ -14,7 +16,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, SelectField, inputClass } from "@/components/admin/ui";
-import { saveMaterial, generateSlides, deleteMaterial, type MaterialState } from "./actions";
+import { parseSlides, slideTypeLabel, type DesignSpec } from "@/lib/slides";
+import {
+  saveMaterial,
+  generateSlides,
+  generateDesigns,
+  exportPptx,
+  deleteMaterial,
+  type MaterialState,
+} from "./actions";
 
 export type MaterialRow = {
   id: string;
@@ -213,6 +223,16 @@ function MaterialPanel({
   const [withExamples, setWithExamples] = useState(true);
   const [withDiscussion, setWithDiscussion] = useState(false);
 
+  // Desain PPT: cetak biru dari AI + pilihan guru (tak ikut tersimpan ke DB).
+  const [designDesc, setDesignDesc] = useState("");
+  const [designs, setDesigns] = useState<DesignSpec[] | null>(null);
+  const [designIdx, setDesignIdx] = useState<number | null>(null);
+  const [designError, setDesignError] = useState<string | null>(null);
+  const [designPending, startDesign] = useTransition();
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportPending, startExport] = useTransition();
+  const selectedDesign = designs !== null && designIdx !== null ? designs[designIdx] : null;
+
   // Tutup panel setelah simpan berhasil.
   useEffect(() => {
     if (state?.ok) onClose();
@@ -250,6 +270,50 @@ function MaterialPanel({
         setAiAssisted(true);
         setShowPreview(true);
       }
+    });
+  }
+
+  function runDesigns() {
+    if (!formRef.current) return;
+    const main = new FormData(formRef.current);
+    const fd = new FormData();
+    fd.set("description", designDesc);
+    fd.set("topic", String(main.get("topic") ?? ""));
+    fd.set("subjectId", String(main.get("subjectId") ?? ""));
+    fd.set("level", level);
+    setDesignError(null);
+    startDesign(async () => {
+      const res = await generateDesigns(fd);
+      if (res.error) setDesignError(res.error);
+      else if (res.designs) {
+        setDesigns(res.designs);
+        setDesignIdx(0);
+      }
+    });
+  }
+
+  function runExport() {
+    if (!formRef.current) return;
+    if (!selectedDesign) {
+      setExportError("Buat & pilih desain dulu.");
+      return;
+    }
+    const main = new FormData(formRef.current);
+    const title = String(main.get("title") ?? "").trim();
+    if (!title) {
+      setExportError("Isi judul materi dulu (dipakai sebagai judul berkas).");
+      return;
+    }
+    const fd = new FormData();
+    fd.set("title", title);
+    fd.set("subjectId", String(main.get("subjectId") ?? ""));
+    fd.set("content", content);
+    fd.set("design", JSON.stringify(selectedDesign));
+    setExportError(null);
+    startExport(async () => {
+      const res = await exportPptx(fd);
+      if (res.error) setExportError(res.error);
+      else if (res.base64 && res.filename) downloadPptx(res.base64, res.filename);
     });
   }
 
@@ -414,7 +478,7 @@ function MaterialPanel({
                 )}
               </div>
               {showPreview && content.trim() ? (
-                <SlidePreview markdown={content} />
+                <SlidePreview markdown={content} design={selectedDesign} />
               ) : (
                 <textarea
                   name="content"
@@ -428,6 +492,78 @@ function MaterialPanel({
               {/* Pastikan isi tetap terkirim walau sedang mode pratinjau */}
               {showPreview && <input type="hidden" name="content" value={content} />}
             </div>
+
+            {/* Desain & unduh PowerPoint: AI mengisi cetak biru, mesin kami merakit .pptx */}
+            {content.trim() && (
+              <div className="rounded-lg border border-teal-700/25 bg-teal-700/5 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-teal-700/10 text-teal-700">
+                    <Palette className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-semibold text-ink">Desain & unduh PowerPoint</h3>
+                    <p className="text-xs text-muted">
+                      Tulis suasana yang diinginkan — AI merancang desainnya, lalu unduh sebagai berkas .pptx.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="text"
+                    value={designDesc}
+                    onChange={(e) => setDesignDesc(e.target.value)}
+                    placeholder='cth. "nuansa bawah laut yang ceria" — kosongkan agar AI menyesuaikan topik'
+                    className={`${inputClass} min-w-0 flex-1`}
+                  />
+                  <button
+                    type="button"
+                    onClick={runDesigns}
+                    disabled={designPending}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-paper transition hover:brightness-95 disabled:opacity-50"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {designPending ? "Merancang…" : designs ? "Rancang ulang" : "Buatkan 3 desain"}
+                  </button>
+                </div>
+                <div className="mt-2">
+                  <AiErrorNote message={designError} />
+                </div>
+
+                {designs && (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                    {designs.map((d, i) => (
+                      <DesignThumb
+                        key={i}
+                        design={d}
+                        selected={designIdx === i}
+                        onSelect={() => setDesignIdx(i)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {designs && (
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={runExport}
+                      disabled={exportPending || designIdx === null}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper transition hover:brightness-110 disabled:opacity-50"
+                    >
+                      <Download className="h-4 w-4" />
+                      {exportPending ? "Merakit berkas…" : "Unduh PPTX"}
+                    </button>
+                    <span className="text-xs text-muted">
+                      Bisa dibuka di PowerPoint & Google Slides — teks tetap bisa disunting.
+                    </span>
+                  </div>
+                )}
+                <div className="mt-2">
+                  <AiErrorNote message={exportError} />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -558,60 +694,150 @@ function Check({
   );
 }
 
-type Slide = { title: string; bullets: string[]; body: string[] };
-
-/** Pisah markdown slide (dipisah '---', judul '# ', butir '- '). */
-function parseSlides(markdown: string): Slide[] {
-  return markdown
-    .split(/^\s*---\s*$/m)
-    .map((chunk) => chunk.trim())
-    .filter(Boolean)
-    .map((chunk) => {
-      const lines = chunk.split("\n").map((l) => l.trim()).filter(Boolean);
-      let title = "";
-      const bullets: string[] = [];
-      const body: string[] = [];
-      for (const line of lines) {
-        if (!title && line.startsWith("#")) {
-          title = line.replace(/^#+\s*/, "");
-        } else if (line.startsWith("- ") || line.startsWith("* ")) {
-          bullets.push(line.slice(2));
-        } else if (!title) {
-          title = line;
-        } else {
-          body.push(line);
-        }
-      }
-      return { title: title || "(tanpa judul)", bullets, body };
-    });
+/** Ubah base64 dari server menjadi unduhan berkas .pptx di browser. */
+function downloadPptx(base64: string, filename: string) {
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], {
+    type: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-function SlidePreview({ markdown }: { markdown: string }) {
+/** Kartu kandidat desain: thumbnail mini yang meniru gaya slide-nya. */
+function DesignThumb({
+  design,
+  selected,
+  onSelect,
+}: {
+  design: DesignSpec;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const c = design.colors;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={`overflow-hidden rounded-lg border text-left transition ${
+        selected
+          ? "border-teal-700 ring-2 ring-teal-700/30"
+          : "border-line hover:border-teal-700/50"
+      }`}
+    >
+      <div className="relative aspect-video p-3" style={{ background: `#${c.background}` }}>
+        {/* hiasan mini ala dekorasi slide */}
+        <span
+          className="absolute -right-3 -top-3 h-10 w-10 rounded-full opacity-25"
+          style={{ background: `#${c.accent2}` }}
+        />
+        <span className="mb-1.5 block h-1 w-8 rounded" style={{ background: `#${c.accent}` }} />
+        <span
+          className="block text-[11px] font-bold leading-tight"
+          style={{ color: `#${c.title}`, fontFamily: `"${design.headingFont}", serif` }}
+        >
+          {design.titleUpper ? "JUDUL MATERI" : "Judul Materi"}
+        </span>
+        <span className="mt-1.5 block space-y-1">
+          {["Poin pembahasan utama", "Penjelasan singkat"].map((t) => (
+            <span key={t} className="flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full" style={{ background: `#${c.accent}` }} />
+              <span
+                className="text-[8px] leading-tight"
+                style={{ color: `#${c.text}`, fontFamily: `"${design.bodyFont}", sans-serif` }}
+              >
+                {t}
+              </span>
+            </span>
+          ))}
+        </span>
+      </div>
+      <div className="border-t border-line bg-paper px-2.5 py-1.5">
+        <span className="block truncate text-xs font-semibold text-ink">{design.name}</span>
+        {design.vibe && <span className="block truncate text-[10px] text-muted">{design.vibe}</span>}
+      </div>
+    </button>
+  );
+}
+
+/** Pratinjau slide — bila `design` dipilih, kartu mengikuti warna & font desainnya. */
+function SlidePreview({ markdown, design }: { markdown: string; design?: DesignSpec | null }) {
   const slides = parseSlides(markdown);
   if (slides.length === 0) {
     return <p className="text-xs text-muted">Belum ada slide untuk dipratinjau.</p>;
   }
+  const c = design?.colors;
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {slides.map((s, i) => (
         <div
           key={i}
-          className="aspect-video overflow-auto rounded-lg border border-line bg-white p-4 shadow-sm"
+          className="aspect-video overflow-auto rounded-lg border border-line p-4 shadow-sm"
+          style={{ background: c ? `#${c.background}` : "#ffffff" }}
         >
-          <div className="mb-1 font-mono text-[10px] text-muted">Slide {i + 1}</div>
-          <h4 className="font-display text-sm font-semibold text-ink">{s.title}</h4>
+          <div className="mb-1 flex items-center justify-between gap-2 font-mono text-[10px]">
+            <span style={{ color: c ? `#${c.text}` : undefined }} className={c ? "opacity-70" : "text-muted"}>
+              Slide {i + 1}
+            </span>
+            <span
+              className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+              style={
+                c
+                  ? { background: `#${c.accent}22`, color: `#${c.title}` }
+                  : { background: "rgba(0,0,0,0.05)" }
+              }
+            >
+              {slideTypeLabel[s.type]}
+            </span>
+          </div>
+          <h4
+            className={`text-sm font-semibold ${c ? "" : "font-display text-ink"}`}
+            style={
+              c
+                ? { color: `#${c.title}`, fontFamily: `"${design.headingFont}", serif` }
+                : undefined
+            }
+          >
+            {design?.titleUpper ? s.title.toUpperCase() : s.title}
+          </h4>
           {s.body.length > 0 && (
-            <p className="mt-1 text-xs text-ink/70">{s.body.join(" ")}</p>
+            <p
+              className={`mt-1 text-xs ${c ? "" : "text-ink/70"}`}
+              style={c ? { color: `#${c.text}` } : undefined}
+            >
+              {s.body.join(" ")}
+            </p>
           )}
           {s.bullets.length > 0 && (
             <ul className="mt-2 space-y-1">
               {s.bullets.map((b, j) => (
-                <li key={j} className="flex gap-1.5 text-xs text-ink/80">
-                  <span className="text-accent">•</span>
+                <li
+                  key={j}
+                  className={`flex gap-1.5 text-xs ${c ? "" : "text-ink/80"}`}
+                  style={c ? { color: `#${c.text}` } : undefined}
+                >
+                  <span style={{ color: c ? `#${c.accent}` : undefined }} className={c ? "" : "text-accent"}>
+                    •
+                  </span>
                   <span>{b}</span>
                 </li>
               ))}
             </ul>
+          )}
+          {s.notes && (
+            <p
+              className={`mt-2 border-t border-dashed pt-1.5 text-[10px] italic ${c ? "" : "text-muted"}`}
+              style={c ? { color: `#${c.text}`, borderColor: `#${c.accent}55`, opacity: 0.75 } : undefined}
+            >
+              Catatan guru: {s.notes}
+            </p>
           )}
         </div>
       ))}

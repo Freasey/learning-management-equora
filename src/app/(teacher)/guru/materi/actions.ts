@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, withTenant, materials, subjects } from "@/db";
+import { db, withTenant, materials, subjects, schools, users } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
 import mammoth from "mammoth";
 import {
@@ -13,6 +13,17 @@ import {
   recordAiUsage,
   type GeminiPart,
 } from "@/lib/ai";
+import {
+  BULLET_STYLES,
+  COVER_STYLES,
+  DECOR_STYLES,
+  FALLBACK_DESIGNS,
+  SAFE_FONTS,
+  SLIDE_TYPES,
+  sanitizeDesign,
+  type DesignSpec,
+} from "@/lib/slides";
+import { buildPptx } from "@/lib/pptx";
 import { uploadFile, deleteFile, isStorageConfigured } from "@/lib/storage";
 
 export type MaterialState = { error?: string; ok?: boolean } | undefined;
@@ -249,8 +260,11 @@ export async function generateSlides(
         "FORMAT WAJIB (jangan menyimpang):",
         "- Pisahkan tiap slide dengan baris berisi tepat: ---",
         "- Baris pertama tiap slide adalah judul, diawali '# '.",
+        `- Baris kedua adalah tipe slide: [tipe: X] dengan X salah satu dari: ${SLIDE_TYPES.join(", ")}.`,
         "- Butir isi memakai '- ' (maks 6 butir per slide, tiap butir ringkas).",
-        "- Slide pertama adalah judul presentasi + subjudul singkat.",
+        "- Baris terakhir tiap slide: '> Catatan: …' berisi naskah bicara singkat (2–3 kalimat) untuk membantu guru menjelaskan slide itu.",
+        "- Slide pertama [tipe: pembuka] = judul presentasi + 1 subjudul singkat. Slide terakhir [tipe: penutup] = pesan penutup + rangkuman 2–3 butir.",
+        "- Variasikan tipe agar presentasi berirama: pakai [tipe: bab] untuk pergantian bagian besar, [tipe: dua-kolom] untuk perbandingan, [tipe: kutipan] untuk definisi/kutipan penting, [tipe: angka] untuk fakta berangka (butir pertama HANYA angka/fakta super singkat, butir berikutnya keterangan), [tipe: contoh] untuk contoh soal, [tipe: diskusi] untuk pertanyaan pemantik, dan [tipe: poin] untuk isi biasa.",
         "- Jangan menulis apa pun di luar slide (tanpa pengantar/penutup).",
       ]
         .filter(Boolean)
@@ -291,11 +305,195 @@ export async function generateSlides(
 
 /** Kerangka slide untuk mode demo (tanpa kunci AI). */
 function demoSlides(title: string, count: number): string {
-  const slides = [`# ${title}\n- Materi presentasi (mode demo — kunci AI belum diatur)`];
+  const slides = [
+    `# ${title}\n[tipe: pembuka]\n- Materi presentasi (mode demo — kunci AI belum diatur)\n> Catatan: Buka kelas dengan salam, lalu perkenalkan topik hari ini.`,
+  ];
   for (let i = 1; i < Math.min(count, 5); i++) {
-    slides.push(`# Bagian ${i}\n- Poin utama …\n- Penjelasan singkat …\n- Contoh …`);
+    slides.push(
+      `# Bagian ${i}\n[tipe: poin]\n- Poin utama …\n- Penjelasan singkat …\n- Contoh …\n> Catatan: Jelaskan tiap poin dengan contoh sehari-hari.`,
+    );
   }
+  slides.push(
+    `# Terima Kasih\n[tipe: penutup]\n- Rangkuman singkat …\n> Catatan: Tutup dengan mengulang poin terpenting.`,
+  );
   return slides.join("\n\n---\n\n");
+}
+
+/* ===================== Desain PPT (cetak biru AI) ===================== */
+
+/**
+ * Minta AI menyusun 3 "cetak biru desain" dari deskripsi bebas guru.
+ * AI TIDAK menulis kode — ia hanya mengisi spesifikasi (warna, font,
+ * gaya dekorasi) yang lalu dibersihkan `sanitizeDesign` (font dibatasi
+ * daftar aman, kontras teks dikoreksi otomatis). Mesin pptxgenjs kitalah
+ * yang merakit berkasnya.
+ */
+export async function generateDesigns(
+  formData: FormData,
+): Promise<{ designs?: DesignSpec[]; error?: string }> {
+  const { schoolId, teacherId } = await requireTeacher();
+  const description = String(formData.get("description") ?? "").trim().slice(0, 500);
+  const topic = String(formData.get("topic") ?? "").trim();
+  const level = String(formData.get("level") ?? "").trim();
+  const subjectId = String(formData.get("subjectId") ?? "");
+
+  try {
+    return await withTenant(schoolId, async () => {
+      if (!isAiConfigured()) {
+        // Mode demo: tawarkan desain bawaan agar alur tetap bisa dicoba.
+        return { designs: FALLBACK_DESIGNS };
+      }
+      await assertAiQuota(schoolId);
+
+      let subjectName = "";
+      if (z.string().uuid().safeParse(subjectId).success) {
+        const [subj] = await db
+          .select({ name: subjects.name })
+          .from(subjects)
+          .where(and(eq(subjects.id, subjectId), eq(subjects.schoolId, schoolId)))
+          .limit(1);
+        subjectName = subj?.name ?? "";
+      }
+
+      const prompt = [
+        "Kamu desainer presentasi profesional. Susun 3 alternatif desain slide yang menarik, modern, dan SANGAT berbeda satu sama lain.",
+        description
+          ? `Keinginan guru: "${description}". Patuhi keinginan ini sebagai arah utama.`
+          : "Guru tidak memberi arahan — karang sendiri desain yang paling cocok dengan konteks materi.",
+        [
+          subjectName && `Mata pelajaran: ${subjectName}`,
+          topic && `Topik: ${topic}`,
+          level && `Jenjang: ${level}`,
+        ]
+          .filter(Boolean)
+          .join(". "),
+        "",
+        "Balas HANYA JSON array valid (tanpa markdown, tanpa penjelasan) berisi tepat 3 objek dengan bentuk:",
+        `{"name":"nama desain singkat","vibe":"deskripsi suasana 1 kalimat","colors":{"background":"#RRGGBB latar slide","surface":"#RRGGBB panel/kartu","title":"#RRGGBB judul","text":"#RRGGBB teks isi","accent":"#RRGGBB aksen utama","accent2":"#RRGGBB aksen kedua"},"headingFont":"…","bodyFont":"…","decor":"…","bulletStyle":"…","titleUpper":false,"coverStyle":"…"}`,
+        "Aturan:",
+        `- headingFont & bodyFont HARUS dari daftar: ${SAFE_FONTS.join(", ")}.`,
+        `- decor salah satu dari: ${DECOR_STYLES.join(", ")}. bulletStyle: ${BULLET_STYLES.join(", ")}. coverStyle: ${COVER_STYLES.join(", ")}.`,
+        "- Pastikan title & text kontras kuat terhadap background (terbaca jelas), dan text juga terbaca di atas surface.",
+        "- Warna harus harmonis dan sesuai suasana yang diminta guru/topik.",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const out = await generateFromParts([{ text: prompt }]);
+      if (!out) return { error: "AI tidak mengembalikan hasil. Coba lagi." };
+
+      // Bersihkan pagar kode bila AI tetap menambahkannya.
+      const jsonText = out.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(jsonText);
+      } catch {
+        console.warn("[design] JSON tak valid:", jsonText.slice(0, 300));
+        return { error: "Hasil AI tidak bisa dibaca. Coba lagi." };
+      }
+      const rawList = Array.isArray(parsed)
+        ? parsed
+        : (parsed as { designs?: unknown[] })?.designs ?? [];
+      const designs = (rawList as unknown[])
+        .map(sanitizeDesign)
+        .filter((d): d is DesignSpec => d !== null)
+        .slice(0, 3);
+      if (designs.length === 0) return { error: "AI tidak menghasilkan desain valid. Coba lagi." };
+      // Genapkan ke 3 pilihan dengan desain bawaan bila AI kurang.
+      for (const fb of FALLBACK_DESIGNS) {
+        if (designs.length >= 3) break;
+        designs.push(fb);
+      }
+
+      await recordAiUsage(schoolId, teacherId, "material.design");
+      return { designs };
+    });
+  } catch (e) {
+    console.error("[design] EXCEPTION:", e);
+    return { error: e instanceof Error ? e.message : "Gagal membuat desain." };
+  }
+}
+
+/* ======================= Ekspor PowerPoint (.pptx) ======================= */
+
+const exportSchema = z.object({
+  title: z.string().trim().min(1, "Isi judul materi dulu."),
+  subjectId: z.string().uuid().optional().or(z.literal("")),
+  content: z.string().trim().min(1, "Belum ada isi slide untuk diekspor."),
+  design: z.string().min(2, "Pilih desain dulu."),
+});
+
+/**
+ * Rakit berkas PowerPoint dari teks slide + cetak biru desain terpilih,
+ * lalu kembalikan sebagai base64 untuk diunduh browser. Tanpa AI — murni
+ * mesin pptxgenjs, jadi tidak memakan kuota AI.
+ */
+export async function exportPptx(
+  formData: FormData,
+): Promise<{ base64?: string; filename?: string; error?: string }> {
+  const { schoolId, teacherId } = await requireTeacher();
+  const parsed = exportSchema.safeParse({
+    title: formData.get("title"),
+    subjectId: formData.get("subjectId"),
+    content: formData.get("content"),
+    design: formData.get("design"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
+  }
+  const d = parsed.data;
+
+  // Jangan percaya JSON dari browser mentah-mentah — bersihkan ulang.
+  let design: DesignSpec | null = null;
+  try {
+    design = sanitizeDesign(JSON.parse(d.design));
+  } catch {
+    design = null;
+  }
+  if (!design) return { error: "Desain tidak valid. Buat ulang desainnya." };
+
+  try {
+    const meta = await withTenant(schoolId, async () => {
+      const [teacher] = await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, teacherId))
+        .limit(1);
+      const [school] = await db
+        .select({ name: schools.name })
+        .from(schools)
+        .where(eq(schools.id, schoolId))
+        .limit(1);
+      let subjectName: string | undefined;
+      if (d.subjectId) {
+        const [subj] = await db
+          .select({ name: subjects.name })
+          .from(subjects)
+          .where(and(eq(subjects.id, d.subjectId), eq(subjects.schoolId, schoolId)))
+          .limit(1);
+        subjectName = subj?.name ?? undefined;
+      }
+      return {
+        title: d.title,
+        subject: subjectName,
+        teacher: teacher?.name,
+        school: school?.name,
+        dateLabel: new Date().toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      };
+    });
+
+    const { base64, slideCount } = await buildPptx(d.content, design, meta);
+    console.log("[pptx] ekspor OK:", { slideCount, bytes: Math.round((base64.length * 3) / 4) });
+    const safeName = d.title.replace(/[^\p{L}\p{N} _-]/gu, "").trim().replace(/\s+/g, "-") || "materi";
+    return { base64, filename: `${safeName}.pptx` };
+  } catch (e) {
+    console.error("[pptx] EXCEPTION:", e);
+    return { error: e instanceof Error ? e.message : "Gagal membuat berkas PowerPoint." };
+  }
 }
 
 export async function deleteMaterial(formData: FormData) {
