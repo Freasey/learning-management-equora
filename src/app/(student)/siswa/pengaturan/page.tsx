@@ -7,7 +7,7 @@ import { db, users } from "@/db";
 import { isStorageConfigured } from "@/lib/storage";
 import { DISABILITY_GUIDES, sanitizeDisabilities } from "@/lib/accessibility";
 import { DisabilityIcon, TONE_CLASS } from "@/components/kid/disability-icon";
-import { toggleTts, toggleDisability } from "./actions";
+import { toggleDisability } from "./actions";
 import { updateAvatar, removeAvatar } from "../../../(account)/account-actions";
 
 export const dynamic = "force-dynamic";
@@ -20,14 +20,12 @@ export default async function PengaturanSiswaPage() {
 
   const [u] = await db
     .select({
-      tts: users.ttsEnabled,
       avatarUrl: users.avatarUrl,
       disabilities: users.disabilities,
     })
     .from(users)
     .where(eq(users.id, studentId))
     .limit(1);
-  const tts = u?.tts ?? false;
   const mine = new Set(sanitizeDisabilities(u?.disabilities));
   const storageOn = isStorageConfigured();
 
@@ -95,8 +93,7 @@ export default async function PengaturanSiswaPage() {
             Kebutuhan Khususmu
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Pilih kebutuhanmu supaya kami bisa membantu caramu belajar. Setelah
-            dipilih, muncul tombol untuk melihat fitur apa saja yang kamu dapat.
+            Pilih kebutuhanmu supaya kami bisa membantu caramu belajar.
           </p>
 
           <div className="mt-4 space-y-2.5">
@@ -133,63 +130,19 @@ export default async function PengaturanSiswaPage() {
                       </button>
                     </form>
                   </div>
-                  {on && (
-                    <Link
-                      href={`/siswa/aksesibilitas/${g.key}`}
-                      className="mt-3 flex items-center justify-center gap-1.5 rounded-full bg-sky/10 px-4 py-2 text-sm font-extrabold text-sky transition hover:bg-sky/20"
-                    >
-                      Lihat fitur untukmu →
-                    </Link>
-                  )}
                 </div>
               );
             })}
           </div>
-        </div>
 
-        {/* TTS */}
-        <div className="flex items-center justify-between gap-4 rounded-3xl border-2 border-slate-200/70 bg-white p-5">
-          <div>
-            <div className="font-kid-display text-lg font-extrabold text-slate-800">
-              Teks ke Suara
-            </div>
-            <p className="text-sm text-slate-500">
-              Bantu membacakan teks di layar (untuk teman tunanetra).
-            </p>
-          </div>
-          <form action={toggleTts}>
-            <button
-              type="submit"
-              aria-pressed={tts}
-              className={`relative h-8 w-14 rounded-full transition ${tts ? "bg-mint" : "bg-slate-300"}`}
-            >
-              <span
-                className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${tts ? "left-7" : "left-1"}`}
-              />
-            </button>
-          </form>
-        </div>
-
-        {/* BISINDO (stub) */}
-        <div className="flex items-center justify-between gap-4 rounded-3xl border-2 border-slate-200/70 bg-white p-5 opacity-70">
-          <div>
-            <div className="font-kid-display text-lg font-extrabold text-slate-800">
-              Bahasa Isyarat (BISINDO)
-            </div>
-            <p className="text-sm text-slate-500">
-              Terjemahan isyarat ke teks saat kelas online.
-            </p>
-          </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-400">
-            Segera
-          </span>
+          <Link
+            href="/siswa/aksesibilitas"
+            className="mt-4 flex items-center justify-center gap-1.5 rounded-full bg-sky/10 px-4 py-2.5 text-sm font-extrabold text-sky transition hover:bg-sky/20"
+          >
+            Lihat semua fitur untukmu →
+          </Link>
         </div>
       </div>
-
-      <p className="mt-4 text-center text-xs text-slate-400">
-        Fitur suara &amp; isyarat sedang disiapkan—tombol ini menyimpan
-        preferensimu.
-      </p>
     </div>
   );
 }

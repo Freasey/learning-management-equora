@@ -44,7 +44,7 @@ export const DISABILITY_GUIDES: DisabilityGuide[] = [
     features: [
       {
         title: "Teks dibacakan (Teks-ke-Suara)",
-        desc: "Tulisan di layar dibacakan dengan suara. Nyalakan lewat Pengaturan.",
+        desc: "Tulisan di layar dibacakan dengan suara, otomatis aktif saat kamu memilih kebutuhan ini.",
         status: "aktif",
       },
       {
@@ -83,7 +83,7 @@ export const DISABILITY_GUIDES: DisabilityGuide[] = [
       },
       {
         title: "Penerjemah bahasa isyarat (BISINDO)",
-        desc: "Bahasa isyarat diterjemahkan menjadi teks. Nyalakan lewat Pengaturan.",
+        desc: "Bahasa isyarat diterjemahkan menjadi teks, otomatis aktif saat kamu memilih kebutuhan ini.",
         status: "segera",
       },
       {

@@ -45,7 +45,7 @@ export default async function AksesibilitasDetailPage({
         href="/siswa/aksesibilitas"
         className="mb-5 inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-slate-700"
       >
-        ← Semua kebutuhan
+        ← Kembali
       </Link>
 
       <div className="flex items-center gap-4">
