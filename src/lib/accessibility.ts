@@ -73,32 +73,12 @@ export const DISABILITY_GUIDES: DisabilityGuide[] = [
     key: "rungu",
     label: "Sulit Mendengar",
     formal: "Tunarungu",
-    tagline: "Suara di kelas diubah jadi teks dan tanda yang bisa dilihat.",
+    tagline: "Suara di kelas online diubah jadi teks yang bisa kamu baca.",
     tone: "sky",
     features: [
       {
         title: "Teks berjalan saat Meet",
         desc: "Ucapan guru dan teman muncul sebagai teks (caption) di layar saat kelas online — otomatis menyala saat kamu memilih kebutuhan ini.",
-        status: "aktif",
-      },
-      {
-        title: "Penerjemah bahasa isyarat (BISINDO)",
-        desc: "Bahasa isyarat diterjemahkan menjadi teks, otomatis aktif saat kamu memilih kebutuhan ini.",
-        status: "segera",
-      },
-      {
-        title: "Catatan kelas tersimpan",
-        desc: "Teks lengkap dari kelas bisa dibaca lagi setelah pelajaran selesai.",
-        status: "segera",
-      },
-      {
-        title: "Notifikasi yang terlihat",
-        desc: "Pemberitahuan tampil sebagai tanda visual, bukan hanya bunyi.",
-        status: "aktif",
-      },
-      {
-        title: "Obrolan teks di kelas",
-        desc: "Selalu bisa bertanya dan menjawab lewat chat tulisan.",
         status: "aktif",
       },
     ],
