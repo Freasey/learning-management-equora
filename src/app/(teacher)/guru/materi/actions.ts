@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, withTenant, materials, subjects, schools, users } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
-import mammoth from "mammoth";
+import { fileToPart } from "@/lib/ai-source";
 import {
   assertAiQuota,
   generateFromParts,
@@ -164,48 +164,14 @@ export async function saveMaterial(
  * Rangkum bahan modul guru (teks tempel dan/atau berkas) menjadi materi
  * presentasi berformat slide-markdown, TANPA menyimpan — hasil dikembalikan agar
  * guru bisa menyunting per slide sebelum menekan Simpan. Kuota AI ditegakkan &
- * pemakaian dicatat. Gemini membaca PDF/gambar native; DOCX diekstrak via mammoth.
+ * pemakaian dicatat. Gemini membaca PDF/gambar native; DOCX diekstrak via mammoth
+ * (lihat pembaca berkas bersama di src/lib/ai-source.ts).
  */
-const MAX_SOURCE_BYTES = 15_000_000;
-
 const styleLabel: Record<string, string> = {
   ringkas: "ringkas dan padat",
   naratif: "naratif dan mengalir",
   interaktif: "interaktif dengan pertanyaan pemantik",
 };
-
-/** Ubah berkas modul menjadi bagian konten Gemini (inline atau teks). */
-async function fileToPart(file: File): Promise<GeminiPart | { error: string }> {
-  if (file.size > MAX_SOURCE_BYTES) {
-    return { error: "Berkas terlalu besar (maks 15 MB)." };
-  }
-  const name = file.name.toLowerCase();
-  const mime = file.type || "";
-  const buf = Buffer.from(await file.arrayBuffer());
-
-  if (mime === "application/pdf" || name.endsWith(".pdf")) {
-    return { inlineData: { mimeType: "application/pdf", data: buf.toString("base64") } };
-  }
-  if (mime.startsWith("image/")) {
-    return { inlineData: { mimeType: mime, data: buf.toString("base64") } };
-  }
-  if (name.endsWith(".docx")) {
-    try {
-      const { value } = await mammoth.extractRawText({ buffer: buf });
-      const text = value.trim();
-      if (!text) return { error: "Berkas DOCX kosong / tak terbaca." };
-      return { text: `BAHAN SUMBER (dari berkas ${file.name}):\n${text}` };
-    } catch {
-      return { error: "Gagal membaca berkas DOCX." };
-    }
-  }
-  if (mime.startsWith("text/") || name.endsWith(".txt") || name.endsWith(".md")) {
-    const text = buf.toString("utf8").trim();
-    if (!text) return { error: "Berkas teks kosong." };
-    return { text: `BAHAN SUMBER (dari berkas ${file.name}):\n${text}` };
-  }
-  return { error: "Format tak didukung. Pakai PDF, DOCX, gambar, atau teks." };
-}
 
 export async function generateSlides(
   formData: FormData,

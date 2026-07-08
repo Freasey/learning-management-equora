@@ -3,12 +3,13 @@ import { redirect, notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { auth } from "@/auth";
-import { db, assessments, questions, subjects, classes, attempts, users } from "@/db";
+import { db, assessments, questions, subjects, classes, attempts, users, schools } from "@/db";
 import { isStorageConfigured } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { RowAction, Th } from "@/components/admin/ui";
 import { deleteQuestion, setAssessmentStatus, toggleCountToGrade } from "../actions";
 import { QuestionForms } from "./question-forms";
+import { AiQuestionForm } from "./ai-question-form";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Susun Kuis · Guru" };
@@ -50,6 +51,13 @@ export default async function KuisDetailPage({
 
   const hasEssay = qs.some((q) => q.type === "essay");
   const totalPoints = qs.reduce((s, q) => s + q.points, 0);
+
+  // Jenjang sekolah → default "jenjang" di panel Buat Soal dengan AI.
+  const [school] = await db
+    .select({ level: schools.level })
+    .from(schools)
+    .where(eq(schools.id, schoolId))
+    .limit(1);
 
   const subs = await db
     .select({
@@ -230,7 +238,10 @@ export default async function KuisDetailPage({
         )}
       </section>
 
-      {/* Tambah soal */}
+      {/* Buat soal dengan AI (jalur cepat) */}
+      <AiQuestionForm assessmentId={a.id} schoolLevel={school?.level ?? null} />
+
+      {/* Tambah soal manual */}
       <QuestionForms assessmentId={a.id} storageOn={isStorageConfigured()} />
     </div>
   );

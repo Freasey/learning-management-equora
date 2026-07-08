@@ -4,12 +4,20 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, withTenant, assessments, questions, gradeItems, attempts, answers, grades, enrollments } from "@/db";
+import { db, withTenant, assessments, questions, gradeItems, attempts, answers, grades, enrollments, subjects } from "@/db";
 import { requireTeacher } from "@/lib/auth-guard";
 import { getActiveYear } from "@/lib/academic";
 import { assertTeacherTeachesClass, teacherTeachesClass } from "@/lib/teaching";
 import { notify, notifyMany } from "@/lib/notify";
 import { uploadFile, deleteFile } from "@/lib/storage";
+import {
+  assertAiQuota,
+  generateFromParts,
+  isAiConfigured,
+  recordAiUsage,
+  type GeminiPart,
+} from "@/lib/ai";
+import { fileToPart } from "@/lib/ai-source";
 
 async function writeGrade(
   schoolId: string,
@@ -334,6 +342,249 @@ export async function addQuestion(
     });
     revalidatePath(`/guru/kuis/${parsed.data.assessmentId}`);
     return undefined;
+  });
+}
+
+/* ============================================================
+ * Pembuat soal dengan AI (Gemini)
+ * Alur hemat waktu guru: isi topik (atau unggah bahan referensi)
+ * → AI mengembalikan DRAF soal tanpa menyimpan → guru memeriksa &
+ * menyunting → simpan massal sekali klik. Kuota AI ditegakkan dan
+ * tiap generate dicatat sebagai pemakaian "quiz.generate".
+ * ============================================================ */
+
+export type DraftQuestion = {
+  type: "mc" | "essay";
+  text: string;
+  options: string[] | null;
+  correctIndex: number | null;
+  points: number;
+};
+
+const MAX_AI_QUESTIONS = 20;
+const MAX_SAVE_QUESTIONS = 40;
+
+/** Rapikan satu elemen (hasil AI / kiriman form) menjadi draf soal valid, atau null. */
+function sanitizeDraft(v: unknown): DraftQuestion | null {
+  if (!v || typeof v !== "object") return null;
+  const o = v as Record<string, unknown>;
+  const type = o.type === "mc" || o.type === "essay" ? o.type : null;
+  const text = typeof o.text === "string" ? o.text.trim().slice(0, 2000) : "";
+  if (!type || text.length < 2) return null;
+
+  const rawPoints = Number(o.points);
+  const points = Number.isFinite(rawPoints)
+    ? Math.max(1, Math.min(100, Math.trunc(rawPoints)))
+    : type === "mc"
+      ? 1
+      : 5;
+
+  if (type === "essay") {
+    return { type, text, options: null, correctIndex: null, points };
+  }
+
+  const options = Array.isArray(o.options)
+    ? o.options
+        .map((x) => String(x ?? "").trim().slice(0, 500))
+        .filter(Boolean)
+        .slice(0, 6)
+    : [];
+  if (options.length < 2) return null;
+  const ci = Number(o.correctIndex);
+  if (!Number.isInteger(ci) || ci < 0 || ci >= options.length) return null;
+  return { type, text, options, correctIndex: ci, points };
+}
+
+/** Ambil JSON array dari balasan AI (toleran terhadap pagar markdown/teks pengantar). */
+function parseAiQuestions(raw: string): DraftQuestion[] {
+  const start = raw.indexOf("[");
+  const end = raw.lastIndexOf("]");
+  if (start === -1 || end <= start) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  return parsed.map(sanitizeDraft).filter((q): q is DraftQuestion => q !== null);
+}
+
+/** Draf soal contoh untuk mode demo (kunci AI belum dipasang). */
+function demoQuestions(topic: string, mcCount: number, essayCount: number): DraftQuestion[] {
+  const items: DraftQuestion[] = [];
+  for (let i = 0; i < mcCount; i++) {
+    items.push({
+      type: "mc",
+      text: `(Contoh demo ${i + 1}) Pertanyaan pilihan ganda tentang "${topic}". Pasang kunci AI (GEMINI_API_KEY) untuk soal sungguhan.`,
+      options: ["Opsi A", "Opsi B", "Opsi C", "Opsi D"],
+      correctIndex: i % 4,
+      points: 1,
+    });
+  }
+  for (let i = 0; i < essayCount; i++) {
+    items.push({
+      type: "essay",
+      text: `(Contoh demo) Jelaskan secara singkat apa yang kamu ketahui tentang "${topic}".`,
+      options: null,
+      correctIndex: null,
+      points: 5,
+    });
+  }
+  return items;
+}
+
+/**
+ * Minta Gemini menyusun draf soal. TIDAK menyimpan apa pun — hasil dikembalikan
+ * ke form agar guru memeriksa & menyunting dulu. Bahan referensi opsional:
+ * teks tempel dan/atau berkas (PDF/DOCX/gambar/teks, dibaca via fileToPart).
+ */
+export async function generateQuestionsAi(formData: FormData): Promise<{
+  items?: DraftQuestion[];
+  fromKnowledge?: boolean;
+  error?: string;
+}> {
+  const { schoolId, teacherId } = await requireTeacher();
+  const assessmentId = String(formData.get("assessmentId") ?? "");
+  if (!z.string().uuid().safeParse(assessmentId).success) return { error: "Kuis tidak valid." };
+
+  const topic = String(formData.get("topic") ?? "").trim();
+  const sourceText = String(formData.get("sourceText") ?? "").trim();
+  const file = formData.get("sourceFile");
+  const hasFile = file instanceof File && file.size > 0;
+  // Tanpa bahan referensi, AI mengarang dari pengetahuannya — butuh topik sebagai pijakan.
+  const fromKnowledge = !sourceText && !hasFile;
+  if (fromKnowledge && !topic) {
+    return { error: "Isi Topik dulu — atau unggah bahan referensi." };
+  }
+
+  const count = Math.min(MAX_AI_QUESTIONS, Math.max(1, Math.trunc(Number(formData.get("count")) || 5)));
+  const kindRaw = String(formData.get("kind") ?? "mc");
+  const kind = ["mc", "essay", "mix"].includes(kindRaw) ? kindRaw : "mc";
+  const diffRaw = String(formData.get("difficulty") ?? "sedang");
+  const difficulty = ["mudah", "sedang", "sulit", "campuran"].includes(diffRaw) ? diffRaw : "sedang";
+  const level = String(formData.get("level") ?? "SMP").trim() || "SMP";
+
+  // Campuran ≈ sepertiga esai (esai menambah beban koreksi manual guru).
+  const essayCount = kind === "essay" ? count : kind === "mix" ? Math.max(1, Math.floor(count / 3)) : 0;
+  const mcCount = count - essayCount;
+
+  try {
+    return await withTenant(schoolId, async () => {
+      const a = await ownAssessment(schoolId, teacherId, assessmentId); // A2
+      await assertAiQuota(schoolId);
+
+      const [subj] = a.subjectId
+        ? await db
+            .select({ name: subjects.name })
+            .from(subjects)
+            .where(and(eq(subjects.id, a.subjectId), eq(subjects.schoolId, schoolId)))
+            .limit(1)
+        : [];
+
+      if (!isAiConfigured()) {
+        return { items: demoQuestions(topic || subj?.name || a.title, mcCount, essayCount), fromKnowledge };
+      }
+
+      const composition = [
+        mcCount > 0 && `${mcCount} soal pilihan ganda`,
+        essayCount > 0 && `${essayCount} soal esai`,
+      ]
+        .filter(Boolean)
+        .join(" dan ");
+
+      const instruction = [
+        fromKnowledge
+          ? "Kamu asisten guru. TIDAK ada bahan referensi — susun soal dari pengetahuanmu sendiri. Berpegang pada materi standar kurikulum sekolah di Indonesia untuk jenjang yang diminta, dan JANGAN memakai fakta, angka, atau nama yang tidak kamu yakini kebenarannya."
+          : "Kamu asisten guru. Susun soal BERDASARKAN BAHAN REFERENSI yang diberikan — jangan keluar dari cakupan bahan itu.",
+        `Mata pelajaran: ${subj?.name ?? "umum"}${topic ? `. Topik: ${topic}` : ""}.`,
+        `Sasaran jenjang: ${level}. Sesuaikan kedalaman & bahasa untuk jenjang itu.`,
+        `Tingkat kesulitan: ${difficulty}.`,
+        `Buat TEPAT ${composition}${mcCount > 0 && essayCount > 0 ? " (pilihan ganda dulu, esai di akhir)" : ""}.`,
+        "",
+        "FORMAT WAJIB: balas HANYA dengan JSON array valid — tanpa penjelasan, tanpa markdown, tanpa pagar kode.",
+        `Elemen pilihan ganda: {"type":"mc","text":"...","options":["...","...","...","..."],"correctIndex":0,"points":1}`,
+        `Elemen esai: {"type":"essay","text":"...","points":5}`,
+        "Aturan:",
+        "- Pilihan ganda: TEPAT 4 opsi, hanya satu jawaban benar (correctIndex 0-3), pengecoh masuk akal, dan posisi jawaban benar bervariasi antar soal.",
+        "- Poin: pilihan ganda 1-2, esai 5-10, sebanding bobot kesulitannya.",
+        "- Tiap soal harus mandiri: jangan merujuk 'bahan di atas', nomor halaman, atau soal lain.",
+        "- Semua dalam Bahasa Indonesia yang baik dan ramah siswa.",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const parts: GeminiPart[] = [{ text: instruction }];
+      if (sourceText) parts.push({ text: `BAHAN REFERENSI (teks):\n${sourceText}` });
+      if (hasFile) {
+        const part = await fileToPart(file);
+        if ("error" in part) return { error: part.error };
+        parts.push(part);
+      }
+
+      const out = await generateFromParts(parts);
+      if (!out) return { error: "AI tidak mengembalikan hasil. Coba lagi." };
+      const items = parseAiQuestions(out).slice(0, MAX_AI_QUESTIONS);
+      if (items.length === 0) {
+        return { error: "Hasil AI tidak bisa dibaca. Coba lagi — atau perjelas topiknya." };
+      }
+      await recordAiUsage(schoolId, teacherId, "quiz.generate");
+      return { items, fromKnowledge };
+    });
+  } catch (e) {
+    console.error("[quiz-ai] EXCEPTION:", e);
+    return { error: e instanceof Error ? e.message : "Gagal membuat soal." };
+  }
+}
+
+export type SaveGeneratedState = { error?: string; ok?: boolean; saved?: number } | undefined;
+
+/** Simpan massal draf soal hasil AI (setelah diperiksa/disunting guru). */
+export async function saveGeneratedQuestions(
+  _prev: SaveGeneratedState,
+  formData: FormData,
+): Promise<SaveGeneratedState> {
+  const { schoolId, teacherId } = await requireTeacher();
+  const assessmentId = String(formData.get("assessmentId") ?? "");
+  if (!z.string().uuid().safeParse(assessmentId).success) return { error: "Kuis tidak valid." };
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(formData.get("items") ?? "[]"));
+  } catch {
+    return { error: "Data soal tidak valid." };
+  }
+  if (!Array.isArray(raw) || raw.length === 0) return { error: "Tidak ada soal untuk disimpan." };
+  if (raw.length > MAX_SAVE_QUESTIONS) return { error: `Maksimal ${MAX_SAVE_QUESTIONS} soal sekali simpan.` };
+
+  const items: DraftQuestion[] = [];
+  for (let i = 0; i < raw.length; i++) {
+    const q = sanitizeDraft(raw[i]);
+    if (!q) {
+      return {
+        error: `Soal #${i + 1} belum lengkap — teks minimal 2 karakter; pilihan ganda butuh ≥2 opsi terisi dan jawaban benar yang ditandai.`,
+      };
+    }
+    items.push(q);
+  }
+
+  return withTenant(schoolId, async (): Promise<SaveGeneratedState> => {
+    await ownAssessment(schoolId, teacherId, assessmentId); // A2
+    const existing = await db.$count(questions, eq(questions.assessmentId, assessmentId));
+    await db.insert(questions).values(
+      items.map((q, i) => ({
+        schoolId,
+        assessmentId,
+        type: q.type,
+        text: q.text,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        points: q.points,
+        sortOrder: existing + i,
+      })),
+    );
+    revalidatePath(`/guru/kuis/${assessmentId}`);
+    return { ok: true, saved: items.length };
   });
 }
 
