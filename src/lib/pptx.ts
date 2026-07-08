@@ -8,8 +8,8 @@ import {
 
 /**
  * Mesin PPTX parametrik: merakit berkas PowerPoint asli dari teks slide +
- * cetak biru desain (buatan AI). Semua penataan dilakukan kode ini —
- * AI hanya memasok data, tidak pernah kode — sehingga hasil selalu
+ * cetak biru desain (buatan AI). Semua penataan dilakukan kode ini
+ * AI hanya memasok data, tidak pernah kode sehingga hasil selalu
  * konsisten, aman, dan bisa dibuka di PowerPoint/Google Slides.
  *
  * Kanvas: LAYOUT_WIDE = 13.33 × 7.5 inci (16:9).
@@ -88,7 +88,7 @@ function on(bg: string, preferred: string, min = 4.5): string {
 
 /**
  * Hiasan latar per slide. Posisi memakai tabel tetap yang digilir menurut
- * indeks slide — deterministik (hasil sama setiap ekspor) tapi tiap slide
+ * indeks slide deterministik (hasil sama setiap ekspor) tapi tiap slide
  * terasa berbeda.
  */
 function addDecor(ctx: Ctx, slide: PptxGenJS.Slide, i: number) {
@@ -177,7 +177,7 @@ function addFooter(ctx: Ctx, slide: PptxGenJS.Slide, i: number, total: number, b
 function addSlide(ctx: Ctx, s: ParsedSlide, i: number, total: number, chapter: number) {
   const { pptx } = ctx;
   const slide = pptx.addSlide();
-  // Hanya layout poin & contoh yang punya tempat panel kode/rumus — tipe lain
+  // Hanya layout poin & contoh yang punya tempat panel kode/rumus tipe lain
   // yang membawa blok kode dialihkan ke layout poin agar isinya tidak hilang.
   const type =
     s.code.length > 0 && !["poin", "contoh", "pembuka", "bab", "penutup"].includes(s.type)
@@ -213,7 +213,7 @@ function addSlide(ctx: Ctx, s: ParsedSlide, i: number, total: number, chapter: n
   }
 }
 
-/** Slide pembuka — tiga gaya sampul sesuai cetak biru. */
+/** Slide pembuka tiga gaya sampul sesuai cetak biru. */
 function layoutCover(ctx: Ctx, slide: PptxGenJS.Slide, s: ParsedSlide, i: number) {
   const { pptx, d, meta } = ctx;
   const subtitle = [...s.body, ...s.bullets].join("  •  ");
@@ -337,7 +337,7 @@ function layoutChapter(ctx: Ctx, slide: PptxGenJS.Slide, s: ParsedSlide, i: numb
   }
 }
 
-/** Judul standar di kiri-atas dengan bar aksen — dipakai beberapa layout. */
+/** Judul standar di kiri-atas dengan bar aksen dipakai beberapa layout. */
 function addHeader(ctx: Ctx, slide: PptxGenJS.Slide, title: string) {
   const { pptx, d } = ctx;
   slide.addShape(pptx.ShapeType.rect, {
@@ -405,7 +405,7 @@ function layoutPoints(ctx: Ctx, slide: PptxGenJS.Slide, s: ParsedSlide, i: numbe
 
   const hasCode = s.code.length > 0;
   if (rows.length && hasCode) {
-    // Dua kolom: penjelasan kiri, panel kode/rumus kanan — tidak bercampur.
+    // Dua kolom: penjelasan kiri, panel kode/rumus kanan tidak bercampur.
     slide.addText(rows, {
       x: MARGIN + 0.1, y: 2.0, w: 5.9, h: 4.7,
       fontFace: d.bodyFont, color: d.colors.text, valign: "top", fit: "shrink",
@@ -481,7 +481,7 @@ function layoutQuote(ctx: Ctx, slide: PptxGenJS.Slide, s: ParsedSlide, i: number
     align: "center", valign: "middle", fit: "shrink", lineSpacingMultiple: 1.2,
   });
   if (attribution) {
-    slide.addText(`— ${attribution}`, {
+    slide.addText(`${attribution}`, {
       x: 2.6, y: 5.0, w: PAGE_W - 5.2, h: 0.6,
       fontFace: d.bodyFont, fontSize: 13, color: d.colors.text, align: "center", fit: "shrink",
     });

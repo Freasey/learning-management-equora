@@ -62,7 +62,7 @@ export default async function NilaiSiswaPage() {
                 return (
                   <tr key={it.id} className="border-b border-slate-100 last:border-0">
                     <td className="px-5 py-3 font-bold text-slate-700">{it.title}</td>
-                    <td className="px-5 py-3 text-slate-500">{it.subjectName ?? "—"}</td>
+                    <td className="px-5 py-3 text-slate-500">{it.subjectName ?? " "}</td>
                     <td className="px-5 py-3">
                       {score == null ? (
                         <span className="text-slate-400">Belum dinilai</span>

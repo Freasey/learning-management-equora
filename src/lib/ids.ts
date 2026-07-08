@@ -7,7 +7,7 @@ export function slugify(s: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/** Kode acak (huruf/angka tanpa karakter ambigu) — untuk kode sekolah. */
+/** Kode acak (huruf/angka tanpa karakter ambigu) untuk kode sekolah. */
 export function randomCode(len = 6): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   return Array.from(

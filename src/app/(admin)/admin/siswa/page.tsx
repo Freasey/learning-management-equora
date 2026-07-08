@@ -101,7 +101,7 @@ export default async function SiswaPage() {
               <Field label="Kata sandi" name="password" required placeholder="min. 4 karakter" />
             </div>
             <SelectField label="Kelas" name="classId" defaultValue="">
-              <option value="">— Tanpa kelas —</option>
+              <option value="">Tanpa kelas</option>
               {classList.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -135,7 +135,7 @@ export default async function SiswaPage() {
                 defaultValue="siswa12345"
               />
               <SelectField label="Kelas" name="classId" defaultValue="">
-                <option value="">— Tanpa kelas —</option>
+                <option value="">Tanpa kelas</option>
                 {classList.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -179,7 +179,7 @@ export default async function SiswaPage() {
                         defaultValue={s.classId ?? ""}
                         className={`${inputClass} max-w-[10rem] py-1.5`}
                       >
-                        <option value="">— Tanpa kelas —</option>
+                        <option value="">Tanpa kelas</option>
                         {classList.map((c) => (
                           <option key={c.id} value={c.id}>
                             {c.name}

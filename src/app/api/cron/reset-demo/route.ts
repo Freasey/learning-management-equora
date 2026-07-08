@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Reset sekolah demo (kode DEMO01) — backstop harian.
+ * Reset sekolah demo (kode DEMO01) backstop harian.
  *
  * Penyegaran UTAMA bersifat "malas" (ensureDemoFresh saat sekolah demo
  * diakses; ramah Vercel Hobby yang membatasi cron 1×/hari). Endpoint ini

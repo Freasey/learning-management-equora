@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 /**
- * Pricing plans — dikelola dari Super Admin page.
+ * Pricing plans dikelola dari Super Admin page.
  * Harga disimpan dalam Rupiah (integer). Kuota null = unlimited / nego.
  */
 export const pricingPlans = pgTable("pricing_plans", {
@@ -36,7 +36,7 @@ export const pricingPlans = pgTable("pricing_plans", {
 
 /**
  * Schools = satu baris per sekolah (basis multi-tenancy).
- * (Dulu bernama "tenants" — diganti ke istilah domain yang lebih jelas.)
+ * (Dulu bernama "tenants" diganti ke istilah domain yang lebih jelas.)
  */
 export const schools = pgTable("schools", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -60,7 +60,7 @@ export const schools = pgTable("schools", {
 });
 
 /**
- * Users — semua peran dalam satu tabel, dibedakan `role`.
+ * Users semua peran dalam satu tabel, dibedakan `role`.
  * schoolId null = super_admin (lintas-sekolah). Selain itu wajib milik sekolah.
  * email: untuk super_admin/school_admin/guru. username: untuk siswa (NIS),
  * unik per sekolah.
@@ -97,7 +97,7 @@ export const users = pgTable(
  *
  * `users.schoolId` tetap menjadi "workspace utama / home" (dipakai untuk
  * sinkron dengan alur lama & sebagai default aktif saat login). Tabel ini
- * ADITIF — hanya dibuat untuk user yang benar-benar lintas-workspace
+ * ADITIF hanya dibuat untuk user yang benar-benar lintas-workspace
  * (mis. guru yang mengajar di sekolah + punya kelas freelance sendiri).
  * Bila user tidak punya baris di sini, konteks aktif disintesis dari
  * users.schoolId + users.role (kompatibel mundur).
@@ -126,7 +126,7 @@ export const memberships = pgTable(
 );
 
 /**
- * Pengumuman global (banner) — dikelola Super Admin.
+ * Pengumuman global (banner) dikelola Super Admin.
  */
 export const announcements = pgTable("announcements", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -493,7 +493,7 @@ export const answers = pgTable("answers", {
 });
 
 /**
- * Knowledge Base / Pusat Bantuan — konten dokumentasi dikelola dari DB
+ * Knowledge Base / Pusat Bantuan konten dokumentasi dikelola dari DB
  * (bukan hardcode), bisa diedit Super Admin. Satu sumber konten dipakai
  * untuk help center publik + contextual help di dalam aplikasi.
  */
@@ -529,7 +529,7 @@ export const docRevisions = pgTable("doc_revisions", {
 });
 
 /**
- * Audit log — jejak tindakan sensitif (login, hapus user, aktivasi paket, dll).
+ * Audit log jejak tindakan sensitif (login, hapus user, aktivasi paket, dll).
  * schoolId null = peristiwa lintas-sekolah / login gagal tanpa konteks sekolah.
  */
 export const auditLogs = pgTable("audit_logs", {
@@ -544,7 +544,7 @@ export const auditLogs = pgTable("audit_logs", {
 });
 
 /**
- * Pembatas laju login — cegah brute-force. Satu baris per identifier
+ * Pembatas laju login cegah brute-force. Satu baris per identifier
  * (email/username, opsional + kode sekolah). Jendela waktu digeser saat
  * kedaluwarsa; blockedUntil disetel setelah melewati ambang.
  */
@@ -561,7 +561,7 @@ export const loginAttempts = pgTable(
 );
 
 /**
- * Notifikasi in-app per pengguna (B1) — pengganti sistem "pull".
+ * Notifikasi in-app per pengguna (B1) pengganti sistem "pull".
  * Di-emit saat peristiwa lintas-peran: kuis terbit, esai menunggu koreksi,
  * nilai keluar, pendaftaran disetujui, pengumuman.
  */

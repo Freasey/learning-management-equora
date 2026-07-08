@@ -145,7 +145,7 @@ const rolloverSchema = z.object({
  * Mulai tahun ajaran baru dari tahun yang sudah ada (rollover).
  * Menyalin STRUKTUR (kelas, pengampu, jadwal) ke tahun baru & menjadikannya
  * aktif. Siswa ikut "naik kelas apa adanya" bila dicentang. Data historis
- * (nilai, kuis, pengerjaan) TIDAK disalin — tetap diarsip di tahun lama.
+ * (nilai, kuis, pengerjaan) TIDAK disalin tetap diarsip di tahun lama.
  */
 export async function rolloverAcademicYear(formData: FormData) {
   const { session, schoolId } = await requireSchoolAdmin();

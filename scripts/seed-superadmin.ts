@@ -1,5 +1,5 @@
 /**
- * Buat / perbarui super admin pertama. Tidak ada form publik untuk ini —
+ * Buat / perbarui super admin pertama. Tidak ada form publik untuk ini
  * sengaja hanya lewat script (pola industri: staff dibuat internal).
  *
  * Jalankan: npm run seed:superadmin

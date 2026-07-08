@@ -4,14 +4,14 @@ import { PageHero } from "@/components/site/page-hero";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "FAQ — Equora",
+  title: "FAQ Equora",
   description: "Pertanyaan yang sering diajukan tentang Equora.",
 };
 
 const faqs = [
   {
     q: "Apakah data sekolah kami aman dan terpisah dari sekolah lain?",
-    a: "Ya. Setiap sekolah memiliki ruang data terisolasi—data satu sekolah tidak akan pernah terlihat oleh sekolah lain.",
+    a: "Ya. Setiap sekolah memiliki ruang data terisolasi data satu sekolah tidak akan pernah terlihat oleh sekolah lain.",
   },
   {
     q: "Bagaimana cara memindahkan data siswa yang sudah ada?",
@@ -23,11 +23,11 @@ const faqs = [
   },
   {
     q: "Bagaimana siswa masuk jika belum punya email?",
-    a: "Siswa masuk menggunakan NIS/username dan kata sandi yang disiapkan sekolah—tidak wajib memiliki email.",
+    a: "Siswa masuk menggunakan NIS/username dan kata sandi yang disiapkan sekolah tidak wajib memiliki email.",
   },
   {
     q: "Apa saja fitur inklusif yang tersedia?",
-    a: "Kami menyediakan dukungan untuk siswa tunanetra (teks-ke-suara), tunarungu (teks langsung), dan tunawicara—dirancang sebagai bagian inti platform.",
+    a: "Kami menyediakan dukungan untuk siswa tunanetra (teks-ke-suara), tunarungu (teks langsung), dan tunawicara dirancang sebagai bagian inti platform.",
   },
   {
     q: "Apakah ada kontrak jangka panjang?",

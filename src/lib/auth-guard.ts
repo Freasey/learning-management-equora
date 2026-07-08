@@ -38,7 +38,7 @@ export async function isUserActive(userId: string | undefined): Promise<boolean>
 
 /**
  * Pastikan pemanggil adalah super admin. Dipakai di awal setiap server
- * action sensitif (defense in depth — jangan hanya andalkan middleware).
+ * action sensitif (defense in depth jangan hanya andalkan middleware).
  */
 export async function requireSuperAdmin() {
   const session = await auth();

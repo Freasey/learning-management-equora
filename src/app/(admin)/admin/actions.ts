@@ -25,7 +25,7 @@ export async function doSignOut() {
 }
 
 /**
- * B7 — Muat data contoh (sandbox trial). Opt-in dari dashboard kosong: mengisi
+ * B7 Muat data contoh (sandbox trial). Opt-in dari dashboard kosong: mengisi
  * tahun ajaran + mapel + kelas + guru contoh + siswa + jadwal supaya admin baru
  * langsung bisa "merasakan" sistem alih-alih kanvas kosong. Aman: hanya membuat,
  * tak menghapus apa pun; admin bisa hapus manual nanti.

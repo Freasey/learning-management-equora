@@ -62,7 +62,7 @@ export default async function AdminHome() {
   const storageGb = plan?.storageGb ?? null;
   const aiCredits = plan?.aiCredits ?? null;
 
-  // B2 — daftar langkah penyiapan. Urut sesuai dependensi.
+  // B2 daftar langkah penyiapan. Urut sesuai dependensi.
   const setup = [
     { label: "Aktifkan tahun ajaran", done: Boolean(year), href: "/admin/pengaturan" },
     { label: "Tambah mata pelajaran", done: subjectCount > 0, href: "/admin/mapel" },
@@ -132,11 +132,11 @@ export default async function AdminHome() {
       {school.type === "personal" && scheduleCount === 0 && (
         <div className="mb-8 rounded-xl border border-accent/40 bg-accent/5 p-6">
           <h2 className="font-display text-lg font-medium text-ink">
-            Mulai cepat — buat kelas instan
+            Mulai cepat buat kelas instan
           </h2>
           <p className="mb-4 mt-1 text-sm text-muted">
             Khusus ruang kerja pribadi: satu langkah menyiapkan tahun ajaran,
-            mata pelajaran, kelas, dan jadwal — Anda langsung bisa mengajar.
+            mata pelajaran, kelas, dan jadwal Anda langsung bisa mengajar.
           </p>
           <form
             action={createInstantClass}

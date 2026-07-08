@@ -19,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const article = await getPublished(slug);
-  return { title: article ? `${article.title} — Equora` : "Panduan — Equora" };
+  return { title: article ? `${article.title} Equora` : "Panduan Equora" };
 }
 
 export default async function PanduanArticlePage({

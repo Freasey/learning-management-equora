@@ -152,7 +152,7 @@ export function MateriManager({
                         </details>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-ink">{m.subjectName ?? "—"}</td>
+                    <td className="px-4 py-3 text-ink">{m.subjectName ?? " "}</td>
                     <td className="px-4 py-3 text-ink">{m.className ?? "Umum"}</td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase ${b.cls}`}>
@@ -221,7 +221,7 @@ function MaterialPanel({
   const [aiPending, startAi] = useTransition();
   const [showPreview, setShowPreview] = useState(false);
 
-  // Bahan untuk asisten AI (tak ikut tersimpan — dipakai hanya untuk generate).
+  // Bahan untuk asisten AI (tak ikut tersimpan dipakai hanya untuk generate).
   // Jenjang default diambil dari profil sekolah (SMK memakai kedalaman SMA).
   const defaultLevel =
     schoolLevel === "SMK" ? "SMA" : schoolLevel && ["SD", "SMP", "SMA"].includes(schoolLevel) ? schoolLevel : "SMP";
@@ -261,7 +261,7 @@ function MaterialPanel({
       return null;
     }
     if (!topic && !sourceText.trim() && !file) {
-      setAiError("Isi Topik di atas — atau beri bahan modul (teks/berkas) di pengaturan lanjutan.");
+      setAiError("Isi Topik di atas atau beri bahan modul (teks/berkas) di pengaturan lanjutan.");
       return null;
     }
     // Judul otomatis dari topik bila guru belum mengisinya.
@@ -288,7 +288,7 @@ function MaterialPanel({
   function noteFromKnowledge(fromKnowledge?: boolean) {
     if (fromKnowledge) {
       setAiNote(
-        "Disusun AI dari pengetahuan umum (tanpa bahan modul) — periksa sekilas kebenaran isinya sebelum dipakai.",
+        "Disusun AI dari pengetahuan umum (tanpa bahan modul) periksa sekilas kebenaran isinya sebelum dipakai.",
       );
     }
   }
@@ -418,7 +418,7 @@ function MaterialPanel({
           ))}
         </SelectField>
         <SelectField label="Kelas" name="classId" defaultValue={row?.classId ?? ""}>
-          <option value="">— Umum —</option>
+          <option value="">Umum</option>
           {classOptions.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
@@ -452,7 +452,7 @@ function MaterialPanel({
       <div className="mt-4">
         {source === "tulis" && (
           <div className="space-y-4">
-            {/* Asisten AI — jalur kilat: satu klik, slide + desain langsung jadi */}
+            {/* Asisten AI jalur kilat: satu klik, slide + desain langsung jadi */}
             <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent/15 text-accent">
@@ -461,7 +461,7 @@ function MaterialPanel({
                 <div>
                   <h3 className="text-sm font-semibold text-ink">Buat materi kilat</h3>
                   <p className="text-xs text-muted">
-                    Cukup pilih Mapel & isi Topik di atas, lalu satu klik — slide + 3 desain langsung
+                    Cukup pilih Mapel & isi Topik di atas, lalu satu klik slide + 3 desain langsung
                     jadi. Tanpa bahan modul, AI menyusun dari pengetahuannya.
                   </p>
                 </div>
@@ -479,7 +479,7 @@ function MaterialPanel({
                 </button>
                 {!aiConfigured && (
                   <span className="text-xs text-muted">
-                    Mode demo — atur <code className="font-mono text-[11px]">GEMINI_API_KEY</code> untuk hasil nyata.
+                    Mode demo atur <code className="font-mono text-[11px]">GEMINI_API_KEY</code> untuk hasil nyata.
                   </span>
                 )}
               </div>
@@ -498,7 +498,7 @@ function MaterialPanel({
                     rows={4}
                     value={sourceText}
                     onChange={(e) => setSourceText(e.target.value)}
-                    placeholder="Tempel isi modul di sini (bab, catatan, ringkasan) — AI akan berpegang pada bahan ini…"
+                    placeholder="Tempel isi modul di sini (bab, catatan, ringkasan) AI akan berpegang pada bahan ini…"
                     className={inputClass}
                   />
 
@@ -568,7 +568,7 @@ function MaterialPanel({
                   rows={10}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Slide muncul di sini setelah dibuat AI — atau ketik sendiri. Pisahkan slide dengan baris ---, judul diawali '# ', kode/rumus diapit baris ```."
+                  placeholder="Slide muncul di sini setelah dibuat AI atau ketik sendiri. Pisahkan slide dengan baris ---, judul diawali '# ', kode/rumus diapit baris ```."
                   className={`${inputClass} font-mono text-xs`}
                 />
               )}
@@ -586,7 +586,7 @@ function MaterialPanel({
                   <div>
                     <h3 className="text-sm font-semibold text-ink">Desain & unduh PowerPoint</h3>
                     <p className="text-xs text-muted">
-                      Tulis suasana yang diinginkan — AI merancang desainnya, lalu unduh sebagai berkas .pptx.
+                      Tulis suasana yang diinginkan AI merancang desainnya, lalu unduh sebagai berkas .pptx.
                     </p>
                   </div>
                 </div>
@@ -596,7 +596,7 @@ function MaterialPanel({
                     type="text"
                     value={designDesc}
                     onChange={(e) => setDesignDesc(e.target.value)}
-                    placeholder='cth. "nuansa bawah laut yang ceria" — kosongkan agar AI menyesuaikan topik'
+                    placeholder='cth. "nuansa bawah laut yang ceria" kosongkan agar AI menyesuaikan topik'
                     className={`${inputClass} min-w-0 flex-1`}
                   />
                   <button
@@ -638,7 +638,7 @@ function MaterialPanel({
                       {exportPending ? "Merakit berkas…" : "Unduh PPTX"}
                     </button>
                     <span className="text-xs text-muted">
-                      Bisa dibuka di PowerPoint & Google Slides — teks tetap bisa disunting.
+                      Bisa dibuka di PowerPoint & Google Slides teks tetap bisa disunting.
                     </span>
                   </div>
                 )}
@@ -679,7 +679,7 @@ function MaterialPanel({
               </>
             ) : (
               <p className="rounded-md border border-dashed border-line bg-sand/40 px-3 py-2 text-xs text-muted">
-                Unggah berkas nonaktif — penyimpanan belum dikonfigurasi.
+                Unggah berkas nonaktif penyimpanan belum dikonfigurasi.
               </p>
             )}
           </div>
@@ -850,7 +850,7 @@ function DesignThumb({
   );
 }
 
-/** Pratinjau slide — bila `design` dipilih, kartu mengikuti warna & font desainnya. */
+/** Pratinjau slide bila `design` dipilih, kartu mengikuti warna & font desainnya. */
 function SlidePreview({ markdown, design }: { markdown: string; design?: DesignSpec | null }) {
   const slides = parseSlides(markdown);
   if (slides.length === 0) {

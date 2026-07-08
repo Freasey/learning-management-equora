@@ -435,7 +435,7 @@ function demoQuestions(topic: string, mcCount: number, essayCount: number): Draf
 }
 
 /**
- * Minta Gemini menyusun draf soal. TIDAK menyimpan apa pun — hasil dikembalikan
+ * Minta Gemini menyusun draf soal. TIDAK menyimpan apa pun hasil dikembalikan
  * ke form agar guru memeriksa & menyunting dulu. Bahan referensi opsional:
  * teks tempel dan/atau berkas (PDF/DOCX/gambar/teks, dibaca via fileToPart).
  */
@@ -452,10 +452,10 @@ export async function generateQuestionsAi(formData: FormData): Promise<{
   const sourceText = String(formData.get("sourceText") ?? "").trim();
   const file = formData.get("sourceFile");
   const hasFile = file instanceof File && file.size > 0;
-  // Tanpa bahan referensi, AI mengarang dari pengetahuannya — butuh topik sebagai pijakan.
+  // Tanpa bahan referensi, AI mengarang dari pengetahuannya butuh topik sebagai pijakan.
   const fromKnowledge = !sourceText && !hasFile;
   if (fromKnowledge && !topic) {
-    return { error: "Isi Topik dulu — atau unggah bahan referensi." };
+    return { error: "Isi Topik dulu atau unggah bahan referensi." };
   }
 
   const count = Math.min(MAX_AI_QUESTIONS, Math.max(1, Math.trunc(Number(formData.get("count")) || 5)));
@@ -495,14 +495,14 @@ export async function generateQuestionsAi(formData: FormData): Promise<{
 
       const instruction = [
         fromKnowledge
-          ? "Kamu asisten guru. TIDAK ada bahan referensi — susun soal dari pengetahuanmu sendiri. Berpegang pada materi standar kurikulum sekolah di Indonesia untuk jenjang yang diminta, dan JANGAN memakai fakta, angka, atau nama yang tidak kamu yakini kebenarannya."
-          : "Kamu asisten guru. Susun soal BERDASARKAN BAHAN REFERENSI yang diberikan — jangan keluar dari cakupan bahan itu.",
+          ? "Kamu asisten guru. TIDAK ada bahan referensi susun soal dari pengetahuanmu sendiri. Berpegang pada materi standar kurikulum sekolah di Indonesia untuk jenjang yang diminta, dan JANGAN memakai fakta, angka, atau nama yang tidak kamu yakini kebenarannya."
+          : "Kamu asisten guru. Susun soal BERDASARKAN BAHAN REFERENSI yang diberikan jangan keluar dari cakupan bahan itu.",
         `Mata pelajaran: ${subj?.name ?? "umum"}${topic ? `. Topik: ${topic}` : ""}.`,
         `Sasaran jenjang: ${level}. Sesuaikan kedalaman & bahasa untuk jenjang itu.`,
         `Tingkat kesulitan: ${difficulty}.`,
         `Buat TEPAT ${composition}${mcCount > 0 && essayCount > 0 ? " (pilihan ganda dulu, esai di akhir)" : ""}.`,
         "",
-        "FORMAT WAJIB: balas HANYA dengan JSON array valid — tanpa penjelasan, tanpa markdown, tanpa pagar kode.",
+        "FORMAT WAJIB: balas HANYA dengan JSON array valid tanpa penjelasan, tanpa markdown, tanpa pagar kode.",
         `Elemen pilihan ganda: {"type":"mc","text":"...","options":["...","...","...","..."],"correctIndex":0,"points":1}`,
         `Elemen esai: {"type":"essay","text":"...","points":5}`,
         "Aturan:",
@@ -526,7 +526,7 @@ export async function generateQuestionsAi(formData: FormData): Promise<{
       if (!out) return { error: "AI tidak mengembalikan hasil. Coba lagi." };
       const items = parseAiQuestions(out).slice(0, MAX_AI_QUESTIONS);
       if (items.length === 0) {
-        return { error: "Hasil AI tidak bisa dibaca. Coba lagi — atau perjelas topiknya." };
+        return { error: "Hasil AI tidak bisa dibaca. Coba lagi atau perjelas topiknya." };
       }
       await recordAiUsage(schoolId, teacherId, "quiz.generate");
       return { items, fromKnowledge };
@@ -562,7 +562,7 @@ export async function saveGeneratedQuestions(
     const q = sanitizeDraft(raw[i]);
     if (!q) {
       return {
-        error: `Soal #${i + 1} belum lengkap — teks minimal 2 karakter; pilihan ganda butuh ≥2 opsi terisi dan jawaban benar yang ditandai.`,
+        error: `Soal #${i + 1} belum lengkap teks minimal 2 karakter; pilihan ganda butuh ≥2 opsi terisi dan jawaban benar yang ditandai.`,
       };
     }
     items.push(q);

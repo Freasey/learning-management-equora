@@ -18,7 +18,7 @@ export default async function ChatPage() {
     <div>
       <PageHeader
         title="Obrolan Kelas"
-        description="Group chat per Kelas & Mata Pelajaran — anggotanya guru pengampu + siswa kelas tersebut."
+        description="Group chat per Kelas & Mata Pelajaran anggotanya guru pengampu + siswa kelas tersebut."
       />
       <ChatClient groups={groups} meId={u.id} variant="teacher" />
     </div>

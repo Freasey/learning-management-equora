@@ -11,14 +11,14 @@ import type { ReceivedDataMessage } from "@livekit/components-core";
 import { MessageSquareText, Send } from "lucide-react";
 
 /**
- * Bicara Lewat Teks — fitur aksesibilitas siswa tunawicara
+ * Bicara Lewat Teks fitur aksesibilitas siswa tunawicara
  * (lihat `lib/accessibility.ts`, kunci "wicara").
  *
  * Cara kerja (tanpa server & tanpa kuota, kembaran MeetCaptions):
  * 1. Siswa mengetik kalimat / menekan frasa cepat → teks dikirim ke semua
  *    peserta lewat kanal data LiveKit topik "speak".
  * 2. Perangkat TIAP penerima membacakan teks itu dengan suara browser
- *    (speechSynthesis) DAN menampilkannya sebagai gelembung teks — jadi
+ *    (speechSynthesis) DAN menampilkannya sebagai gelembung teks jadi
  *    peserta tunarungu pun tetap bisa membacanya.
  * 3. Komponen ini selalu terpasang untuk semua peserta (guru & siswa)
  *    sebagai penerima; tombol "Bicara" hanya membuka panel pengetiknya.
@@ -69,7 +69,7 @@ export function MeetSpeak({ defaultOpen = false }: { defaultOpen?: boolean }) {
     };
   }, []);
 
-  /* Bacakan tanpa membatalkan antrean — pesan beruntun dibaca bergiliran. */
+  /* Bacakan tanpa membatalkan antrean pesan beruntun dibaca bergiliran. */
   const speakAloud = useCallback((name: string, text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     const u = new SpeechSynthesisUtterance(`${name} berkata: ${text}`);

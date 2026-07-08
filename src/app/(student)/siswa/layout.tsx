@@ -35,7 +35,7 @@ export default async function StudentLayout({
   const disabilities = sanitizeDisabilities(u?.disabilities);
   // Pembaca suara otomatis aktif untuk siswa berkebutuhan "netra".
   const ttsOn = disabilities.includes("netra");
-  // Mode Warna: timpa token warna kid via CSS variable — hanya berlaku
+  // Mode Warna: timpa token warna kid via CSS variable hanya berlaku
   // selama kebutuhan "buta-warna" masih dipilih.
   const colorMode = disabilities.includes("buta-warna")
     ? getColorVisionMode(sanitizeColorVision(u?.colorVision) ?? "")

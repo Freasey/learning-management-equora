@@ -78,7 +78,7 @@ export const DISABILITY_GUIDES: DisabilityGuide[] = [
     features: [
       {
         title: "Teks berjalan saat Meet",
-        desc: "Ucapan guru dan teman muncul sebagai teks (caption) di layar saat kelas online — otomatis menyala saat kamu memilih kebutuhan ini.",
+        desc: "Ucapan guru dan teman muncul sebagai teks (caption) di layar saat kelas online otomatis menyala saat kamu memilih kebutuhan ini.",
         status: "aktif",
       },
     ],
@@ -92,7 +92,7 @@ export const DISABILITY_GUIDES: DisabilityGuide[] = [
     features: [
       {
         title: "Ketik lalu disuarakan",
-        desc: "Tulis kalimatmu di Kelas Online lewat tombol Bicara — semua peserta mendengarnya dibacakan dengan suara, seperti kamu ikut berbicara.",
+        desc: "Tulis kalimatmu di Kelas Online lewat tombol Bicara semua peserta mendengarnya dibacakan dengan suara, seperti kamu ikut berbicara.",
         status: "aktif",
       },
       {
@@ -112,7 +112,7 @@ export const DISABILITY_GUIDES: DisabilityGuide[] = [
     features: [
       {
         title: "Mode Warna",
-        desc: "Pilih warna mana yang sulit kamu bedakan di Pengaturan — seluruh warna aplikasi langsung menyesuaikan untukmu.",
+        desc: "Pilih warna mana yang sulit kamu bedakan di Pengaturan seluruh warna aplikasi langsung menyesuaikan untukmu.",
         status: "aktif",
       },
       {
@@ -135,7 +135,7 @@ export const DISABILITY_GUIDES: DisabilityGuide[] = [
  *   biru bagi mereka, jadi digeser ke ungu-kemerahan.
  * - biru-kuning (tritanopia): biru↔hijau dan kuning↔ungu membingungkan,
  *   jadi biru & ungu digelapkan agar terpisah jauh secara terang-gelap.
- * - mono (monokromasi): rona tak membantu sama sekali — semua aksen jadi
+ * - mono (monokromasi): rona tak membantu sama sekali semua aksen jadi
  *   skala abu gelap berkontras tinggi; makna dibawa ikon & tulisan.
  *
  * Nilai palette adalah CSS variable yang menimpa token @theme lewat inline
@@ -146,7 +146,7 @@ export type ColorVisionKey = "merah-hijau" | "biru-kuning" | "mono";
 
 export type ColorVisionMode = {
   key: ColorVisionKey;
-  /** Bahasa anak — apa yang siswa rasakan. */
+  /** Bahasa anak apa yang siswa rasakan. */
   label: string;
   /** Istilah formal (untuk konteks orang tua/guru). */
   formal: string;

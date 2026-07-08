@@ -25,7 +25,7 @@ export type ChatGroup = {
   id: string; // = classSubjects.id
   className: string;
   subjectName: string;
-  label: string; // "VII-A — Fisika"
+  label: string; // "VII-A Fisika"
   unread: number;
 };
 
@@ -110,7 +110,7 @@ export async function getUserGroups(
       id: r.id,
       className: r.className,
       subjectName: r.subjectName,
-      label: `${r.className} — ${r.subjectName}`,
+      label: `${r.className} ${r.subjectName}`,
       unread: 0,
     }));
 

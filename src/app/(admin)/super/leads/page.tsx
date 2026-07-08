@@ -74,7 +74,7 @@ export default async function LeadsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 font-medium text-ink">{r.name}</td>
-                  <td className="px-4 py-3 text-ink">{r.schoolName ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{r.schoolName ?? " "}</td>
                   <td className="px-4 py-3">
                     <div className="text-ink">{r.email}</div>
                     {r.phone && (
@@ -82,13 +82,13 @@ export default async function LeadsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 capitalize text-ink">
-                    {r.planKey ?? "—"}
+                    {r.planKey ?? " "}
                   </td>
                   <td className="max-w-xs px-4 py-3 text-muted">
                     {r.message ? (
                       <span className="line-clamp-2">{r.message}</span>
                     ) : (
-                      "—"
+                      " "
                     )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-xs text-muted">

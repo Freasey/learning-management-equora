@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { withTenant } from "@/db";
 import { isGroupMemberInTx } from "@/lib/chat";
 
-// Token realtime untuk Obrolan (LiveKit data channel — TANPA audio/video).
+// Token realtime untuk Obrolan (LiveKit data channel TANPA audio/video).
 // Setiap grup (= classSubjects.id) memetakan ke satu room `chat__<groupId>`.
 // Hanya anggota grup yang dapat token. Bila LiveKit belum dikonfigurasi,
 // balas 204 → klien jalan mode non-realtime (pesan tetap persist & optimistik).
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;
   if (!apiKey || !apiSecret) {
-    // Realtime tidak tersedia — bukan error fatal.
+    // Realtime tidak tersedia bukan error fatal.
     return new NextResponse(null, { status: 204 });
   }
 

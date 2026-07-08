@@ -9,7 +9,7 @@ import { PageHero } from "@/components/site/page-hero";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Harga — Equora",
+  title: "Harga Equora",
   description:
     "Pilih paket sesuai skala sekolah. Semua fitur tersedia di setiap paket; yang membedakan kuota akun, penyimpanan, dan AI.",
 };
@@ -144,7 +144,7 @@ export default async function HargaPage() {
             Masih ragu paket mana yang cocok?
           </h2>
           <p className="max-w-lg text-muted">
-            Jadwalkan demo gratis—kami bantu pilihkan paket sesuai jumlah siswa
+            Jadwalkan demo gratis kami bantu pilihkan paket sesuai jumlah siswa
             dan kebutuhan sekolah Anda.
           </p>
           <Button href="/demo" variant="accent" size="lg">

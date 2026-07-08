@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 /**
  * Pembaca suara (Teks-ke-Suara) untuk siswa tunanetra.
  *
- * Memakai Web Speech API bawaan browser (speechSynthesis) — gratis, tanpa
+ * Memakai Web Speech API bawaan browser (speechSynthesis) gratis, tanpa
  * layanan luar, tanpa kuota. Dipasang sekali di layout siswa dan hanya
  * dirender bila siswa memilih kebutuhan "netra" di Pengaturan.
  *

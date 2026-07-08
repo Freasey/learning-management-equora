@@ -11,7 +11,7 @@ function clamp(planValue: number | null, cap: number): number {
  * Ambil paket aktif sebuah sekolah.
  *
  * Untuk sekolah demo (DEMO01) kuota AI/storage/akun ditimpa dengan
- * DEMO_LIMITS — fitur tetap boleh dicoba, tapi dibatasi agar sandbox publik
+ * DEMO_LIMITS fitur tetap boleh dicoba, tapi dibatasi agar sandbox publik
  * tidak jadi celah biaya/penyalahgunaan.
  */
 export async function getSchoolPlan(schoolId: string) {
@@ -41,7 +41,7 @@ export async function getSchoolPlan(schoolId: string) {
 }
 
 /**
- * Jumlah pengguna sebuah workspace dengan peran tertentu — sadar-membership.
+ * Jumlah pengguna sebuah workspace dengan peran tertentu sadar-membership.
  * Menghitung gabungan (distinct per user):
  *  - akun home: users.schoolId = workspace & users.role = role, dan
  *  - anggota via memberships aktif yang punya `role` di daftar perannya

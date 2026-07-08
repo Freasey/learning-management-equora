@@ -162,7 +162,7 @@ export default async function PengaturanSiswaPage() {
                         Mode Warna
                       </div>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        Pilih warna yang sulit kamu bedakan — warna aplikasi
+                        Pilih warna yang sulit kamu bedakan warna aplikasi
                         langsung menyesuaikan untukmu.
                       </p>
                       <div

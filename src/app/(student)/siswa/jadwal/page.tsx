@@ -62,7 +62,7 @@ export default async function JadwalSiswaPage() {
                   {byDay.get(d)!.map((s, i) => (
                     <li key={i} className="rounded-2xl bg-cream px-3 py-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-700">{s.subjectName ?? "—"}</span>
+                        <span className="font-bold text-slate-700">{s.subjectName ?? " "}</span>
                         <span className="text-xs font-semibold text-slate-400">{s.room ?? ""}</span>
                       </div>
                       <div className="mt-0.5 text-sm text-slate-500">

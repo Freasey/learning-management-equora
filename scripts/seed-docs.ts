@@ -33,8 +33,8 @@ const articles: Seed[] = [
     body: `Equora adalah platform manajemen sekolah & pembelajaran. Satu tempat untuk mengelola kelas, mata pelajaran, jadwal, materi, kuis/ujian, dan nilai.
 
 ## Untuk siapa?
-- **Sekolah** — admin menyiapkan struktur akademik, lalu guru & siswa memakainya.
-- **Guru mandiri** — tutor/bimbel yang ingin punya kelas sendiri tanpa terikat sekolah.
+- **Sekolah** admin menyiapkan struktur akademik, lalu guru & siswa memakainya.
+- **Guru mandiri** tutor/bimbel yang ingin punya kelas sendiri tanpa terikat sekolah.
 
 ## Tiga area utama
 - **Admin Sekolah** menyiapkan & mengelola data sekolah.
@@ -50,9 +50,9 @@ const articles: Seed[] = [
     icon: "Rocket",
     body: `Ada tiga jalur masuk, sesuaikan dengan kebutuhan Anda.
 
-1. **Daftarkan sekolah** lewat halaman *Daftar* — cocok untuk admin/yayasan. Anda memilih jenjang & paket, lalu langsung mengelola sekolah.
+1. **Daftarkan sekolah** lewat halaman *Daftar* cocok untuk admin/yayasan. Anda memilih jenjang & paket, lalu langsung mengelola sekolah.
 2. **Gabung ke sekolah** lewat halaman *Gabung* memakai **kode sekolah** dari admin. Akun aktif setelah disetujui.
-3. **Buat kelas pribadi** lewat *Daftar Guru Mandiri* — untuk les/bimbel, tanpa sekolah. Gratis.
+3. **Buat kelas pribadi** lewat *Daftar Guru Mandiri* untuk les/bimbel, tanpa sekolah. Gratis.
 
 Guru yang mengajar di sekolah **sekaligus** punya kelas pribadi bisa memiliki keduanya dan berpindah lewat **pemilih workspace** di pojok kanan atas.`,
   },
@@ -65,8 +65,8 @@ Guru yang mengajar di sekolah **sekaligus** punya kelas pribadi bisa memiliki ke
     icon: "Building2",
     body: `Equora memisahkan **akun** dari **workspace** (ruang kerja). Satu akun bisa menjadi anggota beberapa workspace sekaligus:
 
-- Workspace **Sekolah** — tempat Anda diundang sebagai guru.
-- Workspace **Pribadi** — kelas les/bimbel milik Anda sendiri.
+- Workspace **Sekolah** tempat Anda diundang sebagai guru.
+- Workspace **Pribadi** kelas les/bimbel milik Anda sendiri.
 
 Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** di header; semua menu (jadwal, materi, kuis, nilai) otomatis mengikuti workspace yang aktif.`,
   },
@@ -127,7 +127,7 @@ Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** d
     body: `Tentukan mata pelajaran yang dipakai sekolah.
 
 ## Cara pakai
-- **Pilih dari katalog** kurikulum sesuai jenjang (centang yang dipakai) — hemat dan terstandar.
+- **Pilih dari katalog** kurikulum sesuai jenjang (centang yang dipakai) hemat dan terstandar.
 - **Tambah kustom** untuk muatan lokal.
 - Atur **kode** (boleh dikosongkan → dibuat otomatis dari nama) dan **KKM** tiap mapel.`,
   },
@@ -143,7 +143,7 @@ Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** d
 
 ## Cara pakai
 - Tambah slot: pilih **kelas, hari, jam, mata pelajaran, guru, dan ruang**.
-- Penugasan guru di sini menentukan **"apa yang diajar guru"** — dari jadwal inilah guru melihat kelas & mapelnya, lalu bisa membuat materi/kuis/nilai.
+- Penugasan guru di sini menentukan **"apa yang diajar guru"** dari jadwal inilah guru melihat kelas & mapelnya, lalu bisa membuat materi/kuis/nilai.
 - Tanpa jadwal, area Guru akan tampil kosong.`,
   },
   {
@@ -188,7 +188,7 @@ Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** d
 
 ## Cara pakai
 - **Pendaftar baru** (lewat kode sekolah) muncul di tabel utama. Setujui untuk mengaktifkan akun; untuk siswa sekalian pilih kelas.
-- **Permintaan guru lintas-sekolah** — guru yang sudah punya akun (mis. pemilik kelas pribadi) yang ingin mengajar di sekolah Anda. Menyetujui hanya menambah akses, tidak membuat akun baru.
+- **Permintaan guru lintas-sekolah** guru yang sudah punya akun (mis. pemilik kelas pribadi) yang ingin mengajar di sekolah Anda. Menyetujui hanya menambah akses, tidak membuat akun baru.
 - Persetujuan memakai kuota paket; bila penuh, lakukan upgrade dulu.`,
   },
   {
@@ -276,7 +276,7 @@ Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** d
 
 ## Cara pakai
 1. Buat kuis/ujian, lalu tambah soal **pilihan ganda** (terkoreksi otomatis) atau **esai**.
-2. Bila ada minimal satu soal esai, nilai **tidak** terisi penuh otomatis — Anda perlu mengoreksi manual (sistem mengingatkan).
+2. Bila ada minimal satu soal esai, nilai **tidak** terisi penuh otomatis Anda perlu mengoreksi manual (sistem mengingatkan).
 3. **Terbitkan** agar siswa bisa mengerjakan. Setelah siswa mengumpulkan, koreksi esai dari daftar "Pengerjaan siswa".
 4. Kuis yang dihitung ke nilai otomatis membuat item nilai tertaut di **Nilai**.`,
   },

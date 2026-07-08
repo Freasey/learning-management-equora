@@ -1,5 +1,5 @@
 /**
- * Seed DATA DEMO: satu sekolah lengkap (kode DEMO01) — 1 admin, 5 guru,
+ * Seed DATA DEMO: satu sekolah lengkap (kode DEMO01) 1 admin, 5 guru,
  * 10 siswa, plus tahun ajaran, kelas, mapel & penempatan.
  *
  * Logika reset kini tinggal di `src/lib/demo.ts` (dipakai bersama oleh endpoint
@@ -45,7 +45,7 @@ function renderCredentials(): string {
     return `| Siswa ${i + 1} | ${name} | \`${nis}\` | \`${DEMO_PASSWORD}\` | ${i < 5 ? "VII-A" : "VII-B"} |`;
   }).join("\n");
 
-  return `# Akun Demo — ${DEMO_SCHOOL.name}
+  return `# Akun Demo ${DEMO_SCHOOL.name}
 
 > Dibuat otomatis oleh \`npm run seed:demo\`. **Jangan dipakai di produksi.**
 > Semua akun memakai kata sandi yang sama: \`${DEMO_PASSWORD}\`
@@ -54,7 +54,7 @@ function renderCredentials(): string {
 - **Kode sekolah:** \`${DEMO_SCHOOL.code}\`
 - **Tahun ajaran aktif:** ${DEMO_ACADEMIC_YEAR}
 
-## 1. Admin Sekolah (login via \`/masuk\` — pakai email)
+## 1. Admin Sekolah (login via \`/masuk\` pakai email)
 
 | Peran | Nama | Email | Kata sandi |
 | --- | --- | --- | --- |
@@ -62,7 +62,7 @@ function renderCredentials(): string {
 
 → Setelah login diarahkan ke **/admin**.
 
-## 2. Guru (login via \`/masuk\` — pakai email)
+## 2. Guru (login via \`/masuk\` pakai email)
 
 | # | Nama | Email | Kata sandi |
 | --- | --- | --- | --- |
@@ -70,7 +70,7 @@ ${teacherRows}
 
 → Setelah login diarahkan ke **/guru**.
 
-## 3. Siswa (login via \`/masuk-siswa\` — pakai **kode sekolah** + NIS/username)
+## 3. Siswa (login via \`/masuk-siswa\` pakai **kode sekolah** + NIS/username)
 
 > Saat masuk, siswa wajib mengisi **kode sekolah** (\`${DEMO_SCHOOL.code}\`) lebih dulu, lalu NIS dan kata sandi.
 

@@ -22,7 +22,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Equora — Sistem Manajemen Sekolah",
+  title: "Equora Sistem Manajemen Sekolah",
   description:
     "Platform manajemen sekolah yang tenang, kredibel, dan inklusif untuk siswa, guru, dan admin sekolah.",
 };

@@ -96,7 +96,7 @@ export default async function SiswaHome() {
             {todaySchedule.slice(0, 4).map((s, i) => (
               <li key={i} className="flex items-center gap-3 rounded-xl bg-cream px-3 py-2">
                 <span className="text-sm font-bold text-coral">{s.startTime}</span>
-                <span className="text-sm font-bold text-slate-700">{s.subjectName ?? "—"}</span>
+                <span className="text-sm font-bold text-slate-700">{s.subjectName ?? " "}</span>
               </li>
             ))}
           </ul>

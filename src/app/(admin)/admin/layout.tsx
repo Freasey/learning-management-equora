@@ -14,7 +14,7 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-screen flex-col bg-paper">
       <SchoolTopNav
-        name={session?.user?.name ?? "—"}
+        name={session?.user?.name ?? " "}
         email={session?.user?.email}
         roles={session?.user?.roles ?? []}
         unread={unread}

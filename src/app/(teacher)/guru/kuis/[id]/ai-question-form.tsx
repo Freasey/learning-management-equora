@@ -12,7 +12,7 @@ import {
 } from "../actions";
 
 /**
- * Panel "Buat Soal dengan AI" — jalur cepat untuk guru yang tidak sempat
+ * Panel "Buat Soal dengan AI" jalur cepat untuk guru yang tidak sempat
  * menyusun soal manual: isi topik (atau unggah bahan referensi), AI menyusun
  * draf, guru memeriksa/menyunting, lalu simpan semua sekali klik.
  */
@@ -41,8 +41,8 @@ export function AiQuestionForm({
     undefined,
   );
 
-  // Setelah tersimpan, buang draf — daftar soal di atas ter-refresh dari server.
-  // (Penyesuaian state saat render, bukan useEffect — sesuai anjuran React.)
+  // Setelah tersimpan, buang draf daftar soal di atas ter-refresh dari server.
+  // (Penyesuaian state saat render, bukan useEffect sesuai anjuran React.)
   const [handledSave, setHandledSave] = useState<SaveGeneratedState>(undefined);
   if (saveState !== handledSave) {
     setHandledSave(saveState);
@@ -93,7 +93,7 @@ export function AiQuestionForm({
         <h2 className="font-display text-lg font-medium text-ink">Buat Soal dengan AI</h2>
       </div>
       <p className="mb-4 text-sm text-muted">
-        Tidak sempat menyusun soal? Cukup isi topik — atau unggah bahan referensi (PDF, DOCX,
+        Tidak sempat menyusun soal? Cukup isi topik atau unggah bahan referensi (PDF, DOCX,
         gambar, atau teks) agar soal mengikuti bahan Anda. Hasilnya berupa draf yang bisa Anda
         periksa dan sunting dulu; belum ada yang tersimpan sebelum menekan Simpan.
       </p>
@@ -154,7 +154,7 @@ export function AiQuestionForm({
 
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold text-ink">
-            Bahan referensi <span className="font-normal text-muted">(opsional — PDF, DOCX, gambar, atau teks; maks 15 MB)</span>
+            Bahan referensi <span className="font-normal text-muted">(opsional PDF, DOCX, gambar, atau teks; maks 15 MB)</span>
           </span>
           <input
             name="sourceFile"
@@ -201,11 +201,11 @@ export function AiQuestionForm({
             <h3 className="font-display text-base font-medium text-ink">
               Pratinjau {drafts.length} soal · {totalPoints} poin
             </h3>
-            <p className="text-xs text-muted">Periksa & sunting seperlunya — baru tersimpan setelah Anda menekan Simpan.</p>
+            <p className="text-xs text-muted">Periksa & sunting seperlunya baru tersimpan setelah Anda menekan Simpan.</p>
           </div>
           {fromKnowledge && (
             <p className="mb-3 rounded-md bg-accent/10 px-3 py-2 text-xs text-accent">
-              Soal disusun dari pengetahuan AI (tanpa bahan referensi) — mohon cek kebenaran isi
+              Soal disusun dari pengetahuan AI (tanpa bahan referensi) mohon cek kebenaran isi
               dan kunci jawabannya.
             </p>
           )}

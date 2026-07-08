@@ -3,7 +3,7 @@ import { Mail, Phone, MapPin } from "lucide-react";
 import { LeadForm } from "@/components/site/lead-form";
 
 export const metadata: Metadata = {
-  title: "Kontak — Equora",
+  title: "Kontak Equora",
   description: "Hubungi tim Equora. Kami siap membantu sekolah Anda.",
 };
 

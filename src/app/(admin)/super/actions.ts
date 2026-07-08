@@ -12,7 +12,7 @@ export async function doSignOut() {
 
 /**
  * Reset MANUAL sekolah demo (kode DEMO01) dari konsol Super Admin. Hanya
- * menyentuh sekolah demo — sekolah pelanggan lain tidak tersentuh.
+ * menyentuh sekolah demo sekolah pelanggan lain tidak tersentuh.
  * Mengembalikan waktu reset & jatuh tempo reset berikutnya (untuk hitung mundur).
  */
 export async function resetDemoNow(): Promise<{

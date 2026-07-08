@@ -50,7 +50,7 @@ export async function approveMember(formData: FormData) {
   if (member.email) {
     await sendEmail({
       to: member.email,
-      subject: "Pendaftaran Anda disetujui — Equora",
+      subject: "Pendaftaran Anda disetujui Equora",
       html: `<p>Halo ${member.name},</p><p>Akun Anda telah disetujui. Silakan masuk untuk mulai menggunakan Equora.</p>`,
     });
   }

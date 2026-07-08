@@ -11,7 +11,7 @@ import {
 
 /**
  * Login instan sebagai salah satu akun sekolah demo (halaman /demo).
- * signIn melempar sinyal redirect (NEXT_REDIRECT) saat sukses — dibiarkan
+ * signIn melempar sinyal redirect (NEXT_REDIRECT) saat sukses dibiarkan
  * naik agar Next mengarahkan ke /dashboard.
  */
 export async function loginAsDemo(role: DemoRole): Promise<string | undefined> {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/site/page-hero";
 
 export const metadata: Metadata = {
-  title: "Kebijakan Privasi — Equora",
+  title: "Kebijakan Privasi Equora",
   description: "Bagaimana Equora mengumpulkan, menggunakan, dan melindungi data.",
 };
 

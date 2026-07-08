@@ -13,7 +13,7 @@ import { DemoLoginButtons } from "./login-buttons";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Coba Demo — Equora",
+  title: "Coba Demo Equora",
   description:
     "Masuk ke sekolah demo Equora sekali klik. Tanpa daftar, tanpa kartu kredit.",
 };
@@ -37,7 +37,7 @@ export default async function DemoPage() {
         </h1>
         <p className="mt-4 text-lg text-muted">
           Pilih peran di bawah untuk langsung masuk ke{" "}
-          <strong className="text-ink">{DEMO_SCHOOL.name}</strong> — sekolah demo
+          <strong className="text-ink">{DEMO_SCHOOL.name}</strong> sekolah demo
           yang sudah berisi guru, siswa, kelas, dan mata pelajaran. Tanpa daftar,
           tanpa kartu kredit.
         </p>
@@ -46,7 +46,7 @@ export default async function DemoPage() {
       <div className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-line bg-sand/40 px-4 py-3 text-sm text-muted">
         <RotateCw className="h-4 w-4 shrink-0 text-teal-700" />
         <span>
-          Sekolah demo dipakai bersama & disegarkan tiap 6 jam —{" "}
+          Sekolah demo dipakai bersama & disegarkan tiap 6 jam{" "}
           <DemoCountdown targetIso={nextResetIso} />. Semua perubahan Anda akan
           direset.
         </span>

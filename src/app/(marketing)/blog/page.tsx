@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/site/page-hero";
 
 export const metadata: Metadata = {
-  title: "Blog — Equora",
+  title: "Blog Equora",
   description: "Tips manajemen sekolah, pendidikan inklusif, dan kabar produk.",
 };
 

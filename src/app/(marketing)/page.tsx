@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Equora — Sistem Manajemen Sekolah yang Tenang & Inklusif",
+  title: "Equora Sistem Manajemen Sekolah yang Tenang & Inklusif",
   description:
     "Kelola siswa, guru, kurikulum, kelas, dan penilaian dalam satu platform. Dilengkapi fitur inklusif untuk siswa disabilitas.",
 };
@@ -52,7 +52,7 @@ function Hero() {
             mengelola sekolah dengan kepala dingin.
           </h1>
           <p className="mt-5 max-w-md text-lg text-muted">
-            Satu platform untuk siswa, guru, dan admin sekolah — dari manajemen
+            Satu platform untuk siswa, guru, dan admin sekolah dari manajemen
             kelas hingga penilaian, lengkap dengan fitur inklusif untuk semua
             siswa.
           </p>
@@ -254,7 +254,7 @@ function Inclusive() {
           <Sparkles className="h-3.5 w-3.5" /> Pendidikan untuk semua
         </span>
         <h2 className="mt-5 max-w-2xl font-display text-3xl font-medium leading-tight md:text-4xl">
-          Sekolah inklusif bukan tambahan—{" "}
+          Sekolah inklusif bukan tambahan {" "}
           <span className="text-accent">tapi bawaan.</span>
         </h2>
         <p className="mt-4 max-w-xl text-paper/70">
@@ -399,7 +399,7 @@ function PricingTeaser() {
       <SectionHeading
         eyebrow="Harga"
         title="Bayar sesuai skala sekolah"
-        subtitle="Semua fitur tersedia di setiap paket—yang membedakan kuota akun, penyimpanan, dan AI."
+        subtitle="Semua fitur tersedia di setiap paket yang membedakan kuota akun, penyimpanan, dan AI."
       />
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tiers.map((t) => (

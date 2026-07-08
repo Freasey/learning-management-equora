@@ -133,7 +133,7 @@ export default async function PendaftaranPage() {
           </h2>
           <p className="mb-3 text-sm text-muted">
             Guru dengan akun yang sudah ada (mis. pemilik kelas pribadi) ingin
-            mengajar di sekolah ini. Menyetujui hanya menambahkan akses—tidak
+            mengajar di sekolah ini. Menyetujui hanya menambahkan akses tidak
             membuat akun baru.
           </p>
           <div className="overflow-hidden rounded-xl border border-line bg-paper">

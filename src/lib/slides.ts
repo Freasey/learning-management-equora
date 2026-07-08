@@ -10,7 +10,7 @@
  *   Paragraf bebas.
  *   - butir isi (hanya bila memang daftar)
  *   ```
- *   kode program / rumus matematis — tampil sebagai panel terpisah di slide
+ *   kode program / rumus matematis tampil sebagai panel terpisah di slide
  *   ```
  *   (Baris berawalan '>' dari format lama tetap dikenali tapi diabaikan.)
  */
@@ -66,7 +66,7 @@ export function parseSlides(markdown: string): ParsedSlide[] {
       const code: string[] = [];
       for (const raw of chunk.split("\n")) {
         const line = raw.trim();
-        // Blok kode/rumus: diapit baris ``` — indentasi asli dipertahankan.
+        // Blok kode/rumus: diapit baris ``` indentasi asli dipertahankan.
         if (line.startsWith("```")) {
           inCode = !inCode;
           continue;
@@ -84,7 +84,7 @@ export function parseSlides(markdown: string): ParsedSlide[] {
           continue;
         }
         if (line.startsWith(">")) {
-          // Format lama ("> Catatan: …") — diabaikan agar tak bocor jadi isi slide.
+          // Format lama ("> Catatan: …") diabaikan agar tak bocor jadi isi slide.
           continue;
         } else if (!title && line.startsWith("#")) {
           title = line.replace(/^#+\s*/, "");
@@ -112,7 +112,7 @@ export function parseSlides(markdown: string): ParsedSlide[] {
 /* ============================== DESAIN ============================== */
 
 /**
- * Font yang hampir pasti terpasang di Windows/Office — PPTX tidak bisa
+ * Font yang hampir pasti terpasang di Windows/Office PPTX tidak bisa
  * menyematkan font, jadi AI hanya boleh memilih dari daftar ini.
  */
 export const SAFE_FONTS = [
@@ -254,7 +254,7 @@ export function sanitizeDesign(raw: unknown): DesignSpec | null {
   };
 }
 
-/** Desain bawaan — dipakai saat mode demo (tanpa kunci AI) atau AI gagal. */
+/** Desain bawaan dipakai saat mode demo (tanpa kunci AI) atau AI gagal. */
 export const FALLBACK_DESIGNS: DesignSpec[] = [
   {
     name: "Scholarly Calm",

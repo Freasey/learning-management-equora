@@ -128,7 +128,7 @@ export default async function KuisDetailPage({
       {hasEssay && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 px-4 py-2.5 text-sm text-accent">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
-          Ada soal esai — nilai tidak terisi otomatis; Anda perlu mengoreksi manual.
+          Ada soal esai nilai tidak terisi otomatis; Anda perlu mengoreksi manual.
         </div>
       )}
 
@@ -207,7 +207,7 @@ export default async function KuisDetailPage({
               <tbody>
                 {subs.map((s) => (
                   <tr key={s.id} className="border-b border-line last:border-0">
-                    <td className="px-4 py-3 font-medium text-ink">{s.studentName ?? "—"}</td>
+                    <td className="px-4 py-3 font-medium text-ink">{s.studentName ?? " "}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase ${

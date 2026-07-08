@@ -77,7 +77,7 @@ export default async function KuisSiswaPage() {
                 <h2 className="mt-2 font-kid-display text-lg font-extrabold text-slate-800">
                   {a.title}
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">{a.subjectName ?? "—"}</p>
+                <p className="mt-1 text-sm text-slate-500">{a.subjectName ?? " "}</p>
                 <span className="mt-3 inline-block text-sm font-bold text-coral">
                   {at ? "Lihat hasil →" : "Kerjakan →"}
                 </span>

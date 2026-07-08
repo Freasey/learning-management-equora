@@ -1,4 +1,4 @@
-# Row-Level Security (RLS) — Isolasi Tenant (A1)
+# Row-Level Security (RLS) Isolasi Tenant (A1)
 
 Isolasi data antar-sekolah ditegakkan **di lapisan database** (Postgres RLS),
 bukan hanya di aplikasi. Ini jaring pengaman: meski ada bug query yang lupa
@@ -6,7 +6,7 @@ bukan hanya di aplikasi. Ini jaring pengaman: meski ada bug query yang lupa
 
 ## Cara kerja
 
-- **Driver:** `neon-serverless` (Pool/WebSocket) — mendukung transaksi
+- **Driver:** `neon-serverless` (Pool/WebSocket) mendukung transaksi
   interaktif yang dibutuhkan untuk `SET LOCAL app.current_school_id`. (Driver
   lama `neon-http` stateless tak bisa.) Lihat [src/db/index.ts](src/db/index.ts).
 - **Dua role:**
@@ -32,7 +32,7 @@ Default kosong = **nol risiko**: app berjalan persis seperti sebelumnya.
 ## Menyalakan enforcement
 
 1. Set `APP_DB_PASSWORD` (password apa saja) di `.env.local`.
-2. `npm run db:rls` — membuat role `app_tenant` + policy (idempoten).
+2. `npm run db:rls` membuat role `app_tenant` + policy (idempoten).
    Sudah otomatis dijalankan di akhir `npm run demo:reset`.
 3. Restart app. App konek sebagai `app_tenant`; isolasi aktif.
 
@@ -61,7 +61,7 @@ karena `db` dialihkan via ALS selama berada di dalam `withTenant`.
   admin: actions/kelas/mapel/jadwal/pengumuman/siswa/pengaturan/pendaftaran).
   Action yang hanya menyentuh tabel non-RLS (guru, langganan, sebagian
   siswa/pengaturan) sengaja tidak dibungkus.
-- ⏳ **Page loader read-only** — BELUM dibungkus. Sebelum enforcement
+- ⏳ **Page loader read-only** BELUM dibungkus. Sebelum enforcement
   dinyalakan, bungkus loader yang menyentuh tabel RLS (lewat tabel langsung
   ATAU helper) di area (admin)/admin, (teacher)/guru, (student)/siswa dengan pola yang sama:
 

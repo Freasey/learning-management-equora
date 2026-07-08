@@ -1,7 +1,7 @@
 /**
  * Seed pricing plans default (Starting/Basic/Pro/Custom).
  * Jalankan: npm run db:seed
- * Idempotent — re-run akan meng-update berdasarkan `key`.
+ * Idempotent re-run akan meng-update berdasarkan `key`.
  */
 import { db } from "./index";
 import { pricingPlans, curriculumSubjects } from "./schema";

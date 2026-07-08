@@ -48,7 +48,7 @@ export async function addClass(formData: FormData) {
 }
 
 /**
- * B4 — Jalur cepat guru independen: satu aksi menyiapkan semua yang
+ * B4 Jalur cepat guru independen: satu aksi menyiapkan semua yang
  * dibutuhkan untuk langsung mengajar (tahun ajaran → mapel → kelas →
  * pengampu + 1 slot jadwal yang menugaskan pemilik sebagai guru).
  * Setelah ini, getTeacherAssignments langsung mengenali pasangan kelas+mapel.
@@ -77,7 +77,7 @@ export async function createInstantClass(formData: FormData) {
         .returning();
     }
 
-    // 2) Mapel — pakai yang sudah ada (nama sama) atau buat baru.
+    // 2) Mapel pakai yang sudah ada (nama sama) atau buat baru.
     const [existingSubject] = await db
       .select({ id: subjects.id })
       .from(subjects)

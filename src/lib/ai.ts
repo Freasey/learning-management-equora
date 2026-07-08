@@ -31,7 +31,7 @@ function summarizeParts(parts: GeminiPart[]) {
 
 /**
  * Panggil Gemini dengan gabungan bagian teks + berkas inline (PDF/gambar).
- * Gemini membaca PDF & gambar secara native — tak perlu ekstraksi teks lokal.
+ * Gemini membaca PDF & gambar secara native tak perlu ekstraksi teks lokal.
  * Mengembalikan teks hasil, atau null bila belum dikonfigurasi / gagal.
  * Logging tebal (prefix [AI]) untuk membantu trace masalah kuota/format/safety.
  */
@@ -53,7 +53,7 @@ export async function generateFromParts(parts: GeminiPart[]): Promise<string | n
   });
 
   if (!key) {
-    console.warn("[AI] Kunci tidak ada — kembalikan null (mode demo di pemanggil).");
+    console.warn("[AI] Kunci tidak ada kembalikan null (mode demo di pemanggil).");
     return null;
   }
 
@@ -111,7 +111,7 @@ export async function generateFromParts(parts: GeminiPart[]): Promise<string | n
   const text = outParts.map((p) => p.text ?? "").join("").trim();
   console.log("[AI] output", { chars: text.length, preview: text.slice(0, 120) });
   if (!text) {
-    console.warn("[AI] Output kosong — data penuh:", JSON.stringify(data).slice(0, 2000));
+    console.warn("[AI] Output kosong data penuh:", JSON.stringify(data).slice(0, 2000));
   }
   return text || null;
 }

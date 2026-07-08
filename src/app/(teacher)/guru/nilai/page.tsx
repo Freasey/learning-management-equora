@@ -37,10 +37,10 @@ export default async function NilaiPage({
         <label className="block flex-1">
           <span className="mb-1.5 block text-xs font-semibold text-ink">Kelas &amp; Mata Pelajaran</span>
           <select name="pair" defaultValue={pair ?? ""} className={inputClass}>
-            <option value="">— Pilih —</option>
+            <option value="">Pilih</option>
             {assignments.map((a) => (
               <option key={`${a.classId}:${a.subjectId}`} value={`${a.classId}:${a.subjectId}`}>
-                {a.className} — {a.subjectName}
+                {a.className} {a.subjectName}
               </option>
             ))}
           </select>
@@ -207,12 +207,12 @@ async function GradeBook({
       {activeItem && (
         <section className="rounded-xl border border-line bg-paper p-5">
           <h2 className="mb-1 font-display text-lg font-medium text-ink">
-            Isi nilai — {activeItem.title}{" "}
+            Isi nilai {activeItem.title}{" "}
             <span className="font-mono text-xs text-muted">(maks {activeItem.maxScore})</span>
           </h2>
           {activeItem.source === "assessment" && (
             <p className="mb-4 text-xs text-muted">
-              Kolom <strong className="text-teal-700">otomatis</strong> dari kuis — terisi
+              Kolom <strong className="text-teal-700">otomatis</strong> dari kuis terisi
               sendiri saat siswa mengerjakan; nilai di sini bisa Anda override.
             </p>
           )}
@@ -271,7 +271,7 @@ async function GradeBook({
                 return (
                   <tr key={st.id} className="border-b border-line last:border-0">
                     <td className="px-4 py-3 text-ink">{st.name}</td>
-                    <td className="px-4 py-3 font-mono text-ink">{avg == null ? "—" : avg}</td>
+                    <td className="px-4 py-3 font-mono text-ink">{avg == null ? " " : avg}</td>
                     <td className="px-4 py-3">
                       {avg == null ? (
                         <span className="text-xs text-muted">Belum dinilai</span>

@@ -1,4 +1,4 @@
-# Akun Demo — SMP Demo Equora
+# Akun Demo SMP Demo Equora
 
 > Dibuat otomatis oleh `npm run seed:demo`. **Jangan dipakai di produksi.**
 > Semua akun memakai kata sandi yang sama: `demo12345`
@@ -7,7 +7,7 @@
 - **Kode sekolah:** `DEMO01`
 - **Tahun ajaran aktif:** 2025/2026 Ganjil
 
-## 1. Admin Sekolah (login via `/masuk` — pakai email)
+## 1. Admin Sekolah (login via `/masuk` pakai email)
 
 | Peran | Nama | Email | Kata sandi |
 | --- | --- | --- | --- |
@@ -15,7 +15,7 @@
 
 → Setelah login diarahkan ke **/admin**.
 
-## 2. Guru (login via `/masuk` — pakai email)
+## 2. Guru (login via `/masuk` pakai email)
 
 | # | Nama | Email | Kata sandi |
 | --- | --- | --- | --- |
@@ -27,7 +27,7 @@
 
 → Setelah login diarahkan ke **/guru**.
 
-## 3. Siswa (login via `/masuk-siswa` — pakai **kode sekolah** + NIS/username)
+## 3. Siswa (login via `/masuk-siswa` pakai **kode sekolah** + NIS/username)
 
 > Saat masuk, siswa wajib mengisi **kode sekolah** (`DEMO01`) lebih dulu, lalu NIS dan kata sandi.
 

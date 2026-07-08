@@ -4,7 +4,7 @@ import { PageHero } from "@/components/site/page-hero";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Tentang Kami — Equora",
+  title: "Tentang Kami Equora",
   description:
     "Equora membangun sistem manajemen sekolah yang tenang, kredibel, dan inklusif untuk pendidikan Indonesia.",
 };
@@ -44,7 +44,7 @@ export default function TentangPage() {
       <PageHero
         eyebrow="Tentang Kami"
         title="Pendidikan yang tenang untuk semua"
-        subtitle="Kami percaya administrasi sekolah seharusnya tidak rumit—dan setiap siswa berhak atas akses yang setara."
+        subtitle="Kami percaya administrasi sekolah seharusnya tidak rumit dan setiap siswa berhak atas akses yang setara."
       />
 
       <section className="mx-auto max-w-3xl px-5 py-16">
@@ -57,7 +57,7 @@ export default function TentangPage() {
           </p>
           <p>
             Kami membangun satu platform yang menyatukan siswa, guru, dan admin
-            sekolah—dari manajemen kelas, kurikulum, hingga penilaian—dengan
+            sekolah dari manajemen kelas, kurikulum, hingga penilaian dengan
             fitur inklusif sebagai bagian inti, bukan tambahan.
           </p>
         </div>

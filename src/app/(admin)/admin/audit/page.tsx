@@ -65,7 +65,7 @@ export default async function AuditPage() {
                     {ACTION_LABEL[r.action] ?? r.action}
                   </td>
                   <td className="px-4 py-3 text-ink">
-                    {r.actorName ?? r.actorLabel ?? "—"}
+                    {r.actorName ?? r.actorLabel ?? " "}
                   </td>
                 </tr>
               ))

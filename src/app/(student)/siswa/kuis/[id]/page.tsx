@@ -122,7 +122,7 @@ async function AttemptForm({ assessmentId }: { assessmentId: string }) {
               />
               {storageOn && (
                 <label className="block text-sm text-slate-500">
-                  Lampiran (opsional — foto/PDF):
+                  Lampiran (opsional foto/PDF):
                   <input
                     name={`essayfile_${q.id}`}
                     type="file"

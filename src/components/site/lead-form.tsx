@@ -60,7 +60,7 @@ export function LeadForm({ type, plans, submitLabel }: Props) {
             defaultValue=""
             className="w-full rounded-md border border-line bg-paper px-3 py-2.5 text-sm text-ink focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/15"
           >
-            <option value="">— Belum yakin —</option>
+            <option value="">Belum yakin</option>
             {plans.map((p) => (
               <option key={p.key} value={p.key}>
                 {p.name}

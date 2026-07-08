@@ -1,7 +1,7 @@
 /**
- * A1 — Terapkan Row-Level Security (RLS) untuk isolasi tenant.
+ * A1 Terapkan Row-Level Security (RLS) untuk isolasi tenant.
  *
- * Dijalankan sebagai role OWNER (DATABASE_URL). Idempoten — aman diulang.
+ * Dijalankan sebagai role OWNER (DATABASE_URL). Idempoten aman diulang.
  * Karena reset-db.mts MENGHAPUS folder ./drizzle tiap reset, policy RLS TIDAK
  * disimpan sebagai migrasi statis melainkan diturunkan ulang oleh script ini.
  *

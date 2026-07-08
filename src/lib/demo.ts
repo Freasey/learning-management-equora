@@ -69,7 +69,7 @@ export const DEMO_CLASSES = [
 export const DEMO_STUDENT_NIS = "2026001";
 
 /**
- * Batas kuota KHUSUS sekolah demo — "boleh dipakai, tapi ada batasnya".
+ * Batas kuota KHUSUS sekolah demo "boleh dipakai, tapi ada batasnya".
  * Fitur tetap bisa dicoba (AI, unggah, tambah akun) tapi dijepit kecil agar
  * sandbox publik tidak jadi celah biaya/penyalahgunaan. Diterapkan lewat
  * getSchoolPlan() sehingga menimpa kuota paket asli (mis. "pro") untuk DEMO01.
@@ -84,7 +84,7 @@ export const DEMO_LIMITS = {
 
 /**
  * Kredensial login instan per peran (halaman /demo). schoolCode hanya diisi
- * untuk siswa — jalur guru/admin login pakai email.
+ * untuk siswa jalur guru/admin login pakai email.
  */
 export const DEMO_LOGINS = {
   admin: { identifier: DEMO_ADMIN_EMAIL, schoolCode: "" },
@@ -112,7 +112,7 @@ export type DemoResetSummary = {
  * Hapus-lalu-buat-ulang HANYA sekolah demo (kode DEMO01). CASCADE menghapus
  * seluruh user/kelas/mapel terkait; sekolah lain tidak tersentuh.
  *
- * Menggunakan koneksi OWNER (DATABASE_URL apa adanya) agar mem-bypass RLS —
+ * Menggunakan koneksi OWNER (DATABASE_URL apa adanya) agar mem-bypass RLS
  * operasi ini lintas-tenant (menyentuh tabel `schools`), sama seperti seed.
  */
 export async function resetDemoSchool(): Promise<DemoResetSummary> {
@@ -178,7 +178,7 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
       status: "active",
     });
 
-    // 4) Guru (bulk) — guru ke-i mengampu mapel ke-i.
+    // 4) Guru (bulk) guru ke-i mengampu mapel ke-i.
     const teacherRows = await db
       .insert(users)
       .values(
@@ -209,7 +209,7 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
       .returning({ id: subjects.id });
     const subjectIds = subjectRows.map((r) => r.id);
 
-    // 6) Kelas (bulk) — wali kelas = guru ke-i
+    // 6) Kelas (bulk) wali kelas = guru ke-i
     const classRows = await db
       .insert(classes)
       .values(
@@ -421,7 +421,7 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
       const N = 5;
       const [a] = await db
         .insert(assessments)
-        .values({ schoolId, academicYearId, teacherId, subjectId, classId, title, type: "quiz", description: `Kuis latihan ${topic} — silakan coba!`, durationMin: 20, countToGrade: true, status: "published" })
+        .values({ schoolId, academicYearId, teacherId, subjectId, classId, title, type: "quiz", description: `Kuis latihan ${topic} silakan coba!`, durationMin: 20, countToGrade: true, status: "published" })
         .returning({ id: assessments.id });
       await db.insert(questions).values(
         Array.from({ length: N }, (_, i) => ({ schoolId, assessmentId: a.id, type: "mc", text: `Latihan ${i + 1} tentang ${topic}.`, options: OPTS, correctIndex: i % 4, points: POINTS, sortOrder: i })),
@@ -458,7 +458,7 @@ export async function resetDemoSchool(): Promise<DemoResetSummary> {
   }
 }
 
-// ── Reset "malas" (lazy) — tanpa penjadwal, ramah Vercel Hobby ─────────────
+// ── Reset "malas" (lazy) tanpa penjadwal, ramah Vercel Hobby ─────────────
 // Karena reset menghapus & membuat ulang sekolah demo, `schools.createdAt`
 // DEMO01 = waktu reset terakhir. Tak perlu kolom/tabel penanda tambahan.
 
@@ -486,7 +486,7 @@ const DEMO_RESET_LOCK_KEY = 4823917;
 /**
  * Pastikan isi sekolah demo masih segar: bila belum ada atau usianya sudah
  * melewati DEMO_RESET_INTERVAL_MS, reset. Dipanggil saat sekolah demo diakses
- * (halaman /demo & aksi login demo) — pengganti cron presisi yang butuh Pro.
+ * (halaman /demo & aksi login demo) pengganti cron presisi yang butuh Pro.
  *
  * Mengembalikan waktu reset terakhir yang berlaku (untuk hitung mundur).
  */
@@ -506,7 +506,7 @@ export async function ensureDemoFresh(): Promise<Date> {
     ]);
     locked = res.rows[0]?.locked === true;
     if (!locked) {
-      // Request lain sedang me-reset — pakai info terbaik yang ada.
+      // Request lain sedang me-reset pakai info terbaik yang ada.
       return (await getDemoLastReset()) ?? new Date();
     }
     // Cek ulang di dalam lock (mungkin sudah di-reset request lain barusan).

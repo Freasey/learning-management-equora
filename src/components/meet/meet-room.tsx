@@ -10,7 +10,7 @@ import { MeetSpeak } from "./meet-speak";
 /**
  * Ruang Meet (LiveKit Cloud) yang menempel pada sesi login.
  *
- * Nama peserta TIDAK diisi di sini — diambil server dari sesi saat mencetak
+ * Nama peserta TIDAK diisi di sini diambil server dari sesi saat mencetak
  * token (lihat /api/livekit-token). Pengguna hanya memilih KODE RUANG; server
  * otomatis menamai-ulang per sekolah agar antar-sekolah terisolasi.
  */
@@ -22,9 +22,9 @@ export function MeetRoom({
 }: {
   defaultRoom?: string;
   hint?: string;
-  /** Nyalakan teks berjalan (CC) sejak awal — untuk siswa tunarungu. */
+  /** Nyalakan teks berjalan (CC) sejak awal untuk siswa tunarungu. */
   captionsDefault?: boolean;
-  /** Buka panel Bicara Lewat Teks sejak awal — untuk siswa tunawicara. */
+  /** Buka panel Bicara Lewat Teks sejak awal untuk siswa tunawicara. */
   speakDefault?: boolean;
 }) {
   const [room, setRoom] = useState(defaultRoom);

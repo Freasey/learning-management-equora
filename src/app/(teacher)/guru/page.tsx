@@ -115,9 +115,9 @@ export default async function GuruHome() {
                     {s.startTime}–{s.endTime}
                   </span>
                   <span className="flex-1 font-medium text-ink">
-                    {s.subjectName ?? "—"}
+                    {s.subjectName ?? " "}
                   </span>
-                  <span className="text-sm text-muted">{s.className ?? "—"}</span>
+                  <span className="text-sm text-muted">{s.className ?? " "}</span>
                   {s.room && (
                     <span className="font-mono text-[10px] text-muted">{s.room}</span>
                   )}

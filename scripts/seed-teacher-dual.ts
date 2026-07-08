@@ -2,11 +2,11 @@
  * Seed SKENARIO GURU LINTAS-WORKSPACE.
  *
  * Membuat SATU akun guru ("Bu Sari") yang menjadi anggota DUA workspace:
- *   1. Sekolah  — "SMA Cendekia Equora" (kode SEKOLAH), ia mengajar Matematika.
- *   2. Personal — "Bimbel Sari" (kode BIMBEL), ia PEMILIK (kelola + mengajar).
+ *   1. Sekolah  "SMA Cendekia Equora" (kode SEKOLAH), ia mengajar Matematika.
+ *   2. Personal "Bimbel Sari" (kode BIMBEL), ia PEMILIK (kelola + mengajar).
  *
  * Tiap workspace diisi data lengkap (kelas, siswa, jadwal, materi, kuis, nilai,
- * pengerjaan siswa) supaya tampak "sudah dipakai" — memudahkan testing.
+ * pengerjaan siswa) supaya tampak "sudah dipakai" memudahkan testing.
  *
  * Aman di-run berulang: kedua sekolah (by kode) dihapus dulu (CASCADE).
  * Butuh pricing plans sudah di-seed (npm run db:seed).
@@ -250,7 +250,7 @@ async function main() {
     schoolStudents.push({ id, name: schoolStudentNames[i], nis });
   }
 
-  // Pengampu + jadwal (2 slot) — dasar "apa yang diajar guru".
+  // Pengampu + jadwal (2 slot) dasar "apa yang diajar guru".
   await db.insert(classSubjects).values({
     schoolId,
     classId: classSchool.id,
@@ -413,7 +413,7 @@ function render(
 
 > Dibuat \`npm run seed:teacher\`. Semua kata sandi: \`${PASSWORD}\`
 
-## Akun guru (login via /masuk — email)
+## Akun guru (login via /masuk email)
 
 | Nama | Email | Kata sandi |
 | --- | --- | --- |
@@ -423,13 +423,13 @@ Setelah login → /guru (workspace **${SCHOOL.name}**). Gunakan **pemilih worksp
 di pojok kanan atas untuk berpindah ke **${BIMBEL.name}** (kelas pribadi). Di
 workspace pribadi, tombol **Kelola** membuka panel admin kelasnya.
 
-## Admin sekolah (login via /masuk — email)
+## Admin sekolah (login via /masuk email)
 
 | Nama | Email | Kata sandi |
 | --- | --- | --- |
 | Admin Cendekia | \`admin.sekolah@equora.id\` | \`${PASSWORD}\` |
 
-## Siswa SEKOLAH — ${SCHOOL.name} (login via /masuk-siswa)
+## Siswa SEKOLAH ${SCHOOL.name} (login via /masuk-siswa)
 
 > Kode sekolah: \`${SCHOOL.code}\`
 
@@ -437,7 +437,7 @@ workspace pribadi, tombol **Kelola** membuka panel admin kelasnya.
 | --- | --- | --- | --- |
 ${rows(schoolStudents, SCHOOL.code)}
 
-## Siswa BIMBEL — ${BIMBEL.name} (login via /masuk-siswa)
+## Siswa BIMBEL ${BIMBEL.name} (login via /masuk-siswa)
 
 > Kode sekolah: \`${BIMBEL.code}\`
 

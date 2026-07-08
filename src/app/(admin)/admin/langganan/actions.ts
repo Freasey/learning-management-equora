@@ -10,7 +10,7 @@ import { logAudit } from "@/lib/audit";
 
 /**
  * Aktivasi paket. NOTE: pembayaran nyata (Midtrans/Xendit) DI-BYPASS untuk
- * saat ini — klik Bayar = paket langsung aktif. Ganti bagian ini dengan
+ * saat ini klik Bayar = paket langsung aktif. Ganti bagian ini dengan
  * pembuatan transaksi gateway + verifikasi webhook saat go-live.
  */
 export async function activatePlan(formData: FormData) {

@@ -15,7 +15,7 @@ export default async function SuperAdminLayout({
         <header className="flex h-16 items-center justify-end gap-4 border-b border-line px-8">
           <div className="text-right leading-tight">
             <div className="text-sm font-medium text-ink">
-              {session?.user?.name ?? "—"}
+              {session?.user?.name ?? " "}
             </div>
             <div className="font-mono text-[10px] text-muted">
               {session?.user?.email}

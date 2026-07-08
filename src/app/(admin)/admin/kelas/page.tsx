@@ -77,7 +77,7 @@ export default async function KelasPage() {
           <Field label="Tingkat" name="level" placeholder="cth. VII" />
           <Field label="Kapasitas" name="capacity" type="number" placeholder="cth. 32" />
           <SelectField label="Wali kelas" name="homeroomTeacherId" defaultValue="">
-            <option value="">— Belum ada —</option>
+            <option value="">Belum ada</option>
             {teachers.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -106,12 +106,12 @@ export default async function KelasPage() {
               rows.map((c) => (
                 <tr key={c.id} className="border-b border-line last:border-0">
                   <td className="px-4 py-3 font-medium text-ink">{c.name}</td>
-                  <td className="px-4 py-3 text-ink">{c.level ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{c.level ?? " "}</td>
                   <td className="px-4 py-3 text-ink">
                     {countMap.get(c.id) ?? 0}
                     {c.capacity ? ` / ${c.capacity}` : ""}
                   </td>
-                  <td className="px-4 py-3 text-ink">{c.homeroomName ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{c.homeroomName ?? " "}</td>
                   <td className="px-4 py-3">
                     <form action={deleteClass}>
                       <input type="hidden" name="id" value={c.id} />

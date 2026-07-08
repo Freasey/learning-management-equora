@@ -9,7 +9,7 @@ export type Assignment = {
 };
 
 /**
- * Pasangan (kelas, mapel) yang diajar guru — diturunkan dari jadwal.
+ * Pasangan (kelas, mapel) yang diajar guru diturunkan dari jadwal.
  * Admin menugaskan guru lewat Jadwal (schedules.teacherId).
  */
 export async function getTeacherAssignments(
@@ -40,7 +40,7 @@ export async function getTeacherAssignments(
 /**
  * Apakah guru ditugaskan mengajar sebuah kelas di workspace ini?
  * Sumber penugasan: jadwal (schedules.teacherId) atau pengampu (classSubjects).
- * Dipakai untuk otorisasi (A2) — cegah guru mengelola kelas yang bukan asuhannya.
+ * Dipakai untuk otorisasi (A2) cegah guru mengelola kelas yang bukan asuhannya.
  */
 export async function teacherTeachesClass(
   schoolId: string,

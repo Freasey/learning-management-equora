@@ -13,7 +13,7 @@ export function serializeRoles(roles: string[]): string {
 
 /**
  * Pastikan ada baris membership untuk (user, workspace). Bila belum ada,
- * dibuat dari `fallbackRoles` (lazy — supaya tak perlu backfill semua orang).
+ * dibuat dari `fallbackRoles` (lazy supaya tak perlu backfill semua orang).
  */
 export async function ensureMembership(
   userId: string,

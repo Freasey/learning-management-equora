@@ -12,7 +12,7 @@ import type { ReceivedDataMessage } from "@livekit/components-core";
 import { Captions } from "lucide-react";
 
 /**
- * Teks berjalan (live caption) untuk ruang Meet — fitur aksesibilitas
+ * Teks berjalan (live caption) untuk ruang Meet fitur aksesibilitas
  * siswa tunarungu (lihat `lib/accessibility.ts`, kunci "rungu").
  *
  * Cara kerja (tanpa server & tanpa kuota, seperti TTS netra):
@@ -182,7 +182,7 @@ export function MeetCaptions({ defaultOn = false }: { defaultOn?: boolean }) {
       if (!text) return;
       sendCaptionRef.current(enc.encode(JSON.stringify({ text })), { reliable: false }).catch(() => {});
     };
-    // Chrome menghentikan pengenalan saat hening — nyalakan lagi selama masih perlu.
+    // Chrome menghentikan pengenalan saat hening nyalakan lagi selama masih perlu.
     const restart = () => {
       if (!alive) return;
       restartTimer = setTimeout(() => {
@@ -190,7 +190,7 @@ export function MeetCaptions({ defaultOn = false }: { defaultOn?: boolean }) {
         try {
           rec.start();
         } catch {
-          // sudah berjalan / ditolak — biarkan
+          // sudah berjalan / ditolak biarkan
         }
       }, 300);
     };
@@ -260,7 +260,7 @@ export function MeetCaptions({ defaultOn = false }: { defaultOn?: boolean }) {
         >
           {visible.length === 0 ? (
             <p className="rounded-lg bg-black/60 px-3 py-1.5 text-xs text-white/70">
-              Teks berjalan aktif — menunggu ada yang berbicara…
+              Teks berjalan aktif menunggu ada yang berbicara…
               {!speechRecognitionSupported() &&
                 " (browser ini tidak bisa mentranskrip suaramu; pakai Chrome/Edge)"}
             </p>

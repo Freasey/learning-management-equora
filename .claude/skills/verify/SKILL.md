@@ -30,10 +30,10 @@ Guru/admin login pakai email tanpa `schoolCode` (lihat `DEMO_LOGINS`).
 
 - Halaman siswa semuanya SSR dinamis → markup client component (mis. widget
   TTS) ikut ter-render di HTML; grep HTML cukup untuk cek kondisional render.
-- Teks JSX berinterpolasi disisipi `<!-- -->` oleh React SSR — jangan grep
+- Teks JSX berinterpolasi disisipi `<!-- -->` oleh React SSR jangan grep
   frasa utuh lintas interpolasi.
 - Ubah data siswa demo lewat skrip tsx sementara di `scripts/`
   (`npx tsx --env-file=.env.local scripts/<file>.ts`), kolom siswa memakai
   `users.username` (bukan `nis`). Kembalikan datanya setelah selesai.
 - CSS dev tersaji tak-minified di `/_next/static/chunks/*.css` (link ada di
-  HTML) — bisa di-grep untuk aturan global.
+  HTML) bisa di-grep untuk aturan global.

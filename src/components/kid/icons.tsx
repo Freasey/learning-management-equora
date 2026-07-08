@@ -85,7 +85,7 @@ export function IconAlert({ className }: IconProps) {
   );
 }
 
-/** Aksesibilitas — sulit melihat: mata dengan garis bantu. */
+/** Aksesibilitas sulit melihat: mata dengan garis bantu. */
 export function IconEye({ className }: IconProps) {
   return (
     <svg
@@ -104,7 +104,7 @@ export function IconEye({ className }: IconProps) {
   );
 }
 
-/** Aksesibilitas — sulit mendengar: telinga. */
+/** Aksesibilitas sulit mendengar: telinga. */
 export function IconEar({ className }: IconProps) {
   return (
     <svg
@@ -123,7 +123,7 @@ export function IconEar({ className }: IconProps) {
   );
 }
 
-/** Aksesibilitas — sulit bicara: balon obrolan. */
+/** Aksesibilitas sulit bicara: balon obrolan. */
 export function IconSpeech({ className }: IconProps) {
   return (
     <svg
@@ -142,7 +142,7 @@ export function IconSpeech({ className }: IconProps) {
   );
 }
 
-/** Aksesibilitas — sulit membedakan warna: palet cat. */
+/** Aksesibilitas sulit membedakan warna: palet cat. */
 export function IconPalette({ className }: IconProps) {
   return (
     <svg

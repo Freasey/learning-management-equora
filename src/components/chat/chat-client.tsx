@@ -82,7 +82,7 @@ export function ChatClient({
             setToken(d.token);
           }
         } catch {
-          /* abaikan — mode non-realtime */
+          /* abaikan mode non-realtime */
         }
       }
     };
@@ -218,7 +218,7 @@ function RealtimeThread(props: ThreadProps) {
       const data = JSON.parse(new TextDecoder().decode(message.payload)) as Wire;
       props.appendMessage({ ...data, mine: data.senderId === props.meId });
     } catch {
-      /* payload tak valid — abaikan */
+      /* payload tak valid abaikan */
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message]);
@@ -231,7 +231,7 @@ function RealtimeThread(props: ThreadProps) {
           reliable: true,
         });
       } catch {
-        /* belum tersambung — penerima akan lihat dari riwayat */
+        /* belum tersambung penerima akan lihat dari riwayat */
       }
     },
     [send],

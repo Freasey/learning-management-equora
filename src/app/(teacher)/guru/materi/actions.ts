@@ -49,7 +49,7 @@ const saveSchema = z.object({
 
 /**
  * Kolom yang tidak dirender form (mis. `id` saat tambah baru, `url` di mode
- * tulis) tiba sebagai null — samakan jadi "" agar tidak ditolak validasi.
+ * tulis) tiba sebagai null samakan jadi "" agar tidak ditolak validasi.
  */
 function fieldStr(v: FormDataEntryValue | null): string {
   return typeof v === "string" ? v : "";
@@ -77,7 +77,7 @@ export async function saveMaterial(
   const d = parsed.data;
   const id = d.id || null;
 
-  // Materi lama (untuk ubah) — dipakai memvalidasi kepemilikan & mengelola berkas.
+  // Materi lama (untuk ubah) dipakai memvalidasi kepemilikan & mengelola berkas.
   const existing = id
     ? await withTenant(schoolId, async () => {
         const [row] = await db
@@ -106,7 +106,7 @@ export async function saveMaterial(
     const hasNewFile = file instanceof File && file.size > 0;
     if (hasNewFile) {
       if (!isStorageConfigured()) {
-        return { error: "Unggah berkas nonaktif — penyimpanan belum dikonfigurasi." };
+        return { error: "Unggah berkas nonaktif penyimpanan belum dikonfigurasi." };
       }
       try {
         const stored = await uploadFile({
@@ -162,7 +162,7 @@ export async function saveMaterial(
 
 /**
  * Rangkum bahan modul guru (teks tempel dan/atau berkas) menjadi materi
- * presentasi berformat slide-markdown, TANPA menyimpan — hasil dikembalikan agar
+ * presentasi berformat slide-markdown, TANPA menyimpan hasil dikembalikan agar
  * guru bisa menyunting per slide sebelum menekan Simpan. Kuota AI ditegakkan &
  * pemakaian dicatat. Gemini membaca PDF/gambar native; DOCX diekstrak via mammoth
  * (lihat pembaca berkas bersama di src/lib/ai-source.ts).
@@ -196,11 +196,11 @@ export async function generateSlides(
     file: hasFile ? { name: file.name, type: file.type, size: file.size } : null,
   });
   // Bahan modul kini OPSIONAL: tanpa bahan, AI menyusun materi dari
-  // pengetahuannya sendiri — asalkan ada topik sebagai pijakan.
+  // pengetahuannya sendiri asalkan ada topik sebagai pijakan.
   const fromKnowledge = !sourceText && !hasFile;
   if (fromKnowledge && !topic) {
     console.warn("[slides] tanpa sumber & tanpa topik");
-    return { error: "Isi Topik dulu — atau beri bahan modul (teks/berkas)." };
+    return { error: "Isi Topik dulu atau beri bahan modul (teks/berkas)." };
   }
 
   const slideCount = Math.min(30, Math.max(3, Number(formData.get("slideCount")) || 10));
@@ -228,7 +228,7 @@ export async function generateSlides(
 
       const instruction = [
         fromKnowledge
-          ? `Kamu asisten guru. TIDAK ada bahan sumber — susun materi presentasi (slide) yang menarik dalam Bahasa Indonesia dari pengetahuanmu sendiri tentang topik ini. Berpegang pada materi standar kurikulum sekolah di Indonesia untuk jenjang yang diminta, dan JANGAN menyertakan fakta, angka, atau nama yang tidak kamu yakini kebenarannya.`
+          ? `Kamu asisten guru. TIDAK ada bahan sumber susun materi presentasi (slide) yang menarik dalam Bahasa Indonesia dari pengetahuanmu sendiri tentang topik ini. Berpegang pada materi standar kurikulum sekolah di Indonesia untuk jenjang yang diminta, dan JANGAN menyertakan fakta, angka, atau nama yang tidak kamu yakini kebenarannya.`
           : `Kamu asisten guru. Dari BAHAN SUMBER di bawah, susun materi presentasi (slide) yang menarik dalam Bahasa Indonesia.`,
         `Mata pelajaran: ${subj?.name ?? "umum"}${topic ? `. Fokus topik: ${topic}` : ""}.`,
         `Sasaran jenjang: ${level}. Sesuaikan kedalaman & bahasa untuk jenjang itu.`,
@@ -241,7 +241,7 @@ export async function generateSlides(
         "- Baris pertama tiap slide adalah judul, diawali '# '.",
         `- Baris kedua adalah tipe slide: [tipe: X] dengan X salah satu dari: ${SLIDE_TYPES.join(", ")}.`,
         "- Isi slide adalah CAMPURAN: paragraf singkat (1–2 kalimat, ditulis sebagai baris biasa) dan butir '- '. Pakai butir HANYA bila isinya memang daftar (maks 5 butir); jangan jadikan semua isi butir-butir.",
-        "- Kode program, rumus, atau langkah perhitungan matematis WAJIB ditulis dalam blok tersendiri yang dibuka dan ditutup baris berisi tepat: ``` (tiga backtick). Jangan campur kode/rumus ke paragraf atau butir — blok ini tampil sebagai panel khusus terpisah di slide. Maksimal satu blok per slide, isi blok maksimal 8 baris.",
+        "- Kode program, rumus, atau langkah perhitungan matematis WAJIB ditulis dalam blok tersendiri yang dibuka dan ditutup baris berisi tepat: ``` (tiga backtick). Jangan campur kode/rumus ke paragraf atau butir blok ini tampil sebagai panel khusus terpisah di slide. Maksimal satu blok per slide, isi blok maksimal 8 baris.",
         "- Slide pertama [tipe: pembuka] = judul presentasi + 1 subjudul singkat. Slide terakhir [tipe: penutup] = pesan penutup + rangkuman 2–3 butir.",
         "- Variasikan tipe agar presentasi berirama: pakai [tipe: bab] untuk pergantian bagian besar, [tipe: dua-kolom] untuk perbandingan, [tipe: kutipan] untuk definisi/kutipan penting, [tipe: angka] untuk fakta berangka (butir pertama HANYA angka/fakta super singkat, butir berikutnya keterangan), [tipe: contoh] untuk contoh soal, [tipe: diskusi] untuk pertanyaan pemantik, dan [tipe: poin] untuk isi biasa.",
         "- Jangan menulis apa pun di luar slide (tanpa pengantar/penutup).",
@@ -273,7 +273,7 @@ export async function generateSlides(
         return { error: "AI tidak mengembalikan hasil. Coba lagi." };
       }
       await recordAiUsage(schoolId, teacherId, "material.slides");
-      console.log("[slides] SUKSES — panjang hasil:", out.length, "char");
+      console.log("[slides] SUKSES panjang hasil:", out.length, "char");
       return { text: out, fromKnowledge };
     });
   } catch (e) {
@@ -285,7 +285,7 @@ export async function generateSlides(
 /** Kerangka slide untuk mode demo (tanpa kunci AI). */
 function demoSlides(title: string, count: number): string {
   const slides = [
-    `# ${title}\n[tipe: pembuka]\n- Materi presentasi (mode demo — kunci AI belum diatur)`,
+    `# ${title}\n[tipe: pembuka]\n- Materi presentasi (mode demo kunci AI belum diatur)`,
   ];
   for (let i = 1; i < Math.min(count, 5); i++) {
     slides.push(
@@ -322,7 +322,7 @@ export async function generateAll(formData: FormData): Promise<{
       fromKnowledge: slides.fromKnowledge,
       designs: FALLBACK_DESIGNS,
       designNote: designs.error
-        ? `Desain AI gagal (${designs.error}) — dipakai desain bawaan; coba "Rancang ulang".`
+        ? `Desain AI gagal (${designs.error}) dipakai desain bawaan; coba "Rancang ulang".`
         : undefined,
     };
   }
@@ -333,7 +333,7 @@ export async function generateAll(formData: FormData): Promise<{
 
 /**
  * Minta AI menyusun 3 "cetak biru desain" dari deskripsi bebas guru.
- * AI TIDAK menulis kode — ia hanya mengisi spesifikasi (warna, font,
+ * AI TIDAK menulis kode ia hanya mengisi spesifikasi (warna, font,
  * gaya dekorasi) yang lalu dibersihkan `sanitizeDesign` (font dibatasi
  * daftar aman, kontras teks dikoreksi otomatis). Mesin pptxgenjs kitalah
  * yang merakit berkasnya.
@@ -369,7 +369,7 @@ export async function generateDesigns(
         "Kamu desainer presentasi profesional. Susun 3 alternatif desain slide yang menarik, modern, dan SANGAT berbeda satu sama lain.",
         description
           ? `Keinginan guru: "${description}". Patuhi keinginan ini sebagai arah utama.`
-          : "Guru tidak memberi arahan — karang sendiri desain yang paling cocok dengan konteks materi.",
+          : "Guru tidak memberi arahan karang sendiri desain yang paling cocok dengan konteks materi.",
         [
           subjectName && `Mata pelajaran: ${subjectName}`,
           topic && `Topik: ${topic}`,
@@ -435,7 +435,7 @@ const exportSchema = z.object({
 
 /**
  * Rakit berkas PowerPoint dari teks slide + cetak biru desain terpilih,
- * lalu kembalikan sebagai base64 untuk diunduh browser. Tanpa AI — murni
+ * lalu kembalikan sebagai base64 untuk diunduh browser. Tanpa AI murni
  * mesin pptxgenjs, jadi tidak memakan kuota AI.
  */
 export async function exportPptx(
@@ -453,7 +453,7 @@ export async function exportPptx(
   }
   const d = parsed.data;
 
-  // Jangan percaya JSON dari browser mentah-mentah — bersihkan ulang.
+  // Jangan percaya JSON dari browser mentah-mentah bersihkan ulang.
   let design: DesignSpec | null = null;
   try {
     design = sanitizeDesign(JSON.parse(d.design));

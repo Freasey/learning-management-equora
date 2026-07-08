@@ -34,7 +34,7 @@ export function KartuTool({
             className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-teal-600"
           >
             <option value="" disabled>
-              — Pilih kelas —
+              Pilih kelas
             </option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
@@ -105,7 +105,7 @@ export function KartuTool({
                     <span className="text-muted">Kode:</span> {schoolCode}
                   </div>
                   <div>
-                    <span className="text-muted">NIS:</span> {s.username ?? "—"}
+                    <span className="text-muted">NIS:</span> {s.username ?? " "}
                   </div>
                   <div>
                     <span className="text-muted">Sandi:</span> {state.password}

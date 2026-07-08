@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 // Endpoint "tukang cetak tiket" untuk Meet (LiveKit Cloud).
 //
 // Beda penting dari prototipe: di sini IDENTITAS & OTORISASI diambil dari sesi
-// login Gedung A — bukan dari input bebas browser. Jadi tidak ada penyamaran:
+// login Gedung A bukan dari input bebas browser. Jadi tidak ada penyamaran:
 //  - identity peserta = id user yang sedang login (bukan nama ketikan),
 //  - nama room di-namespace per sekolah → siswa sekolah lain tak bisa nyasar
 //    ke ruang yang sama walau kode ruangnya kebetulan sama,

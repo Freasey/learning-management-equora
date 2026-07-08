@@ -16,7 +16,7 @@ if (!url) throw new Error("DATABASE_URL belum diatur di .env.local");
 const sql = neon(url);
 
 async function main() {
-  // Drop SEMUA tabel di schema public (generik) — robust terhadap penambahan
+  // Drop SEMUA tabel di schema public (generik) robust terhadap penambahan
   // tabel baru di src/db/schema.ts tanpa harus memperbarui daftar manual.
   console.log("Menghapus semua tabel di schema public...");
   const res: unknown = await sql.query(

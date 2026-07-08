@@ -77,7 +77,7 @@ export async function registerSchool(
     })
     .returning({ id: users.id });
 
-  // Keanggotaan pemilik — peran bisa ditambah (mis. "teacher") nanti.
+  // Keanggotaan pemilik peran bisa ditambah (mis. "teacher") nanti.
   await db.insert(memberships).values({
     userId: admin.id,
     schoolId: school.id,

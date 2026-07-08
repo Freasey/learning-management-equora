@@ -2,7 +2,7 @@
 
 > Dibuat `npm run seed:teacher`. Semua kata sandi: `guru12345`
 
-## Akun guru (login via /masuk — email)
+## Akun guru (login via /masuk email)
 
 | Nama | Email | Kata sandi |
 | --- | --- | --- |
@@ -12,13 +12,13 @@ Setelah login → /guru (workspace **SMA Cendekia Equora**). Gunakan **pemilih w
 di pojok kanan atas untuk berpindah ke **Bimbel Sari** (kelas pribadi). Di
 workspace pribadi, tombol **Kelola** membuka panel admin kelasnya.
 
-## Admin sekolah (login via /masuk — email)
+## Admin sekolah (login via /masuk email)
 
 | Nama | Email | Kata sandi |
 | --- | --- | --- |
 | Admin Cendekia | `admin.sekolah@equora.id` | `guru12345` |
 
-## Siswa SEKOLAH — SMA Cendekia Equora (login via /masuk-siswa)
+## Siswa SEKOLAH SMA Cendekia Equora (login via /masuk-siswa)
 
 > Kode sekolah: `SEKOLAH`
 
@@ -31,7 +31,7 @@ workspace pribadi, tombol **Kelola** membuka panel admin kelasnya.
 | Elang Saputra | `2025005` | `SEKOLAH` | `guru12345` |
 | Fitri Handayani | `2025006` | `SEKOLAH` | `guru12345` |
 
-## Siswa BIMBEL — Bimbel Sari (login via /masuk-siswa)
+## Siswa BIMBEL Bimbel Sari (login via /masuk-siswa)
 
 > Kode sekolah: `BIMBEL`
 

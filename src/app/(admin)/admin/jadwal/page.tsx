@@ -84,13 +84,13 @@ export default async function JadwalPage() {
             <Field label="Jam mulai" name="startTime" type="time" required />
             <Field label="Jam selesai" name="endTime" type="time" required />
             <SelectField label="Mapel" name="subjectId" defaultValue="">
-              <option value="">— Pilih —</option>
+              <option value="">Pilih</option>
               {subjectList.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </SelectField>
             <SelectField label="Guru" name="teacherId" defaultValue="">
-              <option value="">— Pilih —</option>
+              <option value="">Pilih</option>
               {teacherList.map((t) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
@@ -124,14 +124,14 @@ export default async function JadwalPage() {
             ) : (
               rows.map((r) => (
                 <tr key={r.id} className="border-b border-line last:border-0">
-                  <td className="px-4 py-3 text-ink">{days[r.dayOfWeek] ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{days[r.dayOfWeek] ?? " "}</td>
                   <td className="px-4 py-3 font-mono text-xs text-ink">
                     {r.startTime}–{r.endTime}
                   </td>
-                  <td className="px-4 py-3 text-ink">{r.className ?? "—"}</td>
-                  <td className="px-4 py-3 text-ink">{r.subjectName ?? "—"}</td>
-                  <td className="px-4 py-3 text-ink">{r.teacherName ?? "—"}</td>
-                  <td className="px-4 py-3 text-ink">{r.room ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{r.className ?? " "}</td>
+                  <td className="px-4 py-3 text-ink">{r.subjectName ?? " "}</td>
+                  <td className="px-4 py-3 text-ink">{r.teacherName ?? " "}</td>
+                  <td className="px-4 py-3 text-ink">{r.room ?? " "}</td>
                   <td className="px-4 py-3">
                     <form action={deleteSchedule}>
                       <input type="hidden" name="id" value={r.id} />

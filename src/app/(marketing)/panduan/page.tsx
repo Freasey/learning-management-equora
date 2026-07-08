@@ -4,7 +4,7 @@ import { ShieldCheck, GraduationCap, Backpack, Sparkles, ArrowRight } from "luci
 import { PageHero } from "@/components/site/page-hero";
 
 export const metadata: Metadata = {
-  title: "Pusat Bantuan — Equora",
+  title: "Pusat Bantuan Equora",
   description:
     "Panduan memakai Equora untuk Admin Sekolah, Guru, dan Siswa. Bebas dibaca siapa saja.",
 };
@@ -15,7 +15,7 @@ const cards = [
     name: "Umum",
     icon: Sparkles,
     tone: "text-teal-700 bg-teal-700/10",
-    desc: "Mengenal Equora & cara mulai—untuk siapa saja.",
+    desc: "Mengenal Equora & cara mulai untuk siapa saja.",
   },
   {
     slug: "admin",

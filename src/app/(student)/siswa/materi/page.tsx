@@ -66,7 +66,7 @@ export default async function MateriSiswaPage() {
                   {m.title}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {m.subjectName ?? "—"}
+                  {m.subjectName ?? " "}
                   {m.topic ? ` · ${m.topic}` : ""}
                 </p>
               </>

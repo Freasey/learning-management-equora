@@ -142,7 +142,7 @@ export async function deleteFile(url: string | null | undefined): Promise<void> 
   try {
     await del(url);
   } catch {
-    // Objek mungkin sudah tidak ada — tetap bersihkan metadatanya.
+    // Objek mungkin sudah tidak ada tetap bersihkan metadatanya.
   }
   await db.delete(files).where(eq(files.url, url));
 }

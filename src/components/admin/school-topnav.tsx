@@ -67,7 +67,7 @@ export function SchoolTopNav({
 
   return (
     <div className="sticky top-0 z-40 shadow-[0_8px_24px_-20px_rgba(14,58,58,0.6)]">
-      {/* Tier 1 — brand + grup */}
+      {/* Tier 1 brand + grup */}
       <header className="bg-teal-900 text-paper">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-6">
           <div className="flex items-center gap-8">
@@ -169,7 +169,7 @@ export function SchoolTopNav({
         </nav>
       </header>
 
-      {/* Tier 2 — tab kontekstual */}
+      {/* Tier 2 tab kontekstual */}
       {activeGroup.items.length > 0 && (
         <div className="border-b border-line bg-paper">
           <nav className="mx-auto flex max-w-6xl gap-6 overflow-x-auto px-6">

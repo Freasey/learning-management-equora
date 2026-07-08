@@ -28,9 +28,9 @@ export type MyWorkspace = {
 /**
  * Semua workspace yang dimiliki/diikuti seorang user (untuk halaman Kelola
  * Workspace). Menyertakan workspace HOME walau belum punya baris membership
- * (sintesis dari users.schoolId — konsisten dgn loadWorkspaces di auth).
+ * (sintesis dari users.schoolId konsisten dgn loadWorkspaces di auth).
  *
- * Home diambil dari DB (users.schoolId), BUKAN dari workspace aktif sesi —
+ * Home diambil dari DB (users.schoolId), BUKAN dari workspace aktif sesi
  * agar home tak hilang saat sedang aktif di workspace lain.
  */
 export async function listMyWorkspaces(userId: string): Promise<MyWorkspace[]> {

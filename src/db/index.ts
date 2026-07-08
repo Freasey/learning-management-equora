@@ -4,9 +4,9 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import * as schema from "./schema";
 
 /**
- * RLS (A1) — isolasi tenant di lapisan database.
+ * RLS (A1) isolasi tenant di lapisan database.
  *
- * Driver: neon-serverless (Pool/WebSocket) — mendukung transaksi interaktif
+ * Driver: neon-serverless (Pool/WebSocket) mendukung transaksi interaktif
  * yang DIBUTUHKAN untuk `SET LOCAL app.current_school_id` per-request. Driver
  * lama neon-http stateless tak bisa menahan GUC antar-statement.
  *
@@ -18,7 +18,7 @@ import * as schema from "./schema";
  *    (nol risiko). Set env-nya untuk "menyalakan" enforcement.
  *
  * Semua `db.*` di dalam withTenant() otomatis dialihkan ke transaksi yang
- * sudah menyetel GUC (via AsyncLocalStorage) — call-site tak perlu meneruskan
+ * sudah menyetel GUC (via AsyncLocalStorage) call-site tak perlu meneruskan
  * objek transaksi.
  */
 
@@ -65,7 +65,7 @@ export const db = new Proxy(baseDb, {
   },
 }) as TenantDb;
 
-/** Sinyal kontrol-alur Next (redirect/notFound) — bukan error sungguhan. */
+/** Sinyal kontrol-alur Next (redirect/notFound) bukan error sungguhan. */
 function isControlFlowSignal(e: unknown): boolean {
   const digest = (e as { digest?: unknown } | null)?.digest;
   return (
@@ -79,7 +79,7 @@ function isControlFlowSignal(e: unknown): boolean {
  * `app.current_school_id` (dibaca policy RLS), lalu mengarahkan semua `db` di
  * dalamnya ke transaksi itu.
  *
- * redirect()/notFound() Next melempar sinyal — diperlakukan sebagai SUKSES
+ * redirect()/notFound() Next melempar sinyal diperlakukan sebagai SUKSES
  * (COMMIT) agar tulisan sebelum redirect tidak ikut ter-rollback.
  */
 export async function withTenant<T>(

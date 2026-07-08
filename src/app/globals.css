@@ -6,12 +6,12 @@
   sand/paper = hangat & redam kontras layar, oranye = aksen aksi.
 */
 @theme {
-  /* Brand — teal */
+  /* Brand teal */
   --color-teal-900: #0e3a3a;
   --color-teal-700: #155e5e;
   --color-teal-500: #2f8f8a;
 
-  /* Surfaces — sand & paper */
+  /* Surfaces sand & paper */
   --color-sand: #f3ece0;
   --color-sand-deep: #e6dcc8;
   --color-paper: #fbf9f4;
@@ -21,7 +21,7 @@
   --color-muted: #6f7a76;
   --color-line: #ddd4c4;
 
-  /* Accent — burnt orange */
+  /* Accent burnt orange */
   --color-accent: #c8783c;
 
   /* Fonts */
@@ -29,7 +29,7 @@
   --font-sans: var(--font-sans), system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
 
-  /* ── "Bright Campus" — KHUSUS area siswa (/siswa) ────────── */
+  /* ── "Bright Campus" KHUSUS area siswa (/siswa) ────────── */
   --color-coral: #ff6b5e;
   --color-sky: #3da9fc;
   --color-sunny: #ffc145;
@@ -59,7 +59,7 @@ body {
     outline-color: var(--color-sky);
   }
 
-  /* Target skip link (tabIndex=-1) tak perlu cincin — bukan kontrol interaktif. */
+  /* Target skip link (tabIndex=-1) tak perlu cincin bukan kontrol interaktif. */
   main:focus-visible {
     outline: none;
   }

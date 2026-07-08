@@ -14,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { audience } = await params;
   const key = AUDIENCE_BY_SLUG[audience];
-  return { title: key ? `Panduan ${audienceLabel(key)} — Equora` : "Panduan — Equora" };
+  return { title: key ? `Panduan ${audienceLabel(key)} Equora` : "Panduan Equora" };
 }
 
 export default async function PanduanAudiencePage({

@@ -67,7 +67,7 @@ export default async function KoreksiPage({
 
       <header className="mb-6">
         <h1 className="font-display text-2xl font-medium text-ink">
-          Koreksi — {att.studentName ?? "Siswa"}
+          Koreksi {att.studentName ?? "Siswa"}
         </h1>
         <p className="mt-1 text-sm text-muted">
           {att.title} ·{" "}
@@ -144,7 +144,7 @@ export default async function KoreksiPage({
           </Button>
         ) : (
           <p className="rounded-lg border border-line bg-paper px-4 py-3 text-sm text-muted">
-            Semua soal pilihan ganda — nilai sudah dihitung otomatis.
+            Semua soal pilihan ganda nilai sudah dihitung otomatis.
           </p>
         )}
       </form>

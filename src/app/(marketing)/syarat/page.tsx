@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/site/page-hero";
 
 export const metadata: Metadata = {
-  title: "Syarat & Ketentuan — Equora",
+  title: "Syarat & Ketentuan Equora",
   description: "Syarat dan ketentuan penggunaan layanan Equora.",
 };
 

@@ -61,7 +61,7 @@ export default async function WorkspacePage() {
         </p>
       </header>
 
-      {/* Profil saya — foto profil */}
+      {/* Profil saya foto profil */}
       <div className="mb-8 rounded-xl border border-line bg-paper p-6">
         <h2 className="mb-4 font-display text-lg font-medium text-ink">Profil Saya</h2>
         <div className="flex flex-wrap items-center gap-5">
@@ -105,7 +105,7 @@ export default async function WorkspacePage() {
               </div>
             ) : (
               <p className="text-xs text-muted">
-                Unggah foto nonaktif — atur{" "}
+                Unggah foto nonaktif atur{" "}
                 <code className="font-mono">BLOB_READ_WRITE_TOKEN</code>.
               </p>
             )}
@@ -158,7 +158,7 @@ export default async function WorkspacePage() {
                   <span>{w.type === "personal" ? "Kelas pribadi" : "Sekolah"}</span>
                   <span>·</span>
                   <span>
-                    {w.roles.map((r) => roleLabel[r] ?? r).join(" + ") || "—"}
+                    {w.roles.map((r) => roleLabel[r] ?? r).join(" + ") || " "}
                   </span>
                   <span>·</span>
                   <span>
@@ -212,7 +212,7 @@ export default async function WorkspacePage() {
           </h2>
           <p className="mt-1 text-sm text-muted">
             {hasFree
-              ? "Anda sudah punya satu workspace gratis — workspace baru memerlukan paket berbayar."
+              ? "Anda sudah punya satu workspace gratis workspace baru memerlukan paket berbayar."
               : "Workspace pertama Anda yang gratis. Berikutnya memerlukan paket berbayar."}
           </p>
 
@@ -239,10 +239,10 @@ export default async function WorkspacePage() {
                   <option key={p.key} value={p.key} disabled={disabled}>
                     {p.name}
                     {p.isCustom
-                      ? " — nego"
+                      ? " nego"
                       : free
-                        ? ` — gratis${disabled ? " (sudah dipakai)" : ""}`
-                        : ` — ${formatRupiah(p.priceMonthly)}/bln`}
+                        ? ` gratis${disabled ? " (sudah dipakai)" : ""}`
+                        : ` ${formatRupiah(p.priceMonthly)}/bln`}
                   </option>
                 );
               })}

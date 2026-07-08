@@ -98,8 +98,8 @@ export default async function KuisPage() {
                   <td className="px-4 py-3 capitalize text-ink">
                     {a.type === "exam" ? "Ujian" : "Kuis"}
                   </td>
-                  <td className="px-4 py-3 text-ink">{a.subjectName ?? "—"}</td>
-                  <td className="px-4 py-3 text-ink">{a.className ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{a.subjectName ?? " "}</td>
+                  <td className="px-4 py-3 text-ink">{a.className ?? " "}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase ${
                       a.status === "published" ? "bg-teal-700/10 text-teal-700" : "bg-sand-deep text-ink"

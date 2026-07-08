@@ -59,7 +59,7 @@ export default async function JadwalGuruPage() {
                     <li key={i} className="rounded-lg border border-line px-3 py-2.5">
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-ink">
-                          {s.subjectName ?? "—"}
+                          {s.subjectName ?? " "}
                         </span>
                         <span className="font-mono text-[10px] text-muted">
                           {s.room ?? ""}
@@ -69,7 +69,7 @@ export default async function JadwalGuruPage() {
                         <span className="font-mono text-teal-700">
                           {s.startTime}–{s.endTime}
                         </span>
-                        · <span>{s.className ?? "—"}</span>
+                        · <span>{s.className ?? " "}</span>
                       </div>
                     </li>
                   ))}

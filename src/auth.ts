@@ -24,7 +24,7 @@ async function loadWorkspaces(user: typeof users.$inferSelect): Promise<{
   list: WorkspaceMembership[];
   activeSchoolId: string | null;
 }> {
-  // super_admin lintas-sekolah — tidak terikat workspace.
+  // super_admin lintas-sekolah tidak terikat workspace.
   if (user.role === "super_admin") {
     return { list: [], activeSchoolId: null };
   }
