@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -348,12 +348,13 @@ export async function addQuestion(
 /* ============================================================
  * Pembuat soal dengan AI (Gemini)
  * Alur hemat waktu guru: isi topik (atau unggah bahan referensi)
- * → AI mengembalikan DRAF soal tanpa menyimpan → guru memeriksa &
- * menyunting → simpan massal sekali klik. Kuota AI ditegakkan dan
- * tiap generate dicatat sebagai pemakaian "quiz.generate".
+ * → soal LANGSUNG tersimpan ke kuis (kuis masih draf sampai
+ * diterbitkan). Generate berikutnya MENAMBAH soal, tidak mengganti;
+ * soal yang tidak pas dihapus lewat tombol Hapus di daftar soal.
+ * Kuota AI ditegakkan; tiap generate tercatat sbg "quiz.generate".
  * ============================================================ */
 
-export type DraftQuestion = {
+type DraftQuestion = {
   type: "mc" | "essay";
   text: string;
   options: string[] | null;
@@ -362,7 +363,6 @@ export type DraftQuestion = {
 };
 
 const MAX_AI_QUESTIONS = 20;
-const MAX_SAVE_QUESTIONS = 40;
 
 /** Rapikan satu elemen (hasil AI / kiriman form) menjadi draf soal valid, atau null. */
 function sanitizeDraft(v: unknown): DraftQuestion | null {
@@ -434,13 +434,35 @@ function demoQuestions(topic: string, mcCount: number, essayCount: number): Draf
   return items;
 }
 
+/** Tambahkan soal ke urutan paling belakang kuis (panggil di dalam withTenant). */
+async function appendQuestions(schoolId: string, assessmentId: string, items: DraftQuestion[]) {
+  const existing = await db.$count(questions, eq(questions.assessmentId, assessmentId));
+  await db.insert(questions).values(
+    items.map((q, i) => ({
+      schoolId,
+      assessmentId,
+      type: q.type,
+      text: q.text,
+      options: q.options,
+      correctIndex: q.correctIndex,
+      points: q.points,
+      sortOrder: existing + i,
+    })),
+  );
+  revalidatePath(`/guru/kuis/${assessmentId}`);
+  refresh(); // segarkan router client agar daftar soal langsung tampil
+  return items.length;
+}
+
 /**
- * Minta Gemini menyusun draf soal. TIDAK menyimpan apa pun hasil dikembalikan
- * ke form agar guru memeriksa & menyunting dulu. Bahan referensi opsional:
- * teks tempel dan/atau berkas (PDF/DOCX/gambar/teks, dibaca via fileToPart).
+ * Minta Gemini menyusun soal lalu LANGSUNG menyimpannya ke kuis — menambah di
+ * urutan belakang, bukan mengganti, jadi aman diprompt berulang kali. Soal yang
+ * tidak pas dihapus guru lewat daftar soal. Bahan referensi opsional: teks
+ * tempel dan/atau berkas (PDF/DOCX/gambar/teks, dibaca via fileToPart).
  */
 export async function generateQuestionsAi(formData: FormData): Promise<{
-  items?: DraftQuestion[];
+  ok?: boolean;
+  added?: number;
   fromKnowledge?: boolean;
   error?: string;
 }> {
@@ -483,7 +505,9 @@ export async function generateQuestionsAi(formData: FormData): Promise<{
         : [];
 
       if (!isAiConfigured()) {
-        return { items: demoQuestions(topic || subj?.name || a.title, mcCount, essayCount), fromKnowledge };
+        const demo = demoQuestions(topic || subj?.name || a.title, mcCount, essayCount);
+        const added = await appendQuestions(schoolId, assessmentId, demo);
+        return { ok: true, added, fromKnowledge };
       }
 
       const composition = [
@@ -529,63 +553,13 @@ export async function generateQuestionsAi(formData: FormData): Promise<{
         return { error: "Hasil AI tidak bisa dibaca. Coba lagi atau perjelas topiknya." };
       }
       await recordAiUsage(schoolId, teacherId, "quiz.generate");
-      return { items, fromKnowledge };
+      const added = await appendQuestions(schoolId, assessmentId, items);
+      return { ok: true, added, fromKnowledge };
     });
   } catch (e) {
     console.error("[quiz-ai] EXCEPTION:", e);
     return { error: e instanceof Error ? e.message : "Gagal membuat soal." };
   }
-}
-
-export type SaveGeneratedState = { error?: string; ok?: boolean; saved?: number } | undefined;
-
-/** Simpan massal draf soal hasil AI (setelah diperiksa/disunting guru). */
-export async function saveGeneratedQuestions(
-  _prev: SaveGeneratedState,
-  formData: FormData,
-): Promise<SaveGeneratedState> {
-  const { schoolId, teacherId } = await requireTeacher();
-  const assessmentId = String(formData.get("assessmentId") ?? "");
-  if (!z.string().uuid().safeParse(assessmentId).success) return { error: "Kuis tidak valid." };
-
-  let raw: unknown;
-  try {
-    raw = JSON.parse(String(formData.get("items") ?? "[]"));
-  } catch {
-    return { error: "Data soal tidak valid." };
-  }
-  if (!Array.isArray(raw) || raw.length === 0) return { error: "Tidak ada soal untuk disimpan." };
-  if (raw.length > MAX_SAVE_QUESTIONS) return { error: `Maksimal ${MAX_SAVE_QUESTIONS} soal sekali simpan.` };
-
-  const items: DraftQuestion[] = [];
-  for (let i = 0; i < raw.length; i++) {
-    const q = sanitizeDraft(raw[i]);
-    if (!q) {
-      return {
-        error: `Soal #${i + 1} belum lengkap teks minimal 2 karakter; pilihan ganda butuh ≥2 opsi terisi dan jawaban benar yang ditandai.`,
-      };
-    }
-    items.push(q);
-  }
-
-  return withTenant(schoolId, async (): Promise<SaveGeneratedState> => {
-    await ownAssessment(schoolId, teacherId, assessmentId); // A2
-    const existing = await db.$count(questions, eq(questions.assessmentId, assessmentId));
-    await db.insert(questions).values(
-      items.map((q, i) => ({
-        schoolId,
-        assessmentId,
-        type: q.type,
-        text: q.text,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        points: q.points,
-        sortOrder: existing + i,
-      })),
-    );
-    revalidatePath(`/guru/kuis/${assessmentId}`);
-    return { ok: true, saved: items.length };
-  });
 }
 
 export async function deleteQuestion(formData: FormData) {

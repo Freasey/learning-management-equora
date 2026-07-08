@@ -1,20 +1,17 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
-import { AlertCircle, CheckCircle2, Sparkles, Trash2 } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
+import { AlertCircle, CheckCircle2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { inputClass } from "@/components/admin/ui";
-import {
-  generateQuestionsAi,
-  saveGeneratedQuestions,
-  type DraftQuestion,
-  type SaveGeneratedState,
-} from "../actions";
+import { generateQuestionsAi } from "../actions";
 
 /**
- * Panel "Buat Soal dengan AI" jalur cepat untuk guru yang tidak sempat
- * menyusun soal manual: isi topik (atau unggah bahan referensi), AI menyusun
- * draf, guru memeriksa/menyunting, lalu simpan semua sekali klik.
+ * Panel "Buat Soal dengan AI" — jalur cepat untuk guru yang tidak sempat
+ * menyusun soal manual. Soal hasil AI LANGSUNG tersimpan ke kuis (kuis masih
+ * draf sampai diterbitkan) dan generate berikutnya MENAMBAH soal, sehingga
+ * guru bisa prompt berulang kali lalu menghapus soal yang tidak pas dari
+ * daftar soal di atas.
  */
 export function AiQuestionForm({
   assessmentId,
@@ -32,59 +29,24 @@ export function AiQuestionForm({
         : "SMP";
 
   const formRef = useRef<HTMLFormElement>(null);
-  const [drafts, setDrafts] = useState<DraftQuestion[] | null>(null);
-  const [fromKnowledge, setFromKnowledge] = useState(false);
+  const [result, setResult] = useState<{ added: number; fromKnowledge: boolean } | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiPending, startAi] = useTransition();
-  const [saveState, saveAction, savePending] = useActionState<SaveGeneratedState, FormData>(
-    saveGeneratedQuestions,
-    undefined,
-  );
-
-  // Setelah tersimpan, buang draf daftar soal di atas ter-refresh dari server.
-  // (Penyesuaian state saat render, bukan useEffect sesuai anjuran React.)
-  const [handledSave, setHandledSave] = useState<SaveGeneratedState>(undefined);
-  if (saveState !== handledSave) {
-    setHandledSave(saveState);
-    if (saveState?.ok) setDrafts(null);
-  }
 
   function runGenerate() {
     const form = formRef.current;
     if (!form) return;
     const fd = new FormData(form);
     setAiError(null);
+    setResult(null);
     startAi(async () => {
       const res = await generateQuestionsAi(fd);
       if (res.error) setAiError(res.error);
-      else if (res.items) {
-        setDrafts(res.items);
-        setFromKnowledge(Boolean(res.fromKnowledge));
+      else if (res.ok) {
+        setResult({ added: res.added ?? 0, fromKnowledge: Boolean(res.fromKnowledge) });
       }
     });
   }
-
-  function update(i: number, patch: Partial<DraftQuestion>) {
-    setDrafts((prev) => prev?.map((q, idx) => (idx === i ? { ...q, ...patch } : q)) ?? prev);
-  }
-  function updateOption(i: number, oi: number, value: string) {
-    setDrafts(
-      (prev) =>
-        prev?.map((q, idx) =>
-          idx === i && q.options
-            ? { ...q, options: q.options.map((o, j) => (j === oi ? value : o)) }
-            : q,
-        ) ?? prev,
-    );
-  }
-  function remove(i: number) {
-    setDrafts((prev) => {
-      const next = prev?.filter((_, idx) => idx !== i) ?? null;
-      return next && next.length > 0 ? next : null;
-    });
-  }
-
-  const totalPoints = drafts?.reduce((s, q) => s + (Number(q.points) || 0), 0) ?? 0;
 
   return (
     <section className="mb-8 rounded-xl border border-teal-700/25 bg-teal-700/4 p-5">
@@ -93,9 +55,10 @@ export function AiQuestionForm({
         <h2 className="font-display text-lg font-medium text-ink">Buat Soal dengan AI</h2>
       </div>
       <p className="mb-4 text-sm text-muted">
-        Tidak sempat menyusun soal? Cukup isi topik atau unggah bahan referensi (PDF, DOCX,
-        gambar, atau teks) agar soal mengikuti bahan Anda. Hasilnya berupa draf yang bisa Anda
-        periksa dan sunting dulu; belum ada yang tersimpan sebelum menekan Simpan.
+        Tidak sempat menyusun soal? Cukup isi topik — atau unggah bahan referensi (PDF, DOCX,
+        gambar, atau teks) agar soal mengikuti bahan Anda. Soal langsung ditambahkan ke daftar di
+        atas; ulangi kapan saja untuk menambah lagi, dan hapus soal yang tidak pas lewat tombol
+        Hapus. Kuis baru dilihat siswa setelah Anda menekan Terbitkan.
       </p>
 
       <form
@@ -110,7 +73,7 @@ export function AiQuestionForm({
 
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold text-ink">
-            Topik soal {" "}
+            Topik soal{" "}
             <span className="font-normal text-muted">(boleh kosong bila ada bahan referensi)</span>
           </span>
           <input
@@ -154,7 +117,8 @@ export function AiQuestionForm({
 
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold text-ink">
-            Bahan referensi <span className="font-normal text-muted">(opsional PDF, DOCX, gambar, atau teks; maks 15 MB)</span>
+            Bahan referensi{" "}
+            <span className="font-normal text-muted">(opsional — PDF, DOCX, gambar, atau teks; maks 15 MB)</span>
           </span>
           <input
             name="sourceFile"
@@ -183,121 +147,26 @@ export function AiQuestionForm({
           </p>
         )}
 
+        {result && (
+          <div className="space-y-2">
+            <p className="flex items-center gap-2 rounded-md bg-teal-700/10 px-3 py-2 text-sm text-teal-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              {result.added} soal ditambahkan ke daftar di atas. Klik lagi untuk menambah, atau
+              hapus soal yang tidak pas.
+            </p>
+            {result.fromKnowledge && (
+              <p className="rounded-md bg-accent/10 px-3 py-2 text-xs text-accent">
+                Soal disusun dari pengetahuan AI (tanpa bahan referensi) — mohon cek kebenaran isi
+                dan kunci jawabannya sebelum menerbitkan kuis.
+              </p>
+            )}
+          </div>
+        )}
+
         <Button type="submit" variant="primary" size="md" disabled={aiPending}>
-          {aiPending ? "Menyusun soal…" : drafts ? "Buat Ulang" : "Buatkan Soal"}
+          {aiPending ? "Menyusun soal…" : result ? "Buatkan Soal Lagi" : "Buatkan Soal"}
         </Button>
       </form>
-
-      {saveState?.ok && !drafts && (
-        <p className="mt-4 flex items-center gap-2 rounded-md bg-teal-700/10 px-3 py-2 text-sm text-teal-700">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          {saveState.saved} soal tersimpan ke kuis. Anda bisa membuat lagi atau langsung menerbitkan kuis.
-        </p>
-      )}
-
-      {drafts && drafts.length > 0 && (
-        <div className="mt-6 border-t border-teal-700/15 pt-5">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-display text-base font-medium text-ink">
-              Pratinjau {drafts.length} soal · {totalPoints} poin
-            </h3>
-            <p className="text-xs text-muted">Periksa & sunting seperlunya baru tersimpan setelah Anda menekan Simpan.</p>
-          </div>
-          {fromKnowledge && (
-            <p className="mb-3 rounded-md bg-accent/10 px-3 py-2 text-xs text-accent">
-              Soal disusun dari pengetahuan AI (tanpa bahan referensi) mohon cek kebenaran isi
-              dan kunci jawabannya.
-            </p>
-          )}
-
-          <div className="space-y-3">
-            {drafts.map((q, i) => (
-              <div key={i} className="rounded-xl border border-line bg-paper p-4">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-muted">#{i + 1}</span>
-                    <span className="rounded-full bg-sand-deep px-2 py-0.5 font-mono text-[10px] uppercase text-ink">
-                      {q.type === "mc" ? "Pilihan Ganda" : "Esai"}
-                    </span>
-                    <label className="flex items-center gap-1.5 text-xs text-muted">
-                      Poin
-                      <input
-                        type="number"
-                        min={1}
-                        max={100}
-                        value={q.points}
-                        onChange={(e) => update(i, { points: Math.trunc(Number(e.target.value)) || 1 })}
-                        className="w-16 rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink"
-                      />
-                    </label>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => remove(i)}
-                    aria-label={`Hapus soal ${i + 1}`}
-                    className="rounded-md border border-line p-1.5 text-red-600 transition-colors hover:bg-red-600 hover:text-paper"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <textarea
-                  value={q.text}
-                  onChange={(e) => update(i, { text: e.target.value })}
-                  rows={2}
-                  aria-label={`Teks soal ${i + 1}`}
-                  className={inputClass}
-                />
-
-                {q.type === "mc" && q.options && (
-                  <div className="mt-2 space-y-1.5">
-                    {q.options.map((opt, oi) => (
-                      <div key={oi} className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          checked={q.correctIndex === oi}
-                          onChange={() => update(i, { correctIndex: oi })}
-                          aria-label={`Opsi ${String.fromCharCode(65 + oi)} benar`}
-                          className="h-4 w-4 text-teal-700 focus:ring-teal-500/30"
-                        />
-                        <input
-                          value={opt}
-                          onChange={(e) => updateOption(i, oi, e.target.value)}
-                          aria-label={`Teks opsi ${String.fromCharCode(65 + oi)}`}
-                          className={inputClass}
-                        />
-                      </div>
-                    ))}
-                    <p className="text-[11px] text-muted">Tandai bulatan pada jawaban yang benar.</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {saveState?.error && (
-            <p className="mt-3 flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              {saveState.error}
-            </p>
-          )}
-
-          <form action={saveAction} className="mt-4 flex items-center gap-3">
-            <input type="hidden" name="assessmentId" value={assessmentId} />
-            <input type="hidden" name="items" value={JSON.stringify(drafts)} />
-            <Button type="submit" variant="primary" size="md" disabled={savePending}>
-              {savePending ? "Menyimpan…" : `Simpan ${drafts.length} Soal`}
-            </Button>
-            <button
-              type="button"
-              onClick={() => setDrafts(null)}
-              className="text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
-            >
-              Buang draf
-            </button>
-          </form>
-        </div>
-      )}
     </section>
   );
 }
