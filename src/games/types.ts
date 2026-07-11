@@ -3,7 +3,7 @@
  *
  * Setiap game (kulit) menerima SATU soal pilihan ganda dan wajib melapor
  * tepat SATU hasil lewat `onOutcome`. Game tidak tahu apa-apa di luar itu:
- * bukan urusannya soal benar/salah, nilai, jaringan, atau siapa pemainnya —
+ * bukan urusannya soal benar/salah, nilai, jaringan, atau siapa pemainnya  
  * semuanya ditangani rangka kuis yang memasang game ini.
  *
  * Waktu habis juga urusan rangka: rangka menghentikan game (unmount/pause)

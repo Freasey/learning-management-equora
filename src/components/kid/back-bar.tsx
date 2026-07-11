@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 /**
  * Tombol kembali otomatis untuk area siswa (naik satu level).
- * Disembunyikan di beranda (/siswa).
+ * Disembunyikan di   (/siswa).
  */
 export function StudentBackBar() {
   const pathname = usePathname();

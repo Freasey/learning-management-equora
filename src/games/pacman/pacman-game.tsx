@@ -25,7 +25,7 @@ const GHOST_COLORS = ["#c0453c", "#7d5ba6"];
 const LETTERS = ["A", "B", "C", "D", "E"];
 
 /**
- * Kulit game Pacman — kontrak sama dengan SnakeGame: dipasang per soal,
+ * Kulit game Pacman  kontrak sama dengan SnakeGame: dipasang per soal,
  * melapor tepat satu GameOutcome (makan buah = jawab, kena hantu = kalah).
  */
 export function PacmanGame({

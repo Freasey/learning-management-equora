@@ -75,8 +75,8 @@ Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** d
   {
     audience: "school_admin",
     category: "Memulai",
-    slug: "admin-ikhtisar",
-    title: "Ikhtisar (Beranda Admin)",
+    slug: "admin-beranda",
+    title: "Beranda (Beranda Admin)",
     summary: "Ringkasan sekolah: paket, status, kode sekolah, dan pemakaian kuota.",
     route: "/admin",
     icon: "LayoutDashboard",
@@ -225,8 +225,8 @@ Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** d
   {
     audience: "teacher",
     category: "Mengajar",
-    slug: "guru-ikhtisar",
-    title: "Ikhtisar (Beranda Guru)",
+    slug: "guru-beranda",
+    title: "Beranda (Beranda Guru)",
     summary: "Kelas & mapel yang Anda ampu serta sesi hari ini.",
     route: "/guru",
     icon: "LayoutDashboard",
@@ -324,7 +324,7 @@ Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** d
   {
     audience: "student",
     category: "Belajar",
-    slug: "siswa-beranda",
+    slug: "siswa- ",
     title: "Beranda",
     summary: "Kotak-kotak besar menuju kelas, jadwal, kuis, dan materi.",
     route: "/siswa",

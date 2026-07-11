@@ -1,7 +1,7 @@
 import type { Dir } from "../engine/input";
 
 /**
- * Logika murni game Ular — tidak menyentuh canvas/DOM sama sekali, sehingga
+ * Logika murni game Ular  tidak menyentuh canvas/DOM sama sekali, sehingga
  * bisa diuji otomatis tanpa browser: buat state → panggil tick() berulang →
  * periksa hasilnya.
  */

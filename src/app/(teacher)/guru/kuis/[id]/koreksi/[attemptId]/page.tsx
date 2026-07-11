@@ -109,7 +109,7 @@ export default async function KoreksiPage({
                         : "(kosong)"}
                   {r.choiceIndex === r.correctIndex ? " ✓" : " ✗"}
                 </span>
-                {/* Penyebab dari mode game — pembeda "salah konsep" vs "kalah main". */}
+                {/* Penyebab dari mode game  pembeda "salah konsep" vs "kalah main". */}
                 {r.gameCause === "death" && (
                   <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 font-mono text-[10px] uppercase text-red-700">
                     Kalah di game

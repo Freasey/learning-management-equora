@@ -2,12 +2,12 @@ import type { Dir } from "../engine/input";
 import type { Cell, Fruit } from "../snake/logic";
 
 /**
- * Logika murni game Pacman — seperti snake/logic.ts, tidak menyentuh
+ * Logika murni game Pacman  seperti snake/logic.ts, tidak menyentuh
  * canvas/DOM sehingga bisa diuji otomatis tanpa browser.
  *
  * Labirin tetap (template di bawah): `#` tembok, `.` lorong, `A`–`D` titik
  * buah jawaban, `P` posisi awal pemain, `G` posisi awal hantu. Huruf pada
- * template hanya menandai TEMPAT buah — opsi mana yang menempati tempat mana
+ * template hanya menandai TEMPAT buah  opsi mana yang menempati tempat mana
  * diacak tiap soal supaya jawaban benar tidak selalu di pojok yang sama.
  */
 

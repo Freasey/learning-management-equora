@@ -103,7 +103,7 @@ export async function createWorkspace(formData: FormData) {
   const upd = await buildActiveUpdate(userId, ws.id);
   if (upd) await unstable_update(upd as never);
 
-  // Gratis → langsung ke beranda peran. Berbayar → checkout (bypass gateway).
+  // Gratis → langsung ke   peran. Berbayar → checkout (bypass gateway).
   if (free) {
     redirect(roleHome(upd?.activeRoles ?? ["school_admin"]));
   }

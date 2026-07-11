@@ -56,14 +56,14 @@ export default async function KuisDetailPage({
   const totalPoints = qs.reduce((s, q) => s + q.points, 0);
   const activeGame = GAME_CATALOG.find((g) => g.id === a.gameType);
 
-  // Syarat mode game — dihitung di sini agar UI bisa menjelaskan alasannya.
+  // Syarat mode game  dihitung di sini agar UI bisa menjelaskan alasannya.
   const gameBlockers = [
-    qs.length === 0 && "Belum ada soal — tambahkan soal dulu.",
-    a.type === "exam" && "Ujian tidak bisa memakai mode game — hanya kuis latihan.",
+    qs.length === 0 && "Belum ada soal  tambahkan soal dulu.",
+    a.type === "exam" && "Ujian tidak bisa memakai mode game  hanya kuis latihan.",
     a.countToGrade &&
-      "Kuis ini dihitung ke nilai. Mode game hanya untuk latihan — matikan “Hitung ke nilai” dulu.",
+      "Kuis ini dihitung ke nilai. Mode game hanya untuk latihan  matikan “Hitung ke nilai” dulu.",
     essayCount > 0 &&
-      `Ada ${essayCount} soal esai — mode game butuh semua soal pilihan ganda.`,
+      `Ada ${essayCount} soal esai  mode game butuh semua soal pilihan ganda.`,
   ].filter((b): b is string => Boolean(b));
 
   // Jenjang sekolah → default "jenjang" di panel Buat Soal dengan AI.
@@ -146,7 +146,7 @@ export default async function KuisDetailPage({
         </div>
       )}
 
-      {/* Mode Game — selalu terlihat; nonaktif dengan alasan bila syarat belum terpenuhi. */}
+      {/* Mode Game  selalu terlihat; nonaktif dengan alasan bila syarat belum terpenuhi. */}
       <section className="mb-8 rounded-xl border border-line bg-paper p-5">
         <div className="flex items-center gap-2">
           <Gamepad2 className="h-4 w-4 text-teal-700" />
@@ -158,7 +158,7 @@ export default async function KuisDetailPage({
           )}
         </div>
         <p className="mt-1 text-sm text-muted">
-          Ubah kuis latihan menjadi permainan — siswa menjawab dengan memakan buah
+          Ubah kuis latihan menjadi permainan  siswa menjawab dengan memakan buah
           berlabel A–D di dalam game. Kalah di game atau kehabisan waktu dihitung
           salah, jadi mode ini hanya untuk kuis latihan (tidak dihitung ke nilai).
         </p>
@@ -188,7 +188,7 @@ export default async function KuisDetailPage({
               <option value="">Tanpa game (kuis biasa)</option>
               {GAME_CATALOG.filter((g) => g.available).map((g) => (
                 <option key={g.id} value={g.id}>
-                  {g.label} — {g.description}
+                  {g.label}  {g.description}
                 </option>
               ))}
             </select>

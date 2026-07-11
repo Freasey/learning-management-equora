@@ -8,7 +8,7 @@ import type { GameOutcome } from "@/games/types";
 import { answerGameQuestion, finishGameAttempt, startGameAttempt } from "../actions";
 
 /**
- * Rangka mode game di sisi siswa. Kunci jawaban TIDAK ada di sini — tiap soal
+ * Rangka mode game di sisi siswa. Kunci jawaban TIDAK ada di sini  tiap soal
  * dinilai server lewat answerGameQuestion. Reload halaman aman: attempt
  * "playing" dilanjutkan dari soal pertama yang belum terjawab (answeredIds).
  */
@@ -50,7 +50,7 @@ export function GamePlayer({
   answeredIds: string[];
 }) {
   const router = useRouter();
-  // Antrean soal yang belum terjawab (dibekukan saat mount — resume dari sini).
+  // Antrean soal yang belum terjawab (dibekukan saat mount  resume dari sini).
   const [queue] = useState(() => {
     const done = new Set(answeredIds);
     return questions.filter((q) => !done.has(q.id));

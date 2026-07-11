@@ -1,4 +1,4 @@
-/** Daftar game yang tersedia — sumber kebenaran untuk pilihan `gameType`. */
+/** Daftar game yang tersedia  sumber kebenaran untuk pilihan `gameType`. */
 export const GAME_CATALOG = [
   {
     id: "snake",

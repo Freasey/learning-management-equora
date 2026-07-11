@@ -505,7 +505,7 @@ async function appendQuestions(schoolId: string, assessmentId: string, items: Dr
 }
 
 /**
- * Minta Gemini menyusun soal lalu LANGSUNG menyimpannya ke kuis — menambah di
+ * Minta Gemini menyusun soal lalu LANGSUNG menyimpannya ke kuis  menambah di
  * urutan belakang, bukan mengganti, jadi aman diprompt berulang kali. Soal yang
  * tidak pas dihapus guru lewat daftar soal. Bahan referensi opsional: teks
  * tempel dan/atau berkas (PDF/DOCX/gambar/teks, dibaca via fileToPart).

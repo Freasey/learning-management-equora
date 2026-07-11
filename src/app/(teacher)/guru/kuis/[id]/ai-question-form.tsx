@@ -7,7 +7,7 @@ import { inputClass } from "@/components/admin/ui";
 import { generateQuestionsAi } from "../actions";
 
 /**
- * Panel "Buat Soal dengan AI" — jalur cepat untuk guru yang tidak sempat
+ * Panel "Buat Soal dengan AI"  jalur cepat untuk guru yang tidak sempat
  * menyusun soal manual. Soal hasil AI LANGSUNG tersimpan ke kuis (kuis masih
  * draf sampai diterbitkan) dan generate berikutnya MENAMBAH soal, sehingga
  * guru bisa prompt berulang kali lalu menghapus soal yang tidak pas dari
@@ -67,7 +67,7 @@ export function AiQuestionForm({
         <h2 className="font-display text-lg font-medium text-ink">Buat Soal dengan AI</h2>
       </div>
       <p className="mb-4 text-sm text-muted">
-        Tidak sempat menyusun soal? Cukup isi topik — atau unggah bahan referensi (PDF, DOCX,
+        Tidak sempat menyusun soal? Cukup isi topik  atau unggah bahan referensi (PDF, DOCX,
         gambar, atau teks) agar soal mengikuti bahan Anda. Soal langsung ditambahkan ke daftar di
         atas; ulangi kapan saja untuk menambah lagi, dan hapus soal yang tidak pas lewat tombol
         Hapus. Kuis baru dilihat siswa setelah Anda menekan Terbitkan.
@@ -130,7 +130,7 @@ export function AiQuestionForm({
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold text-ink">
             Bahan referensi{" "}
-            <span className="font-normal text-muted">(opsional — PDF, DOCX, gambar, atau teks; maks 15 MB)</span>
+            <span className="font-normal text-muted">(opsional  PDF, DOCX, gambar, atau teks; maks 15 MB)</span>
           </span>
           <input
             name="sourceFile"
@@ -168,7 +168,7 @@ export function AiQuestionForm({
             </p>
             {result.fromKnowledge && (
               <p className="rounded-md bg-accent/10 px-3 py-2 text-xs text-accent">
-                Soal disusun dari pengetahuan AI (tanpa bahan referensi) — mohon cek kebenaran isi
+                Soal disusun dari pengetahuan AI (tanpa bahan referensi)  mohon cek kebenaran isi
                 dan kunci jawabannya sebelum menerbitkan kuis.
               </p>
             )}

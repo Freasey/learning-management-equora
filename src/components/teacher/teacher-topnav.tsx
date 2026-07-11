@@ -11,7 +11,7 @@ type Item = { href: string; label: string };
 type Group = { id: string; label: string; href?: string; items: Item[] };
 
 const groups: Group[] = [
-  { id: "ikhtisar", label: "Ikhtisar", href: "/guru", items: [] },
+  { id: "beranda", label: "Beranda", href: "/guru", items: [] },
   {
     id: "mengajar",
     label: "Mengajar",

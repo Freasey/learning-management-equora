@@ -8,7 +8,7 @@ const BTN =
   "grid h-14 w-14 select-none place-items-center rounded-xl border border-line bg-paper text-ink shadow-sm transition-colors active:bg-sand-deep touch-manipulation";
 
 /**
- * Kontroler arah di layar (klik/sentuh) — dipakai semua game grid, terutama
+ * Kontroler arah di layar (klik/sentuh)  dipakai semua game grid, terutama
  * untuk pemain HP yang tidak punya keyboard. onPointerDown (bukan onClick)
  * supaya responnya instan saat disentuh.
  */

@@ -17,7 +17,7 @@ import { PacmanGame } from "@/games/pacman/pacman-game";
 import { SnakeGame } from "@/games/snake/snake-game";
 import type { GameOutcome } from "@/games/types";
 
-/** Soal dummy khusus arena — di aplikasi nyata soal datang dari kuis guru. */
+/** Soal dummy khusus arena  di aplikasi nyata soal datang dari kuis guru. */
 const DUMMY_QUESTIONS = [
   { text: "Hasil dari 5 × 6 adalah …", options: ["11", "30", "56", "25"], correctIndex: 1 },
   { text: "Planet terdekat dari Matahari adalah …", options: ["Venus", "Bumi", "Merkurius", "Mars"], correctIndex: 2 },
@@ -50,9 +50,9 @@ type ArenaResult = {
 
 const CAUSE_LABEL: Record<ResultCause, string> = {
   correct: "Benar",
-  "wrong-choice": "Salah — pilih jawaban keliru",
-  death: "Salah — kalah di game",
-  timeout: "Salah — waktu habis",
+  "wrong-choice": "Salah  pilih jawaban keliru",
+  death: "Salah  kalah di game",
+  timeout: "Salah  waktu habis",
 };
 
 export function ArenaClient() {
@@ -254,7 +254,7 @@ export function ArenaClient() {
                 <td className="py-2 pr-3 text-muted">{i + 1}</td>
                 <td className="py-2 pr-3 text-ink">{DUMMY_QUESTIONS[i].text}</td>
                 <td className="py-2 pr-3 text-ink">
-                  {r.chosenIndex === null ? "—" : LETTERS[r.chosenIndex]}
+                  {r.chosenIndex === null ? " " : LETTERS[r.chosenIndex]}
                 </td>
                 <td
                   className={cn(
@@ -415,7 +415,7 @@ export function ArenaClient() {
           </p>
           {lastResult.cause !== "correct" && (
             <p className="mt-1 text-sm text-ink">
-              Jawaban yang benar: <strong>{LETTERS[question.correctIndex]}</strong> —{" "}
+              Jawaban yang benar: <strong>{LETTERS[question.correctIndex]}</strong>  {" "}
               {question.options[question.correctIndex]}
             </p>
           )}

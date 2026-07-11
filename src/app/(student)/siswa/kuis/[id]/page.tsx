@@ -92,7 +92,7 @@ async function GameSection({
   gameType: string;
   attemptId: string | null;
 }) {
-  // Kunci jawaban (correctIndex) sengaja tidak ikut — dinilai di server.
+  // Kunci jawaban (correctIndex) sengaja tidak ikut  dinilai di server.
   const qs = await db
     .select({
       id: questions.id,

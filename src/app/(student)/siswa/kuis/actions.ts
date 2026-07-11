@@ -55,7 +55,7 @@ export async function submitAttempt(formData: FormData) {
   if (!cls || cls.classId !== a.classId) throw new Error("Kuis ini bukan untuk kelasmu.");
 
   // Kuis bermode game dikerjakan lewat game (aksi startGameAttempt), bukan form
-  // biasa — kecuali siswa tunanetra yang otomatis mendapat versi kuis biasa.
+  // biasa  kecuali siswa tunanetra yang otomatis mendapat versi kuis biasa.
   if (a.gameType && !(await isBlindStudent(studentId))) {
     throw new Error("Kuis ini dikerjakan lewat mode game.");
   }
@@ -175,7 +175,7 @@ export async function submitAttempt(formData: FormData) {
  * Mode game (kuis latihan bergamifikasi)
  *
  * Anti-curang: kunci jawaban TIDAK pernah dikirim ke browser. Tiap soal
- * dinilai lewat answerGameQuestion — server yang memutus benar/salah dan
+ * dinilai lewat answerGameQuestion  server yang memutus benar/salah dan
  * mencatat jawaban SEKALI (baris answers = gembok; soal terjawab tidak bisa
  * dijawab ulang, termasuk lewat reload halaman).
  * ============================================================ */
@@ -264,7 +264,7 @@ const gameAnswerSchema = z.object({
 
 /**
  * Nilai satu soal mode game di server. Mengembalikan benar/salah + kunci
- * (untuk umpan balik — soal sudah terkunci, tidak bisa dijawab ulang).
+ * (untuk umpan balik  soal sudah terkunci, tidak bisa dijawab ulang).
  */
 export async function answerGameQuestion(input: {
   attemptId: string;

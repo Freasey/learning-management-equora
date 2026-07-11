@@ -15,7 +15,7 @@ const COLS = 21;
 const ROWS = 15;
 const CELL = 30;
 
-// Palet "Scholarly Calm" (globals.css) — canvas tidak bisa membaca kelas
+// Palet "Scholarly Calm" (globals.css)  canvas tidak bisa membaca kelas
 // Tailwind, jadi nilai hex-nya disalin ke sini.
 const COLOR_BG = "#fbf9f4"; // paper
 const COLOR_GRID = "#ddd4c4"; // line
@@ -28,7 +28,7 @@ const LETTERS = ["A", "B", "C", "D", "E"];
 /**
  * Kulit game Ular. Dipasang sekali per soal (parent me-remount lewat `key`);
  * melapor tepat satu GameOutcome lalu berhenti. Panjang ular lintas-soal
- * adalah urusan rangka — dioper masuk lewat `snakeLength`.
+ * adalah urusan rangka  dioper masuk lewat `snakeLength`.
  */
 export function SnakeGame({
   question,
