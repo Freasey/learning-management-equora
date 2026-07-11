@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Gamepad2 } from "lucide-react";
 import { auth } from "@/auth";
 import { db, assessments, questions, subjects, classes, attempts, users, schools } from "@/db";
 import { isStorageConfigured } from "@/lib/storage";
+import { GAME_CATALOG } from "@/games/catalog";
 import { Button } from "@/components/ui/button";
 import { RowAction, Th } from "@/components/admin/ui";
-import { deleteQuestion, setAssessmentStatus, toggleCountToGrade } from "../actions";
+import { deleteQuestion, setAssessmentStatus, setGameType, toggleCountToGrade } from "../actions";
 import { QuestionForms } from "./question-forms";
 import { AiQuestionForm } from "./ai-question-form";
 
@@ -33,6 +34,7 @@ export default async function KuisDetailPage({
       status: assessments.status,
       durationMin: assessments.durationMin,
       countToGrade: assessments.countToGrade,
+      gameType: assessments.gameType,
       subjectName: subjects.name,
       className: classes.name,
     })
@@ -50,7 +52,19 @@ export default async function KuisDetailPage({
     .orderBy(asc(questions.sortOrder));
 
   const hasEssay = qs.some((q) => q.type === "essay");
+  const essayCount = qs.filter((q) => q.type === "essay").length;
   const totalPoints = qs.reduce((s, q) => s + q.points, 0);
+  const activeGame = GAME_CATALOG.find((g) => g.id === a.gameType);
+
+  // Syarat mode game — dihitung di sini agar UI bisa menjelaskan alasannya.
+  const gameBlockers = [
+    qs.length === 0 && "Belum ada soal — tambahkan soal dulu.",
+    a.type === "exam" && "Ujian tidak bisa memakai mode game — hanya kuis latihan.",
+    a.countToGrade &&
+      "Kuis ini dihitung ke nilai. Mode game hanya untuk latihan — matikan “Hitung ke nilai” dulu.",
+    essayCount > 0 &&
+      `Ada ${essayCount} soal esai — mode game butuh semua soal pilihan ganda.`,
+  ].filter((b): b is string => Boolean(b));
 
   // Jenjang sekolah → default "jenjang" di panel Buat Soal dengan AI.
   const [school] = await db
@@ -131,6 +145,59 @@ export default async function KuisDetailPage({
           Ada soal esai nilai tidak terisi otomatis; Anda perlu mengoreksi manual.
         </div>
       )}
+
+      {/* Mode Game — selalu terlihat; nonaktif dengan alasan bila syarat belum terpenuhi. */}
+      <section className="mb-8 rounded-xl border border-line bg-paper p-5">
+        <div className="flex items-center gap-2">
+          <Gamepad2 className="h-4 w-4 text-teal-700" />
+          <h2 className="font-display text-lg font-medium text-ink">Mode Game</h2>
+          {activeGame && (
+            <span className="rounded-full bg-teal-700/10 px-2.5 py-1 font-mono text-[10px] uppercase text-teal-700">
+              Aktif: {activeGame.label}
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-muted">
+          Ubah kuis latihan menjadi permainan — siswa menjawab dengan memakan buah
+          berlabel A–D di dalam game. Kalah di game atau kehabisan waktu dihitung
+          salah, jadi mode ini hanya untuk kuis latihan (tidak dihitung ke nilai).
+        </p>
+
+        {gameBlockers.length > 0 ? (
+          <>
+            <ul className="mt-3 space-y-1 text-sm text-accent">
+              {gameBlockers.map((b) => (
+                <li key={b}>• {b}</li>
+              ))}
+            </ul>
+            <select
+              disabled
+              className="mt-3 w-full max-w-xs cursor-not-allowed rounded-lg border border-line bg-sand/40 px-3 py-2 text-sm text-muted"
+            >
+              <option>Tanpa game (belum memenuhi syarat)</option>
+            </select>
+          </>
+        ) : (
+          <form action={setGameType} className="mt-3 flex flex-wrap items-center gap-2">
+            <input type="hidden" name="id" value={a.id} />
+            <select
+              name="gameType"
+              defaultValue={a.gameType ?? ""}
+              className="w-full max-w-xs rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink"
+            >
+              <option value="">Tanpa game (kuis biasa)</option>
+              {GAME_CATALOG.filter((g) => g.available).map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.label} — {g.description}
+                </option>
+              ))}
+            </select>
+            <Button type="submit" variant="primary" size="sm">
+              Simpan
+            </Button>
+          </form>
+        )}
+      </section>
 
       {/* Daftar soal */}
       <div className="mb-8 space-y-3">
@@ -213,10 +280,16 @@ export default async function KuisDetailPage({
                         className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase ${
                           s.status === "graded"
                             ? "bg-teal-700/10 text-teal-700"
-                            : "bg-accent/15 text-accent"
+                            : s.status === "playing"
+                              ? "bg-sand-deep text-ink"
+                              : "bg-accent/15 text-accent"
                         }`}
                       >
-                        {s.status === "graded" ? "Dinilai" : "Perlu koreksi"}
+                        {s.status === "graded"
+                          ? "Dinilai"
+                          : s.status === "playing"
+                            ? "Sedang main"
+                            : "Perlu koreksi"}
                       </span>
                     </td>
                     <td className="px-4 py-3 font-mono text-ink">
@@ -239,10 +312,18 @@ export default async function KuisDetailPage({
       </section>
 
       {/* Buat soal dengan AI (jalur cepat) */}
-      <AiQuestionForm assessmentId={a.id} schoolLevel={school?.level ?? null} />
+      <AiQuestionForm
+        assessmentId={a.id}
+        schoolLevel={school?.level ?? null}
+        gameActive={Boolean(a.gameType)}
+      />
 
       {/* Tambah soal manual */}
-      <QuestionForms assessmentId={a.id} storageOn={isStorageConfigured()} />
+      <QuestionForms
+        assessmentId={a.id}
+        storageOn={isStorageConfigured()}
+        gameActive={Boolean(a.gameType)}
+      />
     </div>
   );
 }

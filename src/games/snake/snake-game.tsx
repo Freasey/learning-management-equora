@@ -47,7 +47,9 @@ export function SnakeGame({
   const stateRef = useRef<SnakeState | null>(null);
   const doneRef = useRef(false);
   const onOutcomeRef = useRef(onOutcome);
-  onOutcomeRef.current = onOutcome;
+  useEffect(() => {
+    onOutcomeRef.current = onOutcome;
+  }, [onOutcome]);
 
   if (stateRef.current === null) {
     stateRef.current = createSnakeState({

@@ -12,7 +12,7 @@ export const GAME_CATALOG = [
     label: "Pacman",
     description:
       "Susuri labirin menuju buah jawaban sambil menghindari hantu. Tertangkap hantu = salah.",
-    available: false,
+    available: true,
   },
 ] as const;
 

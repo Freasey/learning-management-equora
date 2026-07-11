@@ -51,6 +51,7 @@ export default async function KoreksiPage({
       essayText: answers.essayText,
       fileUrl: answers.fileUrl,
       awarded: answers.awardedPoints,
+      gameCause: answers.gameCause,
     })
     .from(answers)
     .innerJoin(questions, eq(questions.id, answers.questionId))
@@ -101,9 +102,24 @@ export default async function KoreksiPage({
                   Jawaban siswa:{" "}
                   {r.choiceIndex != null && r.options
                     ? `${String.fromCharCode(65 + r.choiceIndex)}. ${r.options[r.choiceIndex] ?? ""}`
-                    : "(kosong)"}
+                    : r.gameCause === "death"
+                      ? "(kalah di game)"
+                      : r.gameCause === "timeout"
+                        ? "(waktu habis)"
+                        : "(kosong)"}
                   {r.choiceIndex === r.correctIndex ? " ✓" : " ✗"}
                 </span>
+                {/* Penyebab dari mode game — pembeda "salah konsep" vs "kalah main". */}
+                {r.gameCause === "death" && (
+                  <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 font-mono text-[10px] uppercase text-red-700">
+                    Kalah di game
+                  </span>
+                )}
+                {r.gameCause === "timeout" && (
+                  <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] uppercase text-accent">
+                    Waktu habis
+                  </span>
+                )}
               </div>
             ) : (
               <div className="mt-2">

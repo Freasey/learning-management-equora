@@ -16,9 +16,12 @@ import { generateQuestionsAi } from "../actions";
 export function AiQuestionForm({
   assessmentId,
   schoolLevel,
+  gameActive = false,
 }: {
   assessmentId: string;
   schoolLevel: string | null;
+  /** Mode game terpasang → generate esai/campuran harus dikonfirmasi (menonaktifkan game). */
+  gameActive?: boolean;
 }) {
   // Jenjang default mengikuti profil sekolah (SMK memakai kedalaman SMA).
   const defaultLevel =
@@ -37,6 +40,15 @@ export function AiQuestionForm({
     const form = formRef.current;
     if (!form) return;
     const fd = new FormData(form);
+    if (
+      gameActive &&
+      fd.get("kind") !== "mc" &&
+      !window.confirm(
+        "Kuis ini bermode game, dan mode game butuh semua soal pilihan ganda. Membuat soal esai/campuran akan MENONAKTIFKAN mode game. Lanjutkan?",
+      )
+    ) {
+      return;
+    }
     setAiError(null);
     setResult(null);
     startAi(async () => {

@@ -1,10 +1,11 @@
 import { redirect, notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db, assessments, questions, attempts, answers, subjects } from "@/db";
+import { db, assessments, questions, attempts, answers, subjects, users } from "@/db";
 import { getStudentClass } from "@/lib/student";
 import { isStorageConfigured } from "@/lib/storage";
 import { submitAttempt } from "../actions";
+import { GamePlayer } from "./game-player";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kuis · Siswa" };
@@ -28,6 +29,7 @@ export default async function KuisKerjakanPage({
       type: assessments.type,
       description: assessments.description,
       classId: assessments.classId,
+      gameType: assessments.gameType,
       subjectName: subjects.name,
     })
     .from(assessments)
@@ -45,6 +47,15 @@ export default async function KuisKerjakanPage({
     .where(and(eq(attempts.assessmentId, id), eq(attempts.studentId, studentId)))
     .limit(1);
 
+  // Fallback aksesibilitas: siswa tunanetra otomatis mengerjakan versi kuis
+  // biasa dari kuis yang sama (game butuh visual + refleks).
+  const [me] = await db
+    .select({ disabilities: users.disabilities })
+    .from(users)
+    .where(eq(users.id, studentId))
+    .limit(1);
+  const gameMode = Boolean(a.gameType) && !me?.disabilities?.includes("netra");
+
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6">
@@ -56,12 +67,66 @@ export default async function KuisKerjakanPage({
         {a.description && <p className="mt-2 text-sm text-slate-500">{a.description}</p>}
       </div>
 
-      {attempt ? (
+      {gameMode && (!attempt || attempt.status === "playing") ? (
+        <GameSection
+          assessmentId={a.id}
+          gameType={a.gameType!}
+          attemptId={attempt?.id ?? null}
+        />
+      ) : attempt ? (
         <Result attemptId={attempt.id} status={attempt.status} totalScore={attempt.totalScore} autoScore={attempt.autoScore} maxScore={attempt.maxScore} />
       ) : (
         <AttemptForm assessmentId={a.id} />
       )}
     </div>
+  );
+}
+
+/** Muat soal TANPA kunci jawaban + progres (untuk melanjutkan setelah reload). */
+async function GameSection({
+  assessmentId,
+  gameType,
+  attemptId,
+}: {
+  assessmentId: string;
+  gameType: string;
+  attemptId: string | null;
+}) {
+  // Kunci jawaban (correctIndex) sengaja tidak ikut — dinilai di server.
+  const qs = await db
+    .select({
+      id: questions.id,
+      text: questions.text,
+      options: questions.options,
+      points: questions.points,
+    })
+    .from(questions)
+    .where(and(eq(questions.assessmentId, assessmentId), eq(questions.type, "mc")))
+    .orderBy(asc(questions.sortOrder));
+
+  if (qs.length === 0) {
+    return (
+      <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-8 text-center text-slate-500">
+        Kuis ini belum punya soal.
+      </div>
+    );
+  }
+
+  const answered = attemptId
+    ? await db
+        .select({ questionId: answers.questionId })
+        .from(answers)
+        .where(eq(answers.attemptId, attemptId))
+    : [];
+
+  return (
+    <GamePlayer
+      assessmentId={assessmentId}
+      gameType={gameType}
+      questions={qs.map((q) => ({ ...q, options: q.options ?? [] }))}
+      initialAttemptId={attemptId}
+      answeredIds={answered.map((r) => r.questionId)}
+    />
   );
 }
 
@@ -172,6 +237,7 @@ async function Result({
       fileUrl: answers.fileUrl,
       awarded: answers.awardedPoints,
       isCorrect: answers.isCorrect,
+      gameCause: answers.gameCause,
       sortOrder: questions.sortOrder,
     })
     .from(answers)
@@ -209,6 +275,16 @@ async function Result({
             <span className="text-xs font-semibold text-slate-400">
               {r.awarded == null ? "menunggu" : `${r.awarded}/${r.points}`} poin
             </span>
+            {r.gameCause === "death" && (
+              <span className="rounded-full bg-coral/15 px-2 py-0.5 text-xs font-bold text-coral">
+                💥 kalah di game
+              </span>
+            )}
+            {r.gameCause === "timeout" && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                ⏰ waktu habis
+              </span>
+            )}
           </div>
           <p className="mt-2 font-bold text-slate-800">{r.text}</p>
           {r.imageUrl && (

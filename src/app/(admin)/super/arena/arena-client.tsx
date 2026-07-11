@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GAME_CATALOG, type GameTypeId } from "@/games/catalog";
+import { PacmanGame } from "@/games/pacman/pacman-game";
 import { SnakeGame } from "@/games/snake/snake-game";
 import type { GameOutcome } from "@/games/types";
 
@@ -170,7 +171,7 @@ export function ArenaClient() {
 
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
           <label className="block">
-            <span className="text-sm font-medium text-ink">Kecepatan ular</span>
+            <span className="text-sm font-medium text-ink">Kecepatan game</span>
             <select
               value={speedMs}
               onChange={(e) => setSpeedMs(Number(e.target.value))}
@@ -344,16 +345,26 @@ export function ArenaClient() {
 
       {phase === "play" && (
         <div className="mt-5">
-          <SnakeGame
-            key={qIndex}
-            question={question}
-            snakeLength={snakeLength}
-            speedMs={speedMs}
-            onOutcome={handleOutcome}
-          />
+          {gameId === "snake" ? (
+            <SnakeGame
+              key={qIndex}
+              question={question}
+              snakeLength={snakeLength}
+              speedMs={speedMs}
+              onOutcome={handleOutcome}
+            />
+          ) : (
+            <PacmanGame
+              key={qIndex}
+              question={question}
+              speedMs={speedMs}
+              onOutcome={handleOutcome}
+            />
+          )}
           <p className="mt-3 text-center text-xs text-muted">
-            Gerakkan dengan tombol panah / WASD, atau tombol arah di atas.
-            Makan buah berlabel huruf jawabanmu.
+            Gerakkan dengan tombol panah / WASD, atau tombol arah di atas. Makan
+            buah berlabel huruf jawabanmu.
+            {gameId === "pacman" && " Awas, jangan sampai tertangkap hantu!"}
           </p>
         </div>
       )}

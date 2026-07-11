@@ -29,7 +29,9 @@ export function useKeyboardDirection(
   enabled = true,
 ) {
   const onDirRef = useRef(onDir);
-  onDirRef.current = onDir;
+  useEffect(() => {
+    onDirRef.current = onDir;
+  }, [onDir]);
 
   useEffect(() => {
     if (!enabled) return;

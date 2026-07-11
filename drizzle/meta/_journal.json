@@ -50,6 +50,13 @@
       "when": 1783263515662,
       "tag": "0006_productive_fabian_cortez",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783739356511,
+      "tag": "0007_sharp_princess_powerful",
+      "breakpoints": true
     }
   ]
 }

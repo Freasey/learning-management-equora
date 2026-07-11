@@ -333,6 +333,9 @@ export const assessments = pgTable("assessments", {
   description: text("description").notNull().default(""),
   durationMin: integer("duration_min"),
   countToGrade: boolean("count_to_grade").notNull().default(true), // masuk ke penilaian?
+  // Mode game (gamifikasi kuis latihan): null = kuis biasa; "snake" | "pacman".
+  // Hanya boleh terisi bila type=quiz, countToGrade=false, dan SEMUA soal PG.
+  gameType: text("game_type"),
   status: text("status").notNull().default("draft"), // draft | published
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -464,7 +467,7 @@ export const attempts = pgTable(
     studentId: uuid("student_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    status: text("status").notNull().default("submitted"), // submitted | graded
+    status: text("status").notNull().default("submitted"), // submitted | graded | playing (mode game berlangsung)
     autoScore: integer("auto_score").notNull().default(0), // poin PG
     totalScore: integer("total_score"), // final (incl esai); null jika menunggu koreksi
     maxScore: integer("max_score").notNull().default(0), // total poin snapshot
@@ -490,6 +493,8 @@ export const answers = pgTable("answers", {
   fileUrl: text("file_url"), // lampiran jawaban esai (Vercel Blob)
   awardedPoints: integer("awarded_points"), // null = belum dinilai (esai)
   isCorrect: boolean("is_correct"), // PG
+  // Cara soal terjawab di mode game: "answer" | "death" | "timeout"; null = kuis biasa.
+  gameCause: text("game_cause"),
 });
 
 /**

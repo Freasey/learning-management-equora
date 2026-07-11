@@ -9,14 +9,17 @@ import { addQuestion, type QuestionState } from "../actions";
 export function QuestionForms({
   assessmentId,
   storageOn,
+  gameActive = false,
 }: {
   assessmentId: string;
   storageOn: boolean;
+  /** Mode game terpasang → tambah esai harus dikonfirmasi (menonaktifkan game). */
+  gameActive?: boolean;
 }) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <McForm assessmentId={assessmentId} storageOn={storageOn} />
-      <EssayForm assessmentId={assessmentId} storageOn={storageOn} />
+      <EssayForm assessmentId={assessmentId} storageOn={storageOn} gameActive={gameActive} />
     </div>
   );
 }
@@ -95,13 +98,34 @@ function McForm({ assessmentId, storageOn }: { assessmentId: string; storageOn: 
   );
 }
 
-function EssayForm({ assessmentId, storageOn }: { assessmentId: string; storageOn: boolean }) {
+function EssayForm({
+  assessmentId,
+  storageOn,
+  gameActive,
+}: {
+  assessmentId: string;
+  storageOn: boolean;
+  gameActive: boolean;
+}) {
   const [state, formAction, pending] = useActionState<QuestionState, FormData>(
     addQuestion,
     undefined,
   );
   return (
-    <form action={formAction} className="rounded-xl border border-line bg-paper p-5">
+    <form
+      action={formAction}
+      onSubmit={(e) => {
+        if (
+          gameActive &&
+          !window.confirm(
+            "Kuis ini bermode game, dan mode game butuh semua soal pilihan ganda. Menambah soal esai akan MENONAKTIFKAN mode game. Lanjutkan?",
+          )
+        ) {
+          e.preventDefault();
+        }
+      }}
+      className="rounded-xl border border-line bg-paper p-5"
+    >
       <input type="hidden" name="assessmentId" value={assessmentId} />
       <input type="hidden" name="type" value="essay" />
       <h2 className="mb-4 font-display text-lg font-medium text-ink">Soal esai</h2>

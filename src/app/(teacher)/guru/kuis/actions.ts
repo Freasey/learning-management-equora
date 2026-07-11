@@ -2,9 +2,10 @@
 
 import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { db, withTenant, assessments, questions, gradeItems, attempts, answers, grades, enrollments, subjects } from "@/db";
+import { GAME_CATALOG } from "@/games/catalog";
 import { requireTeacher } from "@/lib/auth-guard";
 import { getActiveYear } from "@/lib/academic";
 import { assertTeacherTeachesClass, teacherTeachesClass } from "@/lib/teaching";
@@ -246,7 +247,11 @@ export async function toggleCountToGrade(formData: FormData) {
   await withTenant(schoolId, async () => {
     const a = await ownAssessment(schoolId, teacherId, id);
     const next = !a.countToGrade;
-    await db.update(assessments).set({ countToGrade: next }).where(eq(assessments.id, id));
+    // Mode game hanya untuk latihan → dihitung ke nilai berarti game mati.
+    await db
+      .update(assessments)
+      .set(next ? { countToGrade: next, gameType: null } : { countToGrade: next })
+      .where(eq(assessments.id, id));
 
     if (next) {
       if (a.status === "published") await ensureGradeItem(schoolId, a);
@@ -256,6 +261,49 @@ export async function toggleCountToGrade(formData: FormData) {
     }
   });
   revalidatePath(`/guru/kuis/${id}`);
+}
+
+/**
+ * Pasang/lepas mode game (gamifikasi) sebuah kuis. Validasi server (UI hanya
+ * pemanis): game terdaftar & tersedia, kuis latihan (type=quiz, tidak dihitung
+ * ke nilai), dan SEMUA soal pilihan ganda.
+ */
+export async function setGameType(formData: FormData) {
+  const { schoolId, teacherId } = await requireTeacher();
+  const id = z.string().uuid().parse(formData.get("id"));
+  const raw = String(formData.get("gameType") ?? "");
+  const gameType = raw === "" ? null : raw;
+
+  if (gameType && !GAME_CATALOG.some((g) => g.id === gameType && g.available)) {
+    throw new Error("Game tidak dikenal.");
+  }
+
+  await withTenant(schoolId, async () => {
+    const a = await ownAssessment(schoolId, teacherId, id); // A2
+    if (gameType) {
+      if (a.type !== "quiz" || a.countToGrade) {
+        throw new Error("Mode game hanya untuk kuis latihan (tidak dihitung ke nilai).");
+      }
+      const qs = await db
+        .select({ type: questions.type })
+        .from(questions)
+        .where(eq(questions.assessmentId, id));
+      if (qs.length === 0) throw new Error("Tambahkan soal dulu sebelum memilih game.");
+      if (qs.some((q) => q.type !== "mc")) {
+        throw new Error("Mode game butuh semua soal berbentuk pilihan ganda.");
+      }
+    }
+    await db.update(assessments).set({ gameType }).where(eq(assessments.id, id));
+  });
+  revalidatePath(`/guru/kuis/${id}`);
+}
+
+/** Soal esai membatalkan syarat semua-PG → lepaskan mode game bila terpasang. */
+async function dropGameTypeIfSet(assessmentId: string) {
+  await db
+    .update(assessments)
+    .set({ gameType: null })
+    .where(and(eq(assessments.id, assessmentId), isNotNull(assessments.gameType)));
 }
 
 export type QuestionState = { error: string } | undefined;
@@ -340,6 +388,7 @@ export async function addQuestion(
       points: parsed.data.points,
       sortOrder: count,
     });
+    if (parsed.data.type === "essay") await dropGameTypeIfSet(parsed.data.assessmentId);
     revalidatePath(`/guru/kuis/${parsed.data.assessmentId}`);
     return undefined;
   });
@@ -449,6 +498,7 @@ async function appendQuestions(schoolId: string, assessmentId: string, items: Dr
       sortOrder: existing + i,
     })),
   );
+  if (items.some((q) => q.type === "essay")) await dropGameTypeIfSet(assessmentId);
   revalidatePath(`/guru/kuis/${assessmentId}`);
   refresh(); // segarkan router client agar daftar soal langsung tampil
   return items.length;
