@@ -10,6 +10,7 @@ import {
   Inbox,
   BookText,
   GraduationCap,
+  Gamepad2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const links = [
   { href: "/super/leads", label: "Lead & Demo", icon: Inbox },
   { href: "/super/announcements", label: "Pengumuman", icon: Megaphone },
   { href: "/super/dokumentasi", label: "Dokumentasi", icon: BookText },
+  { href: "/super/arena", label: "Arena Game", icon: Gamepad2 },
 ];
 
 export function AdminSidebar() {
