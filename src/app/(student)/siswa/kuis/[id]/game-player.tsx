@@ -14,6 +14,8 @@ import { answerGameQuestion, finishGameAttempt, startGameAttempt } from "../acti
  */
 
 const READ_SEC = 20;
+/** Jeda siap-siap sebelum game bergerak (papan tampil beku + hitung mundur). */
+const READY_SEC = 3;
 const PLAY_SEC = 60;
 const SNAKE_START = 3;
 const SNAKE_MAX = 15;
@@ -26,7 +28,7 @@ export type GameQuestionRow = {
   points: number;
 };
 
-type Phase = "start" | "read" | "play" | "feedback" | "finishing";
+type Phase = "start" | "read" | "ready" | "play" | "feedback" | "finishing";
 
 type Feedback = {
   correct: boolean;
@@ -71,17 +73,18 @@ export function GamePlayer({
 
   const question = queue[qPos];
 
-  // Detak hitung mundur fase baca & main.
+  // Detak hitung mundur fase baca, bersiap, dan main.
   useEffect(() => {
-    if (phase !== "read" && phase !== "play") return;
+    if (phase !== "read" && phase !== "ready" && phase !== "play") return;
     const id = window.setInterval(() => setCountdown((c) => c - 1), 1000);
     return () => window.clearInterval(id);
   }, [phase, qPos]);
 
-  // Waktu habis: baca → langsung main; main → tercatat salah (timeout).
+  // Hitung mundur habis: baca → bersiap 3 dtk; bersiap → main; main → timeout.
   useEffect(() => {
     if (countdown > 0) return;
-    if (phase === "read") startPlay();
+    if (phase === "read") beginReady();
+    if (phase === "ready") startPlay();
     if (phase === "play") void submitOutcome("timeout", null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countdown, phase]);
@@ -113,6 +116,11 @@ export function GamePlayer({
     setQPos(pos);
     setCountdown(READ_SEC);
     setPhase("read");
+  }
+
+  function beginReady() {
+    setCountdown(READY_SEC);
+    setPhase("ready");
   }
 
   function startPlay() {
@@ -226,13 +234,14 @@ export function GamePlayer({
         <span className="font-bold text-slate-500">
           Soal {questions.length - queue.length + qPos + 1}/{questions.length}
         </span>
-        {(phase === "read" || phase === "play") && (
+        {(phase === "read" || phase === "ready" || phase === "play") && (
           <span
             className={`rounded-full px-3 py-1 font-bold ${
-              countdown <= 5 ? "bg-coral/15 text-coral" : "bg-sky/15 text-sky"
+              phase === "play" && countdown <= 5 ? "bg-coral/15 text-coral" : "bg-sky/15 text-sky"
             }`}
           >
-            {phase === "read" ? "Baca dulu" : "Main"} · {Math.max(countdown, 0)} dtk
+            {phase === "read" ? "Baca dulu" : phase === "ready" ? "Bersiap" : "Main"} ·{" "}
+            {Math.max(countdown, 0)} dtk
           </span>
         )}
       </div>
@@ -258,25 +267,40 @@ export function GamePlayer({
       {phase === "read" && (
         <button
           type="button"
-          onClick={startPlay}
+          onClick={beginReady}
           className="mt-5 w-full rounded-2xl bg-sky py-3 text-base font-extrabold text-white shadow-[0_4px_0_#3a8fc2] transition active:translate-y-1 active:shadow-[0_1px_0_#3a8fc2]"
         >
           Langsung Main!
         </button>
       )}
 
-      {phase === "play" && (
+      {(phase === "ready" || phase === "play") && (
         <div className="mt-4">
-          {gameType === "snake" ? (
-            <SnakeGame
-              key={question.id}
-              question={question}
-              snakeLength={snakeLength}
-              onOutcome={handleOutcome}
-            />
-          ) : (
-            <PacmanGame key={question.id} question={question} onOutcome={handleOutcome} />
-          )}
+          <div className="relative">
+            {gameType === "snake" ? (
+              <SnakeGame
+                key={question.id}
+                question={question}
+                snakeLength={snakeLength}
+                paused={phase === "ready"}
+                onOutcome={handleOutcome}
+              />
+            ) : (
+              <PacmanGame
+                key={question.id}
+                question={question}
+                paused={phase === "ready"}
+                onOutcome={handleOutcome}
+              />
+            )}
+            {phase === "ready" && (
+              <div className="absolute inset-0 grid place-items-center rounded-2xl bg-slate-800/30">
+                <span className="font-kid-display text-8xl font-extrabold text-white drop-shadow-lg">
+                  {Math.max(countdown, 1)}
+                </span>
+              </div>
+            )}
+          </div>
           <p className="mt-3 text-center text-xs text-slate-400">
             Panah / WASD di keyboard, atau tombol arah di atas. Makan buah berlabel
             huruf jawabanmu!
