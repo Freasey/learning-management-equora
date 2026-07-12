@@ -49,11 +49,11 @@ function Hero() {
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-20 md:grid-cols-2 md:py-28">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full bg-sand px-3 py-1 font-mono text-xs uppercase tracking-widest text-teal-700">
-            <Sparkles className="h-3.5 w-3.5" /> Manajemen Sekolah K-12
+            <Sparkles className="h-3.5 w-3.5" /> E-Learning Sekolah K-12
           </span>
           <h1 className="mt-5 font-display text-4xl font-medium leading-[1.05] tracking-tight text-ink md:text-6xl">
-            Administrasi sekolah <em className="text-teal-700 italic">selesai</em>,
-            guru kembali fokus mengajar.
+            Mengajar lebih cepat, belajar lebih{" "}
+            <em className="text-teal-700 italic">seru</em>.
           </h1>
           <p className="mt-5 max-w-md text-lg text-muted">
             Kelola kelas dan nilai, AI bantu buat soal ujian, dan setiap siswa 
