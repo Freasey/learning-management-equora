@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "Tentang Kami Equora",
   description:
-    "Equora membangun sistem manajemen sekolah yang tenang, kredibel, dan inklusif untuk pendidikan Indonesia.",
+    "Equora membangun sistem manajemen sekolah yang dipakai admin, guru, dan siswa Indonesia sehari-hari.",
 };
 
 const values = [
@@ -17,13 +17,13 @@ const values = [
   },
   {
     icon: Heart,
-    title: "Tenang & manusiawi",
-    desc: "Teknologi yang meredakan beban administrasi, bukan menambahnya.",
+    title: "Menghemat waktu guru",
+    desc: "Fitur yang menghemat waktu guru, bukan menambah kolom yang harus diisi.",
   },
   {
     icon: Target,
     title: "Fokus pada hasil",
-    desc: "Membantu guru kembali fokus mengajar dan sekolah tumbuh.",
+    desc: "Membantu guru kembali fokus mengajar dan punya lebih banyak waktu untuk mengajar & belajar.",
   },
   {
     icon: Users,
@@ -43,7 +43,7 @@ export default function TentangPage() {
     <>
       <PageHero
         eyebrow="Tentang Kami"
-        title="Pendidikan yang tenang untuk semua"
+        title="Pendidikan yang adil untuk semua siswa"
         subtitle="Kami percaya administrasi sekolah seharusnya tidak rumit dan setiap siswa berhak atas akses yang setara."
       />
 
@@ -56,9 +56,9 @@ export default function TentangPage() {
             tertinggal karena alat belajar tidak dirancang untuk mereka.
           </p>
           <p>
-            Kami membangun satu platform yang menyatukan siswa, guru, dan admin
-            sekolah dari manajemen kelas, kurikulum, hingga penilaian dengan
-            fitur inklusif sebagai bagian inti, bukan tambahan.
+            Kami membangun Equora untuk siswa, guru, dan admin sekolah sekaligus
+            manajemen kelas, kurikulum, dan penilaian dalam satu alur kerja,
+            dengan aksesibilitas jadi bagian desain sejak baris kode pertama.
           </p>
         </div>
 

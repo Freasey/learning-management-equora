@@ -103,7 +103,7 @@ export function GamePlayer({
       setAttemptId(res.attemptId);
       beginRead(0);
     } catch {
-      setError("Gagal memulai. Periksa koneksi lalu coba lagi.");
+      setError("Game gagal dimuat, coba refresh halaman.");
     } finally {
       setBusy(false);
     }
@@ -154,7 +154,7 @@ export function GamePlayer({
       setFeedback({ ...res, cause });
       setPhase("feedback");
     } catch {
-      setError("Jawaban belum tersimpan. Periksa koneksi lalu kirim ulang.");
+      setError("Jawabanmu belum sempat tersimpan — tekan kirim sekali lagi.");
       setPhase("feedback");
     } finally {
       setBusy(false);

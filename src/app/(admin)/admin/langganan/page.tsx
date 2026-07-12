@@ -41,7 +41,7 @@ export default async function LanggananPage({
       {activated && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-teal-700/20 bg-teal-700/5 px-4 py-3 text-sm text-teal-800">
           <CheckCircle2 className="h-4 w-4" />
-          Paket berhasil diaktifkan. Terima kasih!
+          Paket berhasil diaktifkan.
         </div>
       )}
 

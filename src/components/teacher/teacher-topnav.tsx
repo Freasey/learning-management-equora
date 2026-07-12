@@ -96,7 +96,7 @@ export function TeacherTopNav({
             {canManage && (
               <Link
                 href="/admin"
-                title="Kelola kelas / workspace"
+                title="Kelola kelas / ruang kerja"
                 className="hidden items-center gap-1.5 rounded-md border border-paper/20 px-2.5 py-1.5 text-xs font-semibold text-paper/90 transition-colors hover:bg-paper/10 sm:flex"
               >
                 <Settings2 className="h-3.5 w-3.5" />
@@ -112,8 +112,8 @@ export function TeacherTopNav({
             <NotifBell count={unread} />
             <Link
               href="/workspace"
-              aria-label="Kelola workspace"
-              title="Kelola workspace"
+              aria-label="Kelola ruang kerja"
+              title="Kelola ruang kerja"
               className="grid h-8 w-8 place-items-center rounded-md border border-paper/20 text-paper/90 transition-colors hover:bg-paper/10"
             >
               <LayoutGrid className="h-4 w-4" />

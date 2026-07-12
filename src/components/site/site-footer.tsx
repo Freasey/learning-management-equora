@@ -16,7 +16,7 @@ const cols = [
     title: "Perusahaan",
     links: [
       { href: "/tentang", label: "Tentang Kami" },
-      { href: "/#testimoni", label: "Testimoni" },
+      { href: "/#bukti-produk", label: "Bukti Produk" },
       { href: "/kontak", label: "Kontak" },
       { href: "/blog", label: "Blog" },
     ],
@@ -46,8 +46,8 @@ export function SiteFooter() {
             </span>
           </Link>
           <p className="mt-4 max-w-xs text-sm text-muted">
-            Sistem manajemen sekolah yang tenang, kredibel, dan inklusif untuk
-            siswa, guru, dan admin sekolah di Indonesia.
+            Equora — dipakai admin, guru, dan siswa untuk mengelola kelas,
+            nilai, dan aksesibilitas belajar setiap hari.
           </p>
         </div>
 

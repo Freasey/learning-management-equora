@@ -18,7 +18,7 @@ const posts = [
     category: "Inklusi",
     title: "Membangun kelas yang ramah untuk semua siswa",
     excerpt:
-      "Mengapa aksesibilitas seharusnya menjadi bagian inti, bukan tambahan, dalam pendidikan.",
+      "Kami menulis tentang aksesibilitas karena itu alasan Equora dibangun.",
     date: "Segera",
   },
   {
@@ -35,7 +35,7 @@ export default function BlogPage() {
     <>
       <PageHero
         eyebrow="Blog"
-        title="Wawasan untuk sekolah yang lebih baik"
+        title="Catatan dari tim Equora"
         subtitle="Tips manajemen sekolah, pendidikan inklusif, dan kabar produk Equora."
       />
 

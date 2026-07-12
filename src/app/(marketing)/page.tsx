@@ -22,9 +22,9 @@ import { Button } from "@/components/ui/button";
 import { DemoVideo } from "@/components/site/demo-video";
 
 export const metadata: Metadata = {
-  title: "Equora Sistem Manajemen Sekolah yang Tenang & Inklusif",
+  title: "Equora — Manajemen Sekolah dengan AI & Aksesibilitas Bawaan",
   description:
-    "Kelola siswa, guru, kurikulum, kelas, dan penilaian dalam satu platform. Dilengkapi fitur inklusif untuk siswa disabilitas.",
+    "Kelola siswa, guru, kurikulum, kelas, dan penilaian. AI bantu buat soal ujian, dan setiap siswa punya cara belajar yang sesuai untuknya.",
 };
 
 export default function HomePage() {
@@ -52,13 +52,13 @@ function Hero() {
             <Sparkles className="h-3.5 w-3.5" /> Manajemen Sekolah K-12
           </span>
           <h1 className="mt-5 font-display text-4xl font-medium leading-[1.05] tracking-tight text-ink md:text-6xl">
-            Belajar <em className="text-teal-700 italic">tenang</em>,
-            mengelola sekolah dengan kepala dingin.
+            Administrasi sekolah <em className="text-teal-700 italic">kelar</em>,
+            guru balik fokus mengajar.
           </h1>
           <p className="mt-5 max-w-md text-lg text-muted">
-            Satu platform untuk siswa, guru, dan admin sekolah dari manajemen
-            kelas hingga penilaian, lengkap dengan fitur inklusif untuk semua
-            siswa.
+            Kelola kelas dan nilai, AI bantu buat soal ujian, dan setiap siswa —
+            termasuk yang berkebutuhan khusus — punya cara belajar yang sesuai
+            untuknya.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button href="/daftar" variant="accent" size="lg">
@@ -69,7 +69,7 @@ function Hero() {
             </Button>
           </div>
           <p className="mt-5 font-mono text-xs text-muted">
-            Tanpa kartu kredit · Setup dalam hitungan menit
+            Coba dulu di sekolah demo yang selalu aktif, tanpa perlu daftar
           </p>
         </div>
 
@@ -115,7 +115,7 @@ const featureGroups = [
   {
     icon: ShieldCheck,
     role: "Admin Sekolah",
-    desc: "Kendali penuh atas data sekolah dalam satu dashboard.",
+    desc: "Data siswa, guru, dan kelas tersinkron otomatis — tidak perlu spreadsheet terpisah-pisah lagi.",
     items: [
       "Manajemen siswa, guru & kelas",
       "Kurikulum, mata pelajaran & jadwal",
@@ -167,8 +167,8 @@ function Features() {
     <section id="fitur" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20">
       <SectionHeading
         eyebrow="Fitur"
-        title="Satu platform, tiga peran"
-        subtitle="Dirancang untuk kebutuhan nyata setiap orang di sekolah."
+        title="Tiga peran, satu alur kerja yang sama"
+        subtitle="Admin, guru, dan siswa mengakses data yang sama secara langsung — bukan tiga sistem terpisah."
       />
       <div className="mt-12 grid gap-6 md:grid-cols-3">
         {featureGroups.map((g) => (
@@ -353,12 +353,12 @@ const proofPoints = [
   {
     icon: Accessibility,
     title: "4 mode aksesibilitas aktif",
-    desc: "Teks-ke-suara, live caption, teks-ke-ucapan, dan palet ramah buta warna — bukan wacana, sudah berjalan.",
+    desc: "4 mode aksesibilitas aktif: netra, tunarungu, tunawicara, buta warna.",
   },
   {
     icon: Gamepad2,
     title: "Kuis jadi game Ular & Pacman",
-    desc: "Kuis pilihan ganda yang sama bisa dimainkan sebagai game, bukan cuma formulir soal.",
+    desc: "Kuis pilihan ganda yang sama bisa dimainkan sebagai game Ular atau Pacman.",
   },
 ];
 
@@ -368,7 +368,7 @@ function Testimonials() {
       <div className="mx-auto max-w-6xl px-5 py-20">
         <SectionHeading
           eyebrow="Bukti Produk"
-          title="Bukan janji, ini yang sudah berjalan"
+          title="Empat hal yang benar-benar berjalan hari ini"
           subtitle="Coba sendiri di sekolah demo yang selalu aktif — tidak perlu daftar dulu."
         />
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -444,10 +444,11 @@ function CtaBand() {
     <section className="mx-auto max-w-6xl px-5 pb-24">
       <div className="overflow-hidden rounded-2xl bg-teal-900 px-8 py-14 text-center text-paper md:px-16">
         <h2 className="mx-auto max-w-2xl font-display text-3xl font-medium leading-tight md:text-4xl">
-          Siap menenangkan administrasi sekolah Anda?
+          Mulai kelola sekolah Anda dengan Equora hari ini.
         </h2>
         <p className="mx-auto mt-4 max-w-lg text-paper/70">
-          Coba Equora gratis hari ini. Tanpa kartu kredit, tanpa komitmen.
+          Coba Equora gratis hari ini, atau jelajahi dulu di sekolah demo yang
+          selalu aktif.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button href="/daftar" variant="accent" size="lg">

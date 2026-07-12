@@ -66,9 +66,9 @@ export default async function GuruHome() {
             Belum ada kelas yang ditugaskan
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Anda akan bisa membuat materi, kuis, dan menilai begitu admin
-            menugaskan Anda mengajar sebuah kelas &amp; mata pelajaran lewat{" "}
-            <strong className="text-ink">Jadwal</strong>. Hubungi admin sekolah
+            Setelah admin menugaskan Anda ke kelas &amp; mata pelajaran lewat{" "}
+            <strong className="text-ink">Jadwal</strong>, Anda bisa langsung
+            membuat materi, kuis, dan menilai. Hubungi admin sekolah
             Anda, atau buka{" "}
             <Link
               href="/panduan/guru"

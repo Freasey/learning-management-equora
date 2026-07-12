@@ -62,7 +62,7 @@ export default async function SuperAdminHome() {
       <header className="mb-8">
         <h1 className="font-display text-3xl font-medium text-ink">Ringkasan</h1>
         <p className="mt-1 text-sm text-muted">
-          Selamat datang di konsol platform Equora.
+          Ringkasan seluruh sekolah & langganan aktif hari ini.
         </p>
       </header>
 

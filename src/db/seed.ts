@@ -80,7 +80,7 @@ const plans = [
   {
     key: "basic",
     name: "Basic",
-    description: "Untuk sekolah menengah yang sedang bertumbuh.",
+    description: "Untuk sekolah dengan siswa & guru yang terus bertambah tiap tahun.",
     priceMonthly: 499_000,
     priceYearly: 4_990_000,
     quotaStudents: 300,
@@ -94,7 +94,7 @@ const plans = [
   {
     key: "pro",
     name: "Pro",
-    description: "Untuk sekolah besar dengan kebutuhan lengkap.",
+    description: "Untuk sekolah besar atau yayasan dengan banyak cabang/jenjang.",
     priceMonthly: 1_499_000,
     priceYearly: 14_990_000,
     quotaStudents: 1500,

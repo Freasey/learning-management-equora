@@ -44,14 +44,14 @@ export async function approveMember(formData: FormData) {
     schoolId,
     type: "approval",
     title: "Pendaftaran disetujui",
-    body: "Akun Anda telah diterima. Selamat datang!",
+    body: "Akun Anda sudah aktif, silakan login.",
     href: member.role === "student" ? "/siswa" : "/guru",
   });
   if (member.email) {
     await sendEmail({
       to: member.email,
-      subject: "Pendaftaran Anda disetujui Equora",
-      html: `<p>Halo ${member.name},</p><p>Akun Anda telah disetujui. Silakan masuk untuk mulai menggunakan Equora.</p>`,
+      subject: "Pendaftaran Anda di Equora Disetujui",
+      html: `<p>Halo ${member.name},</p><p>Akun Anda sudah aktif. Login sekarang untuk melihat kelas dan jadwal Anda.</p>`,
     });
   }
 

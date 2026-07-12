@@ -106,7 +106,7 @@ export async function saveMaterial(
     const hasNewFile = file instanceof File && file.size > 0;
     if (hasNewFile) {
       if (!isStorageConfigured()) {
-        return { error: "Unggah berkas nonaktif penyimpanan belum dikonfigurasi." };
+        return { error: "Belum bisa unggah berkas: penyimpanan sekolah ini belum diaktifkan admin." };
       }
       try {
         const stored = await uploadFile({
@@ -270,7 +270,7 @@ export async function generateSlides(
       const out = await generateFromParts(parts);
       if (!out) {
         console.warn("[slides] Gemini kembalikan kosong/null");
-        return { error: "AI tidak mengembalikan hasil. Coba lagi." };
+        return { error: "AI belum berhasil membuat slide. Coba generate ulang." };
       }
       await recordAiUsage(schoolId, teacherId, "material.slides");
       console.log("[slides] SUKSES panjang hasil:", out.length, "char");
@@ -390,7 +390,7 @@ export async function generateDesigns(
         .join("\n");
 
       const out = await generateFromParts([{ text: prompt }]);
-      if (!out) return { error: "AI tidak mengembalikan hasil. Coba lagi." };
+      if (!out) return { error: "AI belum berhasil membuat desain. Coba lagi atau pilih desain manual." };
 
       // Bersihkan pagar kode bila AI tetap menambahkannya.
       const jsonText = out.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");

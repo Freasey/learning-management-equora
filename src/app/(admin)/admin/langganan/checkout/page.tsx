@@ -148,7 +148,7 @@ export default async function CheckoutPage({
             <Li>
               {plan.storageGb === null ? "Storage ∞" : `${plan.storageGb} GB storage`}
             </Li>
-            <Li>Semua fitur inti</Li>
+            <Li>Kuis AI, PPTX otomatis, 4 mode aksesibilitas, dan lainnya</Li>
           </ul>
 
           <button

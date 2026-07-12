@@ -81,7 +81,7 @@ export function MateriManager({
         <div>
           <h1 className="font-display text-3xl font-medium text-ink">Materi Ajar</h1>
           <p className="mt-1 text-sm text-muted">
-            Satu tempat untuk menulis, mengunggah berkas, atau menautkan materi.
+            Tulis langsung, unggah berkas, atau tempel tautan — pilih salah satu.
           </p>
         </div>
         {target === null && (
@@ -461,8 +461,8 @@ function MaterialPanel({
                 <div>
                   <h3 className="text-sm font-semibold text-ink">Buat materi kilat</h3>
                   <p className="text-xs text-muted">
-                    Cukup pilih Mapel & isi Topik di atas, lalu satu klik slide + 3 desain langsung
-                    jadi. Tanpa bahan modul, AI menyusun dari pengetahuannya.
+                    Isi mapel & topik, AI susun slide lengkap dengan 3 pilihan desain. Tanpa bahan
+                    modul, AI menyusun dari pengetahuannya.
                   </p>
                 </div>
               </div>
@@ -475,11 +475,11 @@ function MaterialPanel({
                   className="inline-flex items-center gap-1.5 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-paper transition hover:brightness-95 disabled:opacity-50"
                 >
                   <Sparkles className="h-4 w-4" />
-                  {aiPending ? "Menyiapkan materi & desain…" : "Buatkan semuanya"}
+                  {aiPending ? "Menyiapkan materi & desain…" : "Generate Slide & Soal"}
                 </button>
                 {!aiConfigured && (
                   <span className="text-xs text-muted">
-                    Mode demo atur <code className="font-mono text-[11px]">GEMINI_API_KEY</code> untuk hasil nyata.
+                    Mode demo — atur <code className="font-mono text-[11px]">GEMINI_API_KEY</code> supaya slide dibuat AI sungguhan, bukan contoh.
                   </span>
                 )}
               </div>
@@ -679,7 +679,7 @@ function MaterialPanel({
               </>
             ) : (
               <p className="rounded-md border border-dashed border-line bg-sand/40 px-3 py-2 text-xs text-muted">
-                Unggah berkas nonaktif penyimpanan belum dikonfigurasi.
+                Belum bisa unggah berkas: penyimpanan sekolah ini belum diaktifkan admin.
               </p>
             )}
           </div>

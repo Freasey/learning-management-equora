@@ -597,7 +597,7 @@ export async function generateQuestionsAi(formData: FormData): Promise<{
       }
 
       const out = await generateFromParts(parts);
-      if (!out) return { error: "AI tidak mengembalikan hasil. Coba lagi." };
+      if (!out) return { error: "AI belum berhasil membuat soal. Coba lagi atau ubah topiknya." };
       const items = parseAiQuestions(out).slice(0, MAX_AI_QUESTIONS);
       if (items.length === 0) {
         return { error: "Hasil AI tidak bisa dibaca. Coba lagi atau perjelas topiknya." };

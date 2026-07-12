@@ -117,7 +117,7 @@ export default async function PengaturanSiswaPage() {
             Kebutuhan Khususmu
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Pilih kebutuhanmu supaya kami bisa membantu caramu belajar.
+            Centang yang kamu butuhkan, fiturnya langsung aktif untukmu.
           </p>
 
           <div className="mt-4 space-y-2.5">
@@ -162,8 +162,8 @@ export default async function PengaturanSiswaPage() {
                         Mode Warna
                       </div>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        Pilih warna yang sulit kamu bedakan warna aplikasi
-                        langsung menyesuaikan untukmu.
+                        Pilih warna yang sulit kamu bedakan, tampilan aplikasi
+                        langsung berubah menyesuaikan.
                       </p>
                       <div
                         className="mt-3 space-y-2"

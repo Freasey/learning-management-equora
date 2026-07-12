@@ -213,7 +213,7 @@ async function GradeBook({
           {activeItem.source === "assessment" && (
             <p className="mb-4 text-xs text-muted">
               Kolom <strong className="text-teal-700">otomatis</strong> dari kuis terisi
-              sendiri saat siswa mengerjakan; nilai di sini bisa Anda override.
+              sendiri saat siswa mengerjakan; nilai di sini bisa Anda ubah manual.
             </p>
           )}
           {students.length === 0 ? (

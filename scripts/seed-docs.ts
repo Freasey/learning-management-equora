@@ -30,7 +30,7 @@ const articles: Seed[] = [
     title: "Apa itu Equora?",
     summary: "Platform manajemen pembelajaran untuk sekolah maupun guru mandiri.",
     icon: "Sparkles",
-    body: `Equora adalah platform manajemen sekolah & pembelajaran. Satu tempat untuk mengelola kelas, mata pelajaran, jadwal, materi, kuis/ujian, dan nilai.
+    body: `Equora menyatukan data kelas, jadwal, materi, kuis, dan nilai sekolah Anda — yang biasanya tersebar di Excel dan grup WhatsApp berbeda.
 
 ## Untuk siapa?
 - **Sekolah** admin menyiapkan struktur akademik, lalu guru & siswa memakainya.
@@ -48,7 +48,7 @@ const articles: Seed[] = [
     title: "Cara mulai memakai Equora",
     summary: "Daftarkan sekolah, gabung dengan kode, atau buat kelas pribadi.",
     icon: "Rocket",
-    body: `Ada tiga jalur masuk, sesuaikan dengan kebutuhan Anda.
+    body: `Ada tiga jalur masuk, pilih sesuai peran Anda:
 
 1. **Daftarkan sekolah** lewat halaman *Daftar* cocok untuk admin/yayasan. Anda memilih jenjang & paket, lalu langsung mengelola sekolah.
 2. **Gabung ke sekolah** lewat halaman *Gabung* memakai **kode sekolah** dari admin. Akun aktif setelah disetujui.
@@ -127,7 +127,7 @@ Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** d
     body: `Tentukan mata pelajaran yang dipakai sekolah.
 
 ## Cara pakai
-- **Pilih dari katalog** kurikulum sesuai jenjang (centang yang dipakai) hemat dan terstandar.
+- **Pilih dari katalog** kurikulum sesuai jenjang (centang yang dipakai) — sesuai standar sekolah Anda.
 - **Tambah kustom** untuk muatan lokal.
 - Atur **kode** (boleh dikosongkan → dibuat otomatis dari nama) dan **KKM** tiap mapel.`,
   },

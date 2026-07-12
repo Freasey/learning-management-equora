@@ -254,7 +254,7 @@ async function Result({
               {totalScore}
               <span className="text-2xl text-slate-400">/{maxScore}</span>
             </div>
-            <p className="mt-1 font-bold text-slate-600">Kerja bagus! Sudah dinilai.</p>
+            <p className="mt-1 font-bold text-slate-600">Sudah dinilai — lihat hasilnya di bawah.</p>
           </>
         ) : (
           <>

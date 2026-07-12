@@ -88,9 +88,9 @@ export default async function AksesibilitasDetailPage({
       <div className="mt-6 flex items-start gap-3 rounded-3xl border-2 border-sunny/40 bg-sunny/10 p-5">
         <IconAlert className="mt-0.5 h-5 w-5 shrink-0 text-sunny" />
         <p className="text-sm text-slate-600">
-          Fitur bertanda <span className="font-extrabold">Segera</span> sedang
-          kami siapkan. Nyalakan preferensimu sekarang di Pengaturan, nanti fitur
-          otomatis aktif saat sudah siap.
+          Fitur bertanda <span className="font-extrabold">Segera</span> masih
+          kami kerjakan. Centang kebutuhanmu sekarang di Pengaturan — nanti
+          otomatis nyala begitu selesai.
         </p>
       </div>
       )}

@@ -45,7 +45,7 @@ export default async function NilaiSiswaPage() {
       <p className="mb-6 text-slate-500">Kelas {cls.className}</p>
 
       {items.length === 0 ? (
-        <Empty text="Belum ada penilaian. Semangat belajar!" />
+        <Empty text="Belum ada nilai kuis untuk mata pelajaran ini." />
       ) : (
         <div className="overflow-hidden rounded-3xl border-2 border-slate-200/70 bg-white">
           <table className="w-full text-sm">

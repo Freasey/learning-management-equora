@@ -132,11 +132,12 @@ export default async function AdminHome() {
       {school.type === "personal" && scheduleCount === 0 && (
         <div className="mb-8 rounded-xl border border-accent/40 bg-accent/5 p-6">
           <h2 className="font-display text-lg font-medium text-ink">
-            Mulai cepat buat kelas instan
+            Kelas Instan (Ruang Kerja Pribadi)
           </h2>
           <p className="mb-4 mt-1 text-sm text-muted">
-            Khusus ruang kerja pribadi: satu langkah menyiapkan tahun ajaran,
-            mata pelajaran, kelas, dan jadwal Anda langsung bisa mengajar.
+            Satu form ini otomatis membuat tahun ajaran, mata pelajaran, kelas,
+            dan jadwal sekaligus — untuk guru yang mengajar sendiri tanpa
+            struktur sekolah formal.
           </p>
           <form
             action={createInstantClass}

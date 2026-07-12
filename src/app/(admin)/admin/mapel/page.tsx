@@ -82,7 +82,7 @@ export default async function MapelPage() {
 
         {available.length === 0 ? (
           <div className="rounded-lg border border-dashed border-line py-8 text-center text-sm text-muted">
-            Semua mapel katalog sudah ditambahkan. 🎉
+            Semua mapel di katalog sudah ditambahkan.
           </div>
         ) : (
           <form action={adoptCatalogSubjects}>
