@@ -84,7 +84,7 @@ function HeroVisual() {
     <div className="relative overflow-hidden rounded-2xl border border-line bg-paper p-2 shadow-[0_24px_60px_-30px_rgba(14,58,58,0.45)]">
       <DemoVideo
         src="/videos/hero-demo.mp4"
-        poster="/videos/hero-demo-poster.jpg"
+        poster="/videos/hero-demo-poster.svg"
         alt="Guru meng-generate soal AI dari materi PDF yang diunggah"
         eager
         className="aspect-4/3 w-full rounded-xl object-cover"
@@ -124,7 +124,7 @@ const featureGroups = [
     ],
     video: {
       src: "/videos/feature-admin-demo.mp4",
-      poster: "/videos/feature-admin-demo-poster.jpg",
+      poster: "/videos/feature-admin-demo-poster.svg",
       alt: "Admin menyetujui pendaftaran siswa via kode sekolah",
     },
   },
@@ -140,7 +140,7 @@ const featureGroups = [
     ],
     video: {
       src: "/videos/feature-guru-demo.mp4",
-      poster: "/videos/feature-guru-demo-poster.jpg",
+      poster: "/videos/feature-guru-demo-poster.svg",
       alt: "Guru meng-generate soal dari materi PDF yang diunggah",
     },
   },
@@ -156,7 +156,7 @@ const featureGroups = [
     ],
     video: {
       src: "/videos/feature-siswa-demo.mp4",
-      poster: "/videos/feature-siswa-demo-poster.jpg",
+      poster: "/videos/feature-siswa-demo-poster.svg",
       alt: "Siswa mengerjakan kuis dalam bentuk game Ular",
     },
   },
@@ -212,7 +212,7 @@ const inclusive = [
     desc: "Teks-ke-suara untuk seluruh konten, dapat dinyalakan kapan saja dari pengaturan.",
     video: {
       src: "/videos/inclusive-netra-demo.mp4",
-      poster: "/videos/inclusive-netra-demo-poster.jpg",
+      poster: "/videos/inclusive-netra-demo-poster.svg",
       alt: "Teks-ke-suara membacakan konten halaman",
     },
   },
@@ -222,7 +222,7 @@ const inclusive = [
     desc: "Teks langsung (live caption) di kelas online agar tak ada yang tertinggal.",
     video: {
       src: "/videos/inclusive-rungu-demo.mp4",
-      poster: "/videos/inclusive-rungu-demo-poster.jpg",
+      poster: "/videos/inclusive-rungu-demo-poster.svg",
       alt: "Live caption berjalan saat kelas online berlangsung",
     },
   },
@@ -232,7 +232,7 @@ const inclusive = [
     desc: "Dukungan komunikasi berbasis teks & isyarat dalam ruang belajar.",
     video: {
       src: "/videos/inclusive-wicara-demo.mp4",
-      poster: "/videos/inclusive-wicara-demo-poster.jpg",
+      poster: "/videos/inclusive-wicara-demo-poster.svg",
       alt: "Teks diucapkan otomatis mewakili siswa dalam ruang belajar",
     },
   },
@@ -242,7 +242,7 @@ const inclusive = [
     desc: "Palet warna otomatis menyesuaikan untuk deuteranopia, protanopia, tritanopia, dan monokromasi.",
     video: {
       src: "/videos/inclusive-warna-demo.mp4",
-      poster: "/videos/inclusive-warna-demo-poster.jpg",
+      poster: "/videos/inclusive-warna-demo-poster.svg",
       alt: "Tampilan berganti palet warna ramah buta warna",
     },
   },
