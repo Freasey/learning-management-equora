@@ -13,9 +13,13 @@ import {
   CalendarDays,
   BarChart3,
   CheckCircle2,
-  Quote,
+  Palette,
+  FileCode2,
+  Gamepad2,
+  Accessibility,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DemoVideo } from "@/components/site/demo-video";
 
 export const metadata: Metadata = {
   title: "Equora Sistem Manajemen Sekolah yang Tenang & Inklusif",
@@ -77,54 +81,14 @@ function Hero() {
 
 function HeroVisual() {
   return (
-    <div className="relative">
-      <div className="rounded-2xl border border-line bg-paper p-5 shadow-[0_24px_60px_-30px_rgba(14,58,58,0.45)]">
-        <div className="flex items-center justify-between border-b border-line pb-4">
-          <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-teal-900 text-paper">
-              <GraduationCap className="h-4 w-4" />
-            </span>
-            <span className="font-display text-sm font-medium text-teal-900">
-              Dashboard Sekolah
-            </span>
-          </div>
-          <span className="rounded-full bg-teal-700/10 px-2.5 py-1 font-mono text-[10px] text-teal-700">
-            Semester Genap
-          </span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3 py-4">
-          {[
-            { n: "486", c: "Siswa aktif" },
-            { n: "32", c: "Guru" },
-            { n: "128", c: "Modul" },
-          ].map((s) => (
-            <div key={s.c} className="border-l-2 border-accent pl-3">
-              <div className="font-display text-2xl font-medium text-ink">
-                {s.n}
-              </div>
-              <div className="text-[11px] uppercase tracking-wide text-muted">
-                {s.c}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="rounded-xl border border-line bg-sand/50 p-4">
-          <div className="flex items-center justify-between">
-            <span className="font-display text-sm text-ink">
-              Laporan Keuangan Dasar
-            </span>
-            <span className="font-mono text-[10px] text-muted">XII IPA</span>
-          </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-sand-deep">
-            <span className="block h-full w-[64%] rounded-full bg-accent" />
-          </div>
-          <div className="mt-1.5 font-mono text-[10px] text-muted">
-            64% selesai · 8/12 modul
-          </div>
-        </div>
-      </div>
+    <div className="relative overflow-hidden rounded-2xl border border-line bg-paper p-2 shadow-[0_24px_60px_-30px_rgba(14,58,58,0.45)]">
+      <DemoVideo
+        src="/videos/hero-demo.mp4"
+        poster="/videos/hero-demo-poster.jpg"
+        alt="Guru meng-generate soal AI dari materi PDF yang diunggah"
+        eager
+        className="aspect-4/3 w-full rounded-xl object-cover"
+      />
     </div>
   );
 }
@@ -133,22 +97,14 @@ function HeroVisual() {
 function TrustStrip() {
   return (
     <section className="border-y border-line bg-sand/40">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-5 py-8 text-center md:flex-row md:justify-between md:text-left">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-5 py-8 text-center md:flex-row md:justify-between md:text-left">
         <p className="font-mono text-xs uppercase tracking-widest text-muted">
-          Dipercaya sekolah di seluruh Indonesia
+          Coba sendiri sekolah demo yang selalu aktif, bukan sekadar tangkapan
+          layar
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-          {["SMA Nusantara", "SMP Harapan", "SD Cendekia", "SMK Bina Karya"].map(
-            (s) => (
-              <span
-                key={s}
-                className="font-display text-lg text-teal-900/60"
-              >
-                {s}
-              </span>
-            ),
-          )}
-        </div>
+        <Button href="/demo" variant="ghost" size="md">
+          Coba Demo Sekarang <ArrowRight className="h-4 w-4" />
+        </Button>
       </div>
     </section>
   );
@@ -166,6 +122,11 @@ const featureGroups = [
       "Persetujuan pendaftaran via kode sekolah",
       "Kuota & langganan transparan",
     ],
+    video: {
+      src: "/videos/feature-admin-demo.mp4",
+      poster: "/videos/feature-admin-demo-poster.jpg",
+      alt: "Admin menyetujui pendaftaran siswa via kode sekolah",
+    },
   },
   {
     icon: Users,
@@ -177,6 +138,11 @@ const featureGroups = [
       "Rekap nilai per siswa per mata pelajaran",
       "Sorotan siswa yang perlu perhatian",
     ],
+    video: {
+      src: "/videos/feature-guru-demo.mp4",
+      poster: "/videos/feature-guru-demo-poster.jpg",
+      alt: "Guru meng-generate soal dari materi PDF yang diunggah",
+    },
   },
   {
     icon: GraduationCap,
@@ -188,6 +154,11 @@ const featureGroups = [
       "Akses materi kapan saja",
       "Fitur inklusif bawaan",
     ],
+    video: {
+      src: "/videos/feature-siswa-demo.mp4",
+      poster: "/videos/feature-siswa-demo-poster.jpg",
+      alt: "Siswa mengerjakan kuis dalam bentuk game Ular",
+    },
   },
 ];
 
@@ -220,6 +191,12 @@ function Features() {
                 </li>
               ))}
             </ul>
+            <DemoVideo
+              src={g.video.src}
+              poster={g.video.poster}
+              alt={g.video.alt}
+              className="mt-5 aspect-video w-full rounded-lg border border-line object-cover"
+            />
           </div>
         ))}
       </div>
@@ -233,16 +210,41 @@ const inclusive = [
     icon: Eye,
     title: "Tunanetra",
     desc: "Teks-ke-suara untuk seluruh konten, dapat dinyalakan kapan saja dari pengaturan.",
+    video: {
+      src: "/videos/inclusive-netra-demo.mp4",
+      poster: "/videos/inclusive-netra-demo-poster.jpg",
+      alt: "Teks-ke-suara membacakan konten halaman",
+    },
   },
   {
     icon: Ear,
     title: "Tunarungu",
     desc: "Teks langsung (live caption) di kelas online agar tak ada yang tertinggal.",
+    video: {
+      src: "/videos/inclusive-rungu-demo.mp4",
+      poster: "/videos/inclusive-rungu-demo-poster.jpg",
+      alt: "Live caption berjalan saat kelas online berlangsung",
+    },
   },
   {
     icon: MessageSquare,
     title: "Tunawicara",
     desc: "Dukungan komunikasi berbasis teks & isyarat dalam ruang belajar.",
+    video: {
+      src: "/videos/inclusive-wicara-demo.mp4",
+      poster: "/videos/inclusive-wicara-demo-poster.jpg",
+      alt: "Teks diucapkan otomatis mewakili siswa dalam ruang belajar",
+    },
+  },
+  {
+    icon: Palette,
+    title: "Buta Warna",
+    desc: "Palet warna otomatis menyesuaikan untuk deuteranopia, protanopia, tritanopia, dan monokromasi.",
+    video: {
+      src: "/videos/inclusive-warna-demo.mp4",
+      poster: "/videos/inclusive-warna-demo-poster.jpg",
+      alt: "Tampilan berganti palet warna ramah buta warna",
+    },
   },
 ];
 
@@ -262,7 +264,7 @@ function Inclusive() {
           belajar dengan setara.
         </p>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {inclusive.map((i) => (
             <div
               key={i.title}
@@ -275,6 +277,12 @@ function Inclusive() {
                 {i.title}
               </h3>
               <p className="mt-2 text-sm text-paper/70">{i.desc}</p>
+              <DemoVideo
+                src={i.video.src}
+                poster={i.video.poster}
+                alt={i.video.alt}
+                className="mt-4 aspect-video w-full rounded-lg border border-paper/15 object-cover"
+              />
             </div>
           ))}
         </div>
@@ -330,55 +338,59 @@ function HowItWorks() {
   );
 }
 
-/* ── Testimonials ─────────────────────────────────────── */
-const testimonials = [
+/* ── Bukti Produk ──────────────────────────────────────── */
+const proofPoints = [
   {
-    quote:
-      "Administrasi yang dulu makan waktu berhari-hari kini selesai dalam hitungan jam. Guru bisa fokus mengajar lagi.",
-    name: "Bu Eka Septariana",
-    role: "Kepala Sekolah, SMA Nusantara",
+    icon: Sparkles,
+    title: "Soal AI dari PDF, hitungan detik",
+    desc: "Unggah materi (PDF, DOCX, gambar), AI langsung susun soal pilihan ganda & esai sesuai tingkat kesulitan.",
   },
   {
-    quote:
-      "Fitur inklusifnya yang membuat kami pindah. Siswa tunarungu kami akhirnya bisa mengikuti kelas dengan nyaman.",
-    name: "Pak Dary Aghny",
-    role: "Wakasek Kurikulum, SMP Harapan",
+    icon: FileCode2,
+    title: "8 layout desain PPTX otomatis",
+    desc: "Materi ajar diekspor jadi file .pptx asli, siap dibuka di PowerPoint atau Google Slides.",
   },
   {
-    quote:
-      "Penilaian quiz otomatis menghemat waktu koreksi saya tiap minggu. Rekap nilainya rapi dan mudah dibaca.",
-    name: "Bu Rani Wijaya",
-    role: "Guru Matematika, SMK Bina Karya",
+    icon: Accessibility,
+    title: "4 mode aksesibilitas aktif",
+    desc: "Teks-ke-suara, live caption, teks-ke-ucapan, dan palet ramah buta warna — bukan wacana, sudah berjalan.",
+  },
+  {
+    icon: Gamepad2,
+    title: "Kuis jadi game Ular & Pacman",
+    desc: "Kuis pilihan ganda yang sama bisa dimainkan sebagai game, bukan cuma formulir soal.",
   },
 ];
 
 function Testimonials() {
   return (
-    <section id="testimoni" className="scroll-mt-20 bg-sand/40">
+    <section id="bukti-produk" className="scroll-mt-20 bg-sand/40">
       <div className="mx-auto max-w-6xl px-5 py-20">
         <SectionHeading
-          eyebrow="Testimoni"
-          title="Dipercaya para pendidik"
-          subtitle="Kata mereka yang menggunakan Equora setiap hari."
+          eyebrow="Bukti Produk"
+          title="Bukan janji, ini yang sudah berjalan"
+          subtitle="Coba sendiri di sekolah demo yang selalu aktif — tidak perlu daftar dulu."
         />
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {testimonials.map((t) => (
-            <figure
-              key={t.name}
+        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {proofPoints.map((p) => (
+            <div
+              key={p.title}
               className="flex flex-col rounded-xl border border-line bg-paper p-6"
             >
-              <Quote className="h-7 w-7 text-accent" />
-              <blockquote className="mt-4 flex-1 text-sm leading-relaxed text-ink">
-                “{t.quote}”
-              </blockquote>
-              <figcaption className="mt-5 border-t border-line pt-4">
-                <div className="font-display text-base font-medium text-ink">
-                  {t.name}
-                </div>
-                <div className="font-mono text-xs text-muted">{t.role}</div>
-              </figcaption>
-            </figure>
+              <span className="grid h-11 w-11 place-items-center rounded-lg bg-teal-700/10 text-teal-700">
+                <p.icon className="h-5 w-5" />
+              </span>
+              <h3 className="mt-4 font-display text-lg font-medium text-ink">
+                {p.title}
+              </h3>
+              <p className="mt-2 text-sm text-muted">{p.desc}</p>
+            </div>
           ))}
+        </div>
+        <div className="mt-10 text-center">
+          <Button href="/demo" variant="primary" size="lg">
+            Coba Demo Sekarang <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </section>

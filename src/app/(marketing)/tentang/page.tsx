@@ -33,9 +33,9 @@ const values = [
 ];
 
 const stats = [
-  { n: "3", c: "Peran terpadu" },
-  { n: "100%", c: "Fitur di tiap paket" },
-  { n: "K-12", c: "Jenjang didukung" },
+  { n: "4", c: "Mode aksesibilitas aktif" },
+  { n: "8", c: "Layout PPTX otomatis" },
+  { n: "2", c: "Game kuis (Ular & Pacman)" },
 ];
 
 export default function TentangPage() {
