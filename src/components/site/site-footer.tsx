@@ -16,7 +16,6 @@ const cols = [
     title: "Perusahaan",
     links: [
       { href: "/tentang", label: "Tentang Kami" },
-      { href: "/#bukti-produk", label: "Bukti Produk" },
       { href: "/kontak", label: "Kontak" },
       { href: "/blog", label: "Blog" },
     ],
