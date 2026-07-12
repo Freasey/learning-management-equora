@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { DemoVideo } from "@/components/site/demo-video";
 
 export const metadata: Metadata = {
-  title: "Equora — Manajemen Sekolah dengan AI & Aksesibilitas Bawaan",
+  title: "Equora Manajemen Sekolah dengan AI & Aksesibilitas Bawaan",
   description:
     "Kelola siswa, guru, kurikulum, kelas, dan penilaian. AI bantu buat soal ujian, dan setiap siswa punya cara belajar yang sesuai untuknya.",
 };
@@ -52,12 +52,12 @@ function Hero() {
             <Sparkles className="h-3.5 w-3.5" /> Manajemen Sekolah K-12
           </span>
           <h1 className="mt-5 font-display text-4xl font-medium leading-[1.05] tracking-tight text-ink md:text-6xl">
-            Administrasi sekolah <em className="text-teal-700 italic">kelar</em>,
-            guru balik fokus mengajar.
+            Administrasi sekolah <em className="text-teal-700 italic">selesai</em>,
+            guru kembali fokus mengajar.
           </h1>
           <p className="mt-5 max-w-md text-lg text-muted">
-            Kelola kelas dan nilai, AI bantu buat soal ujian, dan setiap siswa —
-            termasuk yang berkebutuhan khusus — punya cara belajar yang sesuai
+            Kelola kelas dan nilai, AI bantu buat soal ujian, dan setiap siswa 
+            termasuk yang berkebutuhan khusus punya cara belajar yang sesuai
             untuknya.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -115,7 +115,7 @@ const featureGroups = [
   {
     icon: ShieldCheck,
     role: "Admin Sekolah",
-    desc: "Data siswa, guru, dan kelas tersinkron otomatis — tidak perlu spreadsheet terpisah-pisah lagi.",
+    desc: "Data siswa, guru, dan kelas tersinkron otomatis tidak perlu spreadsheet terpisah-pisah lagi.",
     items: [
       "Manajemen siswa, guru & kelas",
       "Kurikulum, mata pelajaran & jadwal",
@@ -168,7 +168,7 @@ function Features() {
       <SectionHeading
         eyebrow="Fitur"
         title="Tiga peran, satu alur kerja yang sama"
-        subtitle="Admin, guru, dan siswa mengakses data yang sama secara langsung — bukan tiga sistem terpisah."
+        subtitle="Admin, guru, dan siswa mengakses data yang sama secara langsung bukan tiga sistem terpisah."
       />
       <div className="mt-12 grid gap-6 md:grid-cols-3">
         {featureGroups.map((g) => (
@@ -369,7 +369,7 @@ function Testimonials() {
         <SectionHeading
           eyebrow="Bukti Produk"
           title="Empat hal yang benar-benar berjalan hari ini"
-          subtitle="Coba sendiri di sekolah demo yang selalu aktif — tidak perlu daftar dulu."
+          subtitle="Coba sendiri di sekolah demo yang selalu aktif tidak perlu daftar dulu."
         />
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {proofPoints.map((p) => (

@@ -81,7 +81,7 @@ export function MateriManager({
         <div>
           <h1 className="font-display text-3xl font-medium text-ink">Materi Ajar</h1>
           <p className="mt-1 text-sm text-muted">
-            Tulis langsung, unggah berkas, atau tempel tautan — pilih salah satu.
+            Tulis langsung, unggah berkas, atau tempel tautan pilih salah satu.
           </p>
         </div>
         {target === null && (
@@ -479,7 +479,7 @@ function MaterialPanel({
                 </button>
                 {!aiConfigured && (
                   <span className="text-xs text-muted">
-                    Mode demo — atur <code className="font-mono text-[11px]">GEMINI_API_KEY</code> supaya slide dibuat AI sungguhan, bukan contoh.
+                    Mode demo atur <code className="font-mono text-[11px]">GEMINI_API_KEY</code> supaya slide dibuat AI sungguhan, bukan contoh.
                   </span>
                 )}
               </div>

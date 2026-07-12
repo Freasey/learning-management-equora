@@ -18,7 +18,7 @@ export default async function MeetPage() {
       />
       <MeetRoom
         defaultRoom="kelas"
-        hint="Sebagai guru, Anda mengelola ruang ini — bisa membisukan atau mengeluarkan peserta. Bagikan kode ruang ini ke siswa."
+        hint="Sebagai guru, Anda mengelola ruang ini bisa membisukan atau mengeluarkan peserta. Bagikan kode ruang ini ke siswa."
       />
     </div>
   );

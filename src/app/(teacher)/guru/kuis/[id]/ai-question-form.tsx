@@ -68,7 +68,7 @@ export function AiQuestionForm({
       </div>
       <p className="mb-4 text-sm text-muted">
         Isi topik, atau unggah materi (PDF, DOCX, gambar, atau teks) supaya soal mengikuti bahan
-        Anda — AI akan menyusun soalnya. Soal langsung ditambahkan ke daftar di atas; ulangi kapan
+        Anda AI akan menyusun soalnya. Soal langsung ditambahkan ke daftar di atas; ulangi kapan
         saja untuk menambah lagi, dan hapus soal yang tidak pas lewat tombol Hapus. Kuis baru
         dilihat siswa setelah Anda menekan Terbitkan.
       </p>
@@ -130,7 +130,7 @@ export function AiQuestionForm({
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold text-ink">
             Bahan referensi{" "}
-            <span className="font-normal text-muted">(opsional — PDF, DOCX, gambar, atau teks; maks 15 MB)</span>
+            <span className="font-normal text-muted">(opsional PDF, DOCX, gambar, atau teks; maks 15 MB)</span>
           </span>
           <input
             name="sourceFile"

@@ -136,7 +136,7 @@ export default async function AdminHome() {
           </h2>
           <p className="mb-4 mt-1 text-sm text-muted">
             Satu form ini otomatis membuat tahun ajaran, mata pelajaran, kelas,
-            dan jadwal sekaligus — untuk guru yang mengajar sendiri tanpa
+            dan jadwal sekaligus untuk guru yang mengajar sendiri tanpa
             struktur sekolah formal.
           </p>
           <form

@@ -154,7 +154,7 @@ export function GamePlayer({
       setFeedback({ ...res, cause });
       setPhase("feedback");
     } catch {
-      setError("Jawabanmu belum sempat tersimpan — tekan kirim sekali lagi.");
+      setError("Jawabanmu belum sempat tersimpan tekan kirim sekali lagi.");
       setPhase("feedback");
     } finally {
       setBusy(false);

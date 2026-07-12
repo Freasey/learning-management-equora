@@ -45,7 +45,7 @@ export function SiteFooter() {
             </span>
           </Link>
           <p className="mt-4 max-w-xs text-sm text-muted">
-            Equora — dipakai admin, guru, dan siswa untuk mengelola kelas,
+            Equora dipakai admin, guru, dan siswa untuk mengelola kelas,
             nilai, dan aksesibilitas belajar setiap hari.
           </p>
         </div>

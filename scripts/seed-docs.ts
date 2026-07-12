@@ -30,7 +30,7 @@ const articles: Seed[] = [
     title: "Apa itu Equora?",
     summary: "Platform manajemen pembelajaran untuk sekolah maupun guru mandiri.",
     icon: "Sparkles",
-    body: `Equora menyatukan data kelas, jadwal, materi, kuis, dan nilai sekolah Anda — yang biasanya tersebar di Excel dan grup WhatsApp berbeda.
+    body: `Equora menyatukan data kelas, jadwal, materi, kuis, dan nilai sekolah Anda yang biasanya tersebar di Excel dan grup WhatsApp berbeda.
 
 ## Untuk siapa?
 - **Sekolah** admin menyiapkan struktur akademik, lalu guru & siswa memakainya.
@@ -127,7 +127,7 @@ Data tiap workspace terpisah penuh. Pindah konteks lewat **pemilih workspace** d
     body: `Tentukan mata pelajaran yang dipakai sekolah.
 
 ## Cara pakai
-- **Pilih dari katalog** kurikulum sesuai jenjang (centang yang dipakai) — sesuai standar sekolah Anda.
+- **Pilih dari katalog** kurikulum sesuai jenjang (centang yang dipakai) sesuai standar sekolah Anda.
 - **Tambah kustom** untuk muatan lokal.
 - Atur **kode** (boleh dikosongkan → dibuat otomatis dari nama) dan **KKM** tiap mapel.`,
   },

@@ -89,7 +89,7 @@ export default async function AksesibilitasDetailPage({
         <IconAlert className="mt-0.5 h-5 w-5 shrink-0 text-sunny" />
         <p className="text-sm text-slate-600">
           Fitur bertanda <span className="font-extrabold">Segera</span> masih
-          kami kerjakan. Centang kebutuhanmu sekarang di Pengaturan — nanti
+          kami kerjakan. Centang kebutuhanmu sekarang di Pengaturan nanti
           otomatis nyala begitu selesai.
         </p>
       </div>
